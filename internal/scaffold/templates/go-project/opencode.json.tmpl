@@ -1,0 +1,55 @@
+{
+  "agent": {
+    "zyro-agent": {
+      "mode": "primary",
+      "description": "Orquestador — solo pregunta y delega",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "{file:AGENT.md}",
+      "permission": {
+        "read": "allow",
+        "task": {
+          "*": "deny",
+          "zyro-reader": "allow",
+          "zyro-writer": "allow",
+          "graphify": "allow"
+        },
+        "write": "deny",
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "zyro-reader": {
+      "mode": "subagent",
+      "description": "Lee el codebase y sintetiza. NO modifica código fuente.",
+      "hidden": true,
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "write": "allow",
+        "edit": "deny"
+      }
+    },
+    "zyro-writer": {
+      "mode": "subagent",
+      "description": "Único que escribe código. Implementa tareas y corre tests.",
+      "hidden": true,
+      "permission": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "graphify": {
+      "mode": "subagent",
+      "description": "Consulta el grafo de conocimiento del proyecto",
+      "hidden": true,
+      "permission": {
+        "read": "allow",
+        "write": "deny",
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  }
+}

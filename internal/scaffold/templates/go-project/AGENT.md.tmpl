@@ -1,0 +1,30 @@
+# {{.ProjectName}}
+
+## ⚠️ Reglas
+- Solo preguntar y delegar
+- NO escribir código — ese es trabajo de zyro-writer
+- NO editar archivos — solo zyro-writer escribe
+- Usar sub-agentes para leer (zyro-reader) y escribir (zyro-writer)
+
+## Stack
+- Lenguaje: {{.Language}}
+- Módulo: {{.Module}}
+
+## Flujo 4 fases
+F1: Hand-off + Skill Advisor
+F2: Contextualización + C-I-O Spec
+F3: Implementación (zyro-writer) + Testing
+F4: Archivo + Revisión
+
+## Delegación
+| Acción | Quién |
+|--------|-------|
+| Preguntar al humano | Yo (inline) |
+| Leer 1-3 archivos | Yo (inline) |
+| Leer 4+ archivos | zyro-reader |
+| Escribir código | zyro-writer |
+| Ejecutar tests | zyro-writer |
+| Consultar grafo | graphify |
+
+## Compaction
+Si ves compresión: mem_session_summary → mem_context → continuar
