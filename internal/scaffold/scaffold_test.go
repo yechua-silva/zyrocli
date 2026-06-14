@@ -229,3 +229,39 @@ func TestRenderFuncs(t *testing.T) {
 		t.Fatal("rendered opencode.json is empty")
 	}
 }
+
+func TestScaffoldWithLaunchOpenCode(t *testing.T) {
+	// LaunchOpenCode is handled by the CLI layer, not by scaffold.Run.
+	// This test verifies that setting it to true does not cause errors.
+	tmpDir := t.TempDir()
+
+	cfg := Config{
+		ProjectName:     "open-app",
+		Language:        "Go",
+		Module:          "github.com/test/open-app",
+		Problem:         "test problem",
+		SuccessCriteria: "test criteria",
+		Version:         "2.0",
+		Source:          "holdin-admin",
+		ScaffoldDir:     filepath.Join(tmpDir, "open-app"),
+		LaunchOpenCode:  true,
+	}
+
+	result, err := Run(cfg)
+	if err != nil {
+		t.Fatalf("Run with LaunchOpenCode=true failed: %v", err)
+	}
+
+	if result.TargetDir != cfg.ScaffoldDir {
+		t.Errorf("TargetDir = %q, want %q", result.TargetDir, cfg.ScaffoldDir)
+	}
+	if result.FilesCreated != 6 {
+		t.Errorf("FilesCreated = %d, want 6", result.FilesCreated)
+	}
+
+	// Verify open-app/main.go was created correctly.
+	cmdPath := filepath.Join(tmpDir, "open-app", "cmd", "open-app", "main.go")
+	if _, err := os.Stat(cmdPath); err != nil {
+		t.Errorf("expected cmd at %s: %v", cmdPath, err)
+	}
+}
