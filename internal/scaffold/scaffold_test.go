@@ -1,7 +1,10 @@
 package scaffold
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 )
@@ -74,6 +77,9 @@ func TestScaffoldCreatesAllFiles(t *testing.T) {
 	}
 	if len(agentContent) == 0 {
 		t.Error("AGENT.md is empty")
+	}
+	if !bytes.Contains(agentContent, []byte("## Tools por Fase")) {
+		t.Error("AGENT.md missing ## Tools por Fase section")
 	}
 
 	readmeContent, err := os.ReadFile(filepath.Join(tmpDir, "output", "README.md"))
@@ -274,6 +280,54 @@ func TestScriptsExecutable(t *testing.T) {
 		if len(content) < len(shebang) || string(content[:len(shebang)]) != shebang {
 			t.Errorf("%s missing shebang line or wrong shebang", s)
 		}
+	}
+}
+
+func TestPythonExplorerRuntime(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping Python runtime test in short mode")
+	}
+
+	// Check if python3 is available.
+	if _, err := exec.LookPath("python3"); err != nil {
+		t.Skip("python3 not found in PATH")
+	}
+
+	tmpDir := t.TempDir()
+
+	// Scaffold into the temp directory so scripts/explorer.py exists.
+	cfg := Config{
+		ProjectName: "explorer-test",
+		Language:    "Go",
+		Module:      "github.com/test/explorer",
+		ScaffoldDir: filepath.Join(tmpDir, "output"),
+	}
+	_, err := Run(cfg)
+	if err != nil {
+		t.Fatalf("scaffold Run failed: %v", err)
+	}
+
+	// Run explorer.py on the scaffold output directory.
+	cmd := exec.Command("python3", "scripts/explorer.py", "--path", ".")
+	cmd.Dir = filepath.Join(tmpDir, "output")
+	output, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("explorer.py failed: %v\noutput: %s", err, string(output))
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(output, &result); err != nil {
+		t.Fatalf("invalid JSON from explorer.py: %v\nraw: %s", err, string(output))
+	}
+
+	if _, ok := result["total_files"]; !ok {
+		t.Error("output missing 'total_files' key")
+	}
+	if _, ok := result["languages"]; !ok {
+		t.Error("output missing 'languages' key")
+	}
+	if total, ok := result["total_files"].(float64); !ok || total < 1 {
+		t.Errorf("expected total_files >= 1, got %v", result["total_files"])
 	}
 }
 
