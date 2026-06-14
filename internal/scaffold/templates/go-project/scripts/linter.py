@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run linter and return structured JSON."""
-import argparse, json, os, subprocess, sys
+import argparse, json, os, re, subprocess, sys
 
 
 def run(args):
@@ -15,16 +15,66 @@ def run(args):
         if args.fix:
             cmd.append("--fix")
     else:
-        print(json.dumps({"issues": [], "fixed": 0, "warnings": 0}))
-        sys.exit(1)
+        return {"issues": [], "fixed": 0, "warnings": 1}
 
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=path)
     issues = []
-    for line in result.stdout.strip().split("\n"):
-        parts = line.split(":")
-        if len(parts) >= 3:
-            issues.append({"file": parts[0], "line": parts[1], "message": ":".join(parts[2:])})
-    return {"issues": issues, "fixed": 1 if args.fix else 0, "warnings": len(result.stderr.split("\n")) if result.stderr else 0}
+    fixed = 0
+
+    if cmd[0] == "golangci-lint":
+        # Parse JSON output from golangci-lint
+        if result.stdout.strip():
+            try:
+                data = json.loads(result.stdout)
+                for issue in data.get("Issues", []):
+                    pos = issue.get("Pos", {})
+                    issues.append({
+                        "file": pos.get("Filename", ""),
+                        "line": str(pos.get("Line", 0)),
+                        "severity": issue.get("Severity", "error"),
+                        "message": issue.get("Text", ""),
+                    })
+            except json.JSONDecodeError:
+                pass
+
+        if args.fix:
+            # Count "fixed" mentions in stderr
+            for line in result.stderr.split("\n"):
+                m = re.search(r"(\d+)\s+issue", line, re.IGNORECASE)
+                if m:
+                    fixed = int(m.group(1))
+                    break
+    else:
+        # Ruff output: path:line:col: code Message
+        for line in result.stdout.strip().split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(":", 3)
+            if len(parts) >= 4:
+                issues.append({
+                    "file": parts[0],
+                    "line": parts[1],
+                    "severity": "warning",
+                    "message": parts[3].strip(),
+                })
+            elif len(parts) >= 2:
+                issues.append({
+                    "file": parts[0],
+                    "line": parts[1] if len(parts) > 1 else "0",
+                    "severity": "warning",
+                    "message": ":".join(parts[2:]),
+                })
+
+        if args.fix:
+            for line in result.stderr.split("\n"):
+                m = re.search(r"(\d+)\s+fixed", line, re.IGNORECASE)
+                if m:
+                    fixed = int(m.group(1))
+                    break
+
+    warnings = len([l for l in result.stderr.split("\n") if l.strip()]) if result.stderr else 0
+    return {"issues": issues, "fixed": fixed, "warnings": warnings}
 
 
 def main():
