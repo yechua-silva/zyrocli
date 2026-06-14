@@ -28,8 +28,8 @@ func TestScaffoldCreatesAllFiles(t *testing.T) {
 	if result.TargetDir != cfg.ScaffoldDir {
 		t.Errorf("TargetDir = %q, want %q", result.TargetDir, cfg.ScaffoldDir)
 	}
-	if result.FilesCreated != 6 {
-		t.Errorf("FilesCreated = %d, want 6", result.FilesCreated)
+	if result.FilesCreated != 9 {
+		t.Errorf("FilesCreated = %d, want 9", result.FilesCreated)
 	}
 
 	// Verify all expected files exist.
@@ -40,6 +40,9 @@ func TestScaffoldCreatesAllFiles(t *testing.T) {
 		".gitignore",
 		"README.md",
 		"cmd/my-cool-app/main.go",
+		"scripts/explorer.py",
+		"scripts/test-runner.py",
+		"scripts/linter.py",
 	}
 	for _, f := range files {
 		fullPath := filepath.Join(tmpDir, "output", f)
@@ -203,6 +206,77 @@ func TestWriteProjectCleansUpOnError(t *testing.T) {
 }
 
 // TestRenderFuncs verifies the template FuncMap works correctly.
+func TestScaffoldScriptsExist(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg := Config{
+		ProjectName: "scripts-test",
+		ScaffoldDir: filepath.Join(tmpDir, "output"),
+	}
+
+	result, err := Run(cfg)
+	if err != nil {
+		t.Fatalf("Run failed: %v", err)
+	}
+
+	if result.FilesCreated != 9 {
+		t.Errorf("FilesCreated = %d, want 9", result.FilesCreated)
+	}
+
+	scripts := []string{
+		"scripts/explorer.py",
+		"scripts/test-runner.py",
+		"scripts/linter.py",
+	}
+	for _, s := range scripts {
+		fullPath := filepath.Join(tmpDir, "output", s)
+		info, err := os.Stat(fullPath)
+		if err != nil {
+			t.Errorf("missing script %s: %v", s, err)
+			continue
+		}
+		if info.Size() == 0 {
+			t.Errorf("script %s is empty", s)
+		}
+	}
+}
+
+func TestScriptsExecutable(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg := Config{
+		ProjectName: "exec-test",
+		ScaffoldDir: filepath.Join(tmpDir, "output"),
+	}
+
+	_, err := Run(cfg)
+	if err != nil {
+		t.Fatalf("Run failed: %v", err)
+	}
+
+	scripts := []string{
+		"scripts/explorer.py",
+		"scripts/test-runner.py",
+		"scripts/linter.py",
+	}
+	for _, s := range scripts {
+		fullPath := filepath.Join(tmpDir, "output", s)
+		content, err := os.ReadFile(fullPath)
+		if err != nil {
+			t.Errorf("failed to read %s: %v", s, err)
+			continue
+		}
+		if len(content) < 20 {
+			t.Errorf("%s too short (%d bytes)", s, len(content))
+		}
+		// Verify shebang line.
+		const shebang = "#!/usr/bin/env python3"
+		if len(content) < len(shebang) || string(content[:len(shebang)]) != shebang {
+			t.Errorf("%s missing shebang line or wrong shebang", s)
+		}
+	}
+}
+
 func TestRenderFuncs(t *testing.T) {
 	r := NewRenderer()
 
@@ -255,8 +329,8 @@ func TestScaffoldWithLaunchOpenCode(t *testing.T) {
 	if result.TargetDir != cfg.ScaffoldDir {
 		t.Errorf("TargetDir = %q, want %q", result.TargetDir, cfg.ScaffoldDir)
 	}
-	if result.FilesCreated != 6 {
-		t.Errorf("FilesCreated = %d, want 6", result.FilesCreated)
+	if result.FilesCreated != 9 {
+		t.Errorf("FilesCreated = %d, want 9", result.FilesCreated)
 	}
 
 	// Verify open-app/main.go was created correctly.

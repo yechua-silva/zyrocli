@@ -28,3 +28,14 @@ F4: Archivo + Revisión
 
 ## Compaction
 Si ves compresión: mem_session_summary → mem_context → continuar
+
+## Tools por Fase
+| Fase | Tool | Agente | Restricción |
+|------|------|--------|-------------|
+| F1 | explorer.py | zyro-reader | Solo explorar, NO modificar código |
+| F2 | explorer.py | zyro-reader | Análisis profundo de estructura |
+| F3 | test-runner.py | zyro-writer | Tests obligatorios antes de commit |
+| F3 | linter.py | zyro-writer | Correr linter antes de commit |
+| F4 | test-runner.py | zyro-writer | Validación final del proyecto |
+
+> Los scripts requieren Python 3.8+ en el PATH. Se invocan desde la raíz del proyecto: `python3 scripts/<tool>.py --path .`

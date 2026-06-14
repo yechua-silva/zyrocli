@@ -77,7 +77,7 @@ func Run(cfg Config) (*Result, error) {
 		{tmplName: "templates/go-project/main.go.tmpl", outPath: mainGoPath},
 	}
 
-	files := make(map[string]string, len(jobs)+4)
+	files := make(map[string]string, len(jobs)+7)
 
 	for _, j := range jobs {
 		content, err := renderer.Render(j.tmplName, tmplCfg)
@@ -85,6 +85,21 @@ func Run(cfg Config) (*Result, error) {
 			return nil, fmt.Errorf("scaffold: %w", err)
 		}
 		files[j.outPath] = content
+	}
+
+	// Script files — raw copies, not templates.
+	scriptEntries := []struct{ embedPath, outPath string }{
+		{"templates/go-project/scripts/explorer.py", "scripts/explorer.py"},
+		{"templates/go-project/scripts/test-runner.py", "scripts/test-runner.py"},
+		{"templates/go-project/scripts/linter.py", "scripts/linter.py"},
+	}
+
+	for _, se := range scriptEntries {
+		content, err := scriptsFS.ReadFile(se.embedPath)
+		if err != nil {
+			return nil, fmt.Errorf("scaffold: read script %s: %w", se.embedPath, err)
+		}
+		files[se.outPath] = string(content)
 	}
 
 	// Empty directories required by the scaffold structure.
@@ -99,7 +114,7 @@ func Run(cfg Config) (*Result, error) {
 
 	return &Result{
 		TargetDir:    targetDir,
-		FilesCreated: len(jobs),
+		FilesCreated: len(jobs) + len(scriptEntries),
 	}, nil
 }
 
