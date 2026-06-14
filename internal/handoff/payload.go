@@ -56,9 +56,11 @@ type Testing struct {
 
 // Limits defines change constraints.
 type Limits struct {
-	MaxTasks   int  `yaml:"max_tasks,omitempty"`
-	MaxLines   int  `yaml:"max_lines,omitempty"`
-	ChainedPRs bool `yaml:"chained_prs,omitempty"`
+	MaxTasks     int    `yaml:"max_tasks,omitempty"`
+	MaxLines     int    `yaml:"max_lines,omitempty"`
+	MaxLoops     int    `yaml:"max_loops,omitempty"`
+	PhaseTimeout string `yaml:"phase_timeout,omitempty"`
+	ChainedPRs   bool   `yaml:"chained_prs,omitempty"`
 }
 
 // Payload is the top-level handoff structure read from handoff.yaml.

@@ -40,6 +40,8 @@ testing:
 limits:
   max_tasks: 15
   max_lines: 400
+  max_loops: 5
+  phase_timeout: 10m
   chained_prs: false
 `
 
@@ -93,6 +95,12 @@ func TestParseFile(t *testing.T) {
 	if got.Governance.Mode != "structured" {
 		t.Errorf("expected governance.mode 'structured', got %q", got.Governance.Mode)
 	}
+	if got.Governance.Module != "github.com/test/project" {
+		t.Errorf("expected governance.module 'github.com/test/project', got %q", got.Governance.Module)
+	}
+	if got.Governance.GoVersion != "1.26" {
+		t.Errorf("expected governance.go_version '1.26', got %q", got.Governance.GoVersion)
+	}
 	if got.Testing.Strategy != "table-driven" {
 		t.Errorf("expected testing.strategy 'table-driven', got %q", got.Testing.Strategy)
 	}
@@ -101,6 +109,18 @@ func TestParseFile(t *testing.T) {
 	}
 	if len(got.MVP.Features) != 2 {
 		t.Errorf("expected 2 mvp.features, got %d", len(got.MVP.Features))
+	}
+	if got.Limits.MaxTasks != 15 {
+		t.Errorf("expected limits.max_tasks 15, got %d", got.Limits.MaxTasks)
+	}
+	if got.Limits.MaxLines != 400 {
+		t.Errorf("expected limits.max_lines 400, got %d", got.Limits.MaxLines)
+	}
+	if got.Limits.MaxLoops != 5 {
+		t.Errorf("expected limits.max_loops 5, got %d", got.Limits.MaxLoops)
+	}
+	if got.Limits.PhaseTimeout != "10m" {
+		t.Errorf("expected limits.phase_timeout '10m', got %q", got.Limits.PhaseTimeout)
 	}
 }
 
@@ -354,5 +374,11 @@ func TestIntegrationParseValidateMinimal(t *testing.T) {
 	}
 	if payload.MVP.Scope != "" {
 		t.Errorf("expected empty mvp.scope, got %q", payload.MVP.Scope)
+	}
+	if payload.Limits.MaxLoops != 0 {
+		t.Errorf("expected default limits.max_loops 0, got %d", payload.Limits.MaxLoops)
+	}
+	if payload.Limits.PhaseTimeout != "" {
+		t.Errorf("expected empty limits.phase_timeout, got %q", payload.Limits.PhaseTimeout)
 	}
 }
