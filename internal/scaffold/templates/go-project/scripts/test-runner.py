@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run tests and return structured JSON."""
-import argparse, json, os, re, subprocess
+import argparse, json, os, re, subprocess, sys
 
 
 def run(args):
@@ -15,12 +15,20 @@ def run(args):
         if args.coverage:
             cmd.append("--cov")
     else:
-        return {"passed": 0, "failed": 0, "output": "", "errors": "No test framework detected"}
+        print(json.dumps({"passed": 0, "failed": 0, "errors": "No test framework detected", "coverage": None}))
+        sys.exit(1)
 
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=path)
     passed = len(re.findall(r"^(--- )?PASS|OK|\.$", result.stdout, re.MULTILINE))
     failed = len(re.findall(r"^--- FAIL|FAIL|ERROR", result.stdout, re.MULTILINE))
-    return {"passed": passed, "failed": failed, "output": result.stdout, "errors": result.stderr}
+    coverage = None
+    if args.coverage and os.path.isfile(os.path.join(path, "coverage.out")):
+        with open(os.path.join(path, "coverage.out")) as f:
+            for line in f:
+                m = re.match(r"^ok\s+\S+\s+[\d.]+s\s+coverage:\s+([\d.]+%)", line)
+                if m:
+                    coverage = m.group(1)
+    return {"passed": passed, "failed": failed, "errors": result.stderr, "coverage": coverage}
 
 
 def main():

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Explore directory tree and return structured JSON."""
-import argparse, fnmatch, json, os
+import argparse, fnmatch, json, os, sys
 
 
 def run(args):
     path = args.path
     if not os.path.isdir(path):
-        return {"error": f"Directory not found: {path}"}
+        print(json.dumps({"error": f"Directory not found: {path}"}))
+        sys.exit(1)
 
     result = {"files": [], "dirs": 0, "total_files": 0, "languages": {}}
     for root, dirs, files in os.walk(path):
