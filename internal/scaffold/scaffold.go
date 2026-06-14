@@ -112,6 +112,18 @@ func Run(cfg Config) (*Result, error) {
 		return nil, err
 	}
 
+	// Write initialization state
+	state := &State{
+		Initialized: true,
+		ProjectName: cfg.ProjectName,
+		TargetDir:   targetDir,
+		Version:     cfg.Version,
+	}
+	if err := WriteState(targetDir, state); err != nil {
+		// Non-fatal: log but don't fail scaffold
+		fmt.Fprintf(os.Stderr, "⚠ warning: failed to write state file: %v\n", err)
+	}
+
 	return &Result{
 		TargetDir:    targetDir,
 		FilesCreated: len(jobs) + len(scriptEntries),

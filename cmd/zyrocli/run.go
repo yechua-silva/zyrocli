@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 
+	"github.com/secko/zyrocli/internal/handoff"
+	"github.com/secko/zyrocli/internal/scaffold"
 	"github.com/secko/zyrocli/internal/scheduler"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +24,31 @@ proceeding — there is no automatic mode.
 Flags:
   --phase F2   Run a single phase only (F1, F2, F3, or F4)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Check if project is already initialized
+		projectDir := "." // current directory, or read from handoff.yaml project.name
+		if _, err := os.Stat("handoff.yaml"); err == nil {
+			payload, err := handoff.Parse("handoff.yaml")
+			if err == nil && payload.Project.Name != "" {
+				projectDir = payload.Project.Name
+			}
+		}
+
+		state, err := scaffold.ReadState(projectDir)
+		if err != nil {
+			return fmt.Errorf("run: checking project state: %w", err)
+		}
+
+		if state != nil && state.Initialized {
+			cmd.Printf("✓ Proyecto ya inicializado: %s\n", state.ProjectName)
+			cmd.Println("  Abriendo OpenCode...")
+
+			openCmd := exec.Command("opencode", projectDir)
+			openCmd.Stdin = os.Stdin
+			openCmd.Stdout = os.Stdout
+			openCmd.Stderr = os.Stderr
+			return openCmd.Run()
+		}
+
 		// Check handoff.yaml exists
 		if _, err := os.Stat("handoff.yaml"); os.IsNotExist(err) {
 			return fmt.Errorf("run: handoff.yaml not found in current directory\nRun 'zyrocli init <file>' first")

@@ -89,6 +89,20 @@ func TestScaffoldCreatesAllFiles(t *testing.T) {
 	if string(readmeContent) == "" {
 		t.Error("README.md is empty")
 	}
+
+	// Verify state file was created
+	statePath := filepath.Join(tmpDir, "output", ".zyro", "state.json")
+	if _, err := os.Stat(statePath); err != nil {
+		t.Errorf("missing state file: %v", err)
+	} else {
+		stateData, err := os.ReadFile(statePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Contains(stateData, []byte(`"initialized": true`)) {
+			t.Error("state file missing initialized: true")
+		}
+	}
 }
 
 func TestScaffoldNameNormalization(t *testing.T) {
