@@ -393,3 +393,38 @@ func TestScaffoldWithLaunchOpenCode(t *testing.T) {
 		t.Errorf("expected cmd at %s: %v", cmdPath, err)
 	}
 }
+
+func TestReadScript(t *testing.T) {
+	tests := []struct {
+		name    string
+		script  string
+		wantErr bool
+	}{
+		{name: "valid explorer.py", script: "explorer.py", wantErr: false},
+		{name: "valid test-runner.py", script: "test-runner.py", wantErr: false},
+		{name: "valid linter.py", script: "linter.py", wantErr: false},
+		{name: "invalid name", script: "nonexistent.py", wantErr: true},
+		{name: "empty name", script: "", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := ReadScript(tt.script)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ReadScript(%q) failed: %v", tt.script, err)
+			}
+			if len(data) == 0 {
+				t.Errorf("ReadScript(%q) returned empty content", tt.script)
+			}
+			if string(data[:len("#!/usr/bin/env python3")]) != "#!/usr/bin/env python3" {
+				t.Errorf("ReadScript(%q) missing shebang line", tt.script)
+			}
+		})
+	}
+}

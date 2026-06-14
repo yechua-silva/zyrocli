@@ -75,7 +75,7 @@ def run(args):
         if args.coverage:
             cmd.append("--cov")
     else:
-        print(json.dumps({"passed": 0, "failed": 0, "errors": "No test framework detected", "coverage": None}))
+        print(json.dumps({"passed": 0, "failed": 0, "errors": [{"file": "", "test": "", "message": "No test framework detected"}], "coverage": None}))
         sys.exit(1)
 
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=path)
