@@ -1,55 +1,160 @@
 {
   "agent": {
-    "Zyro Agent": {
+    "zyro-orchestrator": {
       "mode": "primary",
-      "description": "Orquestador — solo pregunta y delega",
+      "description": "Orchestrator — delegates SDD phases to sub-agents, never writes code directly",
       "model": "opencode-go/deepseek-v4-flash",
       "prompt": "{file:AGENT.md}",
       "permission": {
         "read": "allow",
         "task": {
           "*": "deny",
-          "zyro-reader": "allow",
-          "zyro-writer": "allow",
-          "graphify": "allow"
+          "sdd-apply": "allow",
+          "sdd-verify": "allow",
+          "sdd-explore": "allow",
+          "sdd-propose": "allow",
+          "sdd-spec": "allow",
+          "sdd-tasks": "allow",
+          "sdd-design": "allow",
+          "sdd-archive": "allow"
         },
         "write": "deny",
         "edit": "deny",
         "bash": "deny"
       }
     },
-    "zyro-reader": {
+    "sdd-apply": {
       "mode": "subagent",
-      "description": "Lee el codebase y sintetiza. NO modifica código fuente.",
+      "description": "Implements SDD tasks — writes code, creates files, runs tests",
       "hidden": true,
-      "permission": {
-        "read": "allow",
-        "bash": "allow",
-        "write": "allow",
-        "edit": "deny"
-      }
-    },
-    "zyro-writer": {
-      "mode": "subagent",
-      "description": "Único que escribe código. Implementa tareas y corre tests.",
-      "hidden": true,
+      "prompt": "{skill:sdd-apply}",
       "permission": {
         "read": "allow",
         "write": "allow",
         "edit": "allow",
-        "bash": "allow"
+        "bash": "allow",
+        "task": {
+          "*": "allow"
+        }
       }
     },
-    "graphify": {
+    "sdd-verify": {
       "mode": "subagent",
-      "description": "Consulta el grafo de conocimiento del proyecto",
+      "description": "Verifies implementation matches specs, design, and tasks",
       "hidden": true,
+      "prompt": "{skill:sdd-verify}",
       "permission": {
         "read": "allow",
+        "write": "allow",
+        "edit": "deny",
+        "bash": "allow",
+        "task": {
+          "*": "allow"
+        }
+      }
+    },
+    "sdd-explore": {
+      "mode": "subagent",
+      "description": "Explores codebase and requirements before committing to a change",
+      "hidden": true,
+      "prompt": "{skill:sdd-explore}",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
         "write": "deny",
+        "edit": "deny"
+      }
+    },
+    "sdd-propose": {
+      "mode": "subagent",
+      "description": "Creates SDD change proposals with intent, scope, and approach",
+      "hidden": true,
+      "prompt": "{skill:sdd-propose}",
+      "permission": {
+        "read": "allow",
+        "write": "allow",
         "edit": "deny",
         "bash": "deny"
       }
+    },
+    "sdd-spec": {
+      "mode": "subagent",
+      "description": "Writes SDD delta specs with requirements and scenarios",
+      "hidden": true,
+      "prompt": "{skill:sdd-spec}",
+      "permission": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "sdd-tasks": {
+      "mode": "subagent",
+      "description": "Breaks SDD changes into implementation tasks",
+      "hidden": true,
+      "prompt": "{skill:sdd-tasks}",
+      "permission": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "sdd-design": {
+      "mode": "subagent",
+      "description": "Creates SDD technical design and architecture approach",
+      "hidden": true,
+      "prompt": "{skill:sdd-design}",
+      "permission": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "sdd-archive": {
+      "mode": "subagent",
+      "description": "Archives completed SDD changes by syncing delta specs",
+      "hidden": true,
+      "prompt": "{skill:sdd-archive}",
+      "permission": {
+        "read": "allow",
+        "write": "allow",
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  },
+  "mcp_servers": {
+    "task_context": {
+      "description": "Fetch task context from HelixDB — skills, code nodes, documents, patterns",
+      "endpoint": "http://localhost:6969"
+    },
+    "search_code": {
+      "description": "Search codebase via HelixDB vector/text index",
+      "endpoint": "http://localhost:6969"
+    },
+    "search_skills": {
+      "description": "Search installed agent skills by trigger and keyword",
+      "endpoint": "http://localhost:6969"
+    }
+  },
+  "mcp_tools": {
+    "task_context": {
+      "type": "helix",
+      "description": "Fetch task context: skills, code nodes, documents, and patterns from HelixDB",
+      "endpoint": "http://localhost:6969"
+    },
+    "search_code": {
+      "type": "helix",
+      "description": "Vector and text search over indexed code in HelixDB",
+      "endpoint": "http://localhost:6969"
+    },
+    "search_skills": {
+      "type": "helix",
+      "description": "Search skill registry by trigger keywords",
+      "endpoint": "http://localhost:6969"
     }
   }
 }

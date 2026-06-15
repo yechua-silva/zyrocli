@@ -1,30 +1,84 @@
 # {{.ProjectName}}
 
-## ⚠️ Reglas
+{{.Problem}}
+
+## Architecture — 3-Layer Hybrid
+
+```
+┌─────────────────────────────────────┐
+│   Layer 1: Orchestrator             │
+│   (zyro-orchestrator)               │
+│   · Reads specs, delegates phases    │
+│   · NEVER writes code directly       │
+├─────────────────────────────────────┤
+│   Layer 2: SDD Skills (sub-agents)  │
+│   · sdd-propose  — change proposals │
+│   · sdd-spec     — delta specs      │
+│   · sdd-design   — tech design      │
+│   · sdd-tasks    — task breakdown   │
+│   · sdd-apply    — write code       │
+│   · sdd-verify   — validate impl   │
+│   · sdd-archive  — archive changes │
+├─────────────────────────────────────┤
+│   Layer 3: MCP Tools                │
+│   · task_context — HelixDB context   │
+│   · search_code — codebase search   │
+│   · search_skills — skill lookup    │
+└─────────────────────────────────────┘
+```
+
+## ⚠️ Rules
 - Solo preguntar y delegar
-- NO escribir código — ese es trabajo de zyro-writer
-- NO editar archivos — solo zyro-writer escribe
-- Usar sub-agentes para leer (zyro-reader) y escribir (zyro-writer)
+- NO escribir código — ese es trabajo de zyro-writer / sdd-apply
+- NO editar archivos — solo sdd-apply escribe
+- Usar sub-agentes para explorar (sdd-explore), diseñar (sdd-design), implementar (sdd-apply)
+- Antes de implementar, siempre pasar por: propose → spec → design → tasks → apply
 
-## Stack
-- Lenguaje: {{.Language}}
-- Módulo: {{.Module}}
+## SDD Workflow — 4 Phases
 
-## Flujo 4 fases
-F1: Hand-off + Skill Advisor
-F2: Contextualización + C-I-O Spec
-F3: Implementación (zyro-writer) + Testing
-F4: Archivo + Revisión
+| Fase | Actividad | Agente(s) |
+|------|-----------|-----------|
+| F1 | Hand-off + Skill Advisor + Propose | zyro-orchestrator, sdd-propose |
+| F2 | Contextualización + Spec + Design + Tasks | sdd-spec, sdd-design, sdd-tasks |
+| F3 | Implementación + Testing | sdd-apply, sdd-verify |
+| F4 | Archive + Revisión final | sdd-archive |
 
-## Delegación
+Cada fase requiere aprobación explícita antes de continuar. No hay modo automático.
+
+## MCP Tools
+
+Usa estas herramientas para contexto y búsqueda:
+
+| Herramienta | Qué hace | Cuándo usarla |
+|-------------|----------|---------------|
+| `task_context <task-id>` | Obtiene contexto completo de una tarea desde HelixDB | Al iniciar una tarea, antes de explorar |
+| `search_code <query>` | Busca código en HelixDB por vector o texto | Para encontrar ejemplos, patrones o archivos |
+| `search_skills <query>` | Busca skills instaladas por trigger | Para saber qué skill cargar según la tarea |
+
+## zyro-sdd Skills
+
+Las skills zyro-sdd implementan cada fase del SDD. Cárgalas con `{skill:zyro-sdd-<name>}` cuando el
+orquestrador indique una fase específica:
+
+- `zyro-sdd-propose` — Crea propuesta de cambio (intento, alcance, enfoque)
+- `zyro-sdd-spec` — Escribe delta specs con requerimientos y escenarios
+- `zyro-sdd-design` — Diseño técnico y arquitectura
+- `zyro-sdd-tasks` — Desglose en tareas de implementación
+- `zyro-sdd-apply` — Implementa código, escribe archivos, corre tests
+- `zyro-sdd-verify` — Verifica que la implementación cumple specs, diseño y tareas
+- `zyro-sdd-archive` — Archiva cambio completado, sincroniza delta specs
+
+## Delegation
+
 | Acción | Quién |
 |--------|-------|
 | Preguntar al humano | Yo (inline) |
 | Leer 1-3 archivos | Yo (inline) |
-| Leer 4+ archivos | zyro-reader |
-| Escribir código | zyro-writer |
-| Ejecutar tests | zyro-writer |
-| Consultar grafo | graphify |
+| Leer 4+ archivos | sdd-explore |
+| Escribir código | sdd-apply |
+| Ejecutar tests | sdd-apply |
+| Validar implementación | sdd-verify |
+| Consultar grafo HelixDB | task_context / search_code |
 
 ## Compaction
 Si ves compresión: mem_session_summary → mem_context → continuar
@@ -32,10 +86,12 @@ Si ves compresión: mem_session_summary → mem_context → continuar
 ## Tools por Fase
 | Fase | Tool | Agente | Restricción |
 |------|------|--------|-------------|
-| F1 | explorer.py | zyro-reader | Solo explorar, NO modificar código |
-| F2 | explorer.py | zyro-reader | Análisis profundo de estructura |
-| F3 | test-runner.py | zyro-writer | Tests obligatorios antes de commit |
-| F3 | linter.py | zyro-writer | Correr linter antes de commit |
-| F4 | test-runner.py | zyro-writer | Validación final del proyecto |
+| F1 | sdd-propose | sdd-propose | Proponer cambio, NO implementar |
+| F2 | sdd-spec / sdd-design / sdd-tasks | sdd-spec, sdd-design, sdd-tasks | Solo diseñar, NO codificar |
+| F3 | sdd-apply | sdd-apply | Tests obligatorios antes de commit |
+| F3 | sdd-verify | sdd-verify | Validar contra specs antes de cerrar |
+| F4 | sdd-archive | sdd-archive | Archivar cambio, sincronizar delta specs |
 
-> Los scripts requieren Python 3.8+ en el PATH. Se invocan desde la raíz del proyecto: `python3 scripts/<tool>.py --path .`
+## Stack
+- Lenguaje: {{.Language}}
+- Módulo: {{.Module}}
