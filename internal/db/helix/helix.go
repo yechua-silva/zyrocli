@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -63,14 +64,36 @@ func (c *Client) EnsureStarted(ctx context.Context) error {
 		return nil // already running
 	}
 
-	// Try to start it
+	// Ensure we have a global helix project to run commands from
+	helixHome := os.Getenv("HOME") + "/.config/zyrocli/helix"
+	os.MkdirAll(helixHome, 0755)
+	if _, err := os.Stat(helixHome + "/helix.toml"); os.IsNotExist(err) {
+		helixToml := `[project]
+name = "zyrocli-global"
+queries = "db"
+container_runtime = "docker"
+
+[local.dev]
+port = 6969
+image = "ghcr.io/helixdb/enterprise-dev"
+tag = "latest"
+
+[enterprise]
+`
+		if err := os.WriteFile(helixHome+"/helix.toml", []byte(helixToml), 0644); err != nil {
+			return fmt.Errorf("helix: create config: %w", err)
+		}
+	}
+
+	// Start HelixDB via its CLI (handles port mapping and container lifecycle correctly)
 	cmd := exec.CommandContext(ctx, "helix", "start", "dev", "--disk")
+	cmd.Dir = helixHome
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("helix: auto-start failed: %w\n%s", err, string(out))
 	}
 
-	// Wait for it to be ready (up to 15s)
-	deadline := time.Now().Add(15 * time.Second)
+	// Wait for it to be ready (up to 30s)
+	deadline := time.Now().Add(30 * time.Second)
 	for time.Now().Before(deadline) {
 		if err := c.ping(ctx); err == nil {
 			return nil
@@ -80,9 +103,10 @@ func (c *Client) EnsureStarted(ctx context.Context) error {
 	return fmt.Errorf("helix: auto-started but not ready after 15s")
 }
 
-// ping checks if HelixDB is reachable.
+// ping checks if HelixDB is reachable by sending a minimal query.
 func (c *Client) ping(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/health", nil)
+	body := `{"request_type":"read","parameters":{},"query":{"queries":[{"Query":{"name":"t","steps":[{"NWhere":{"Eq":["$label",{"String":"_ping"}]}}],"condition":null}}],"returns":["t"]}}`
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/v1/query", bytes.NewReader([]byte(body)))
 	if err != nil {
 		return err
 	}
@@ -91,10 +115,11 @@ func (c *Client) ping(ctx context.Context) error {
 		return err
 	}
 	resp.Body.Close()
-	if resp.StatusCode == http.StatusOK {
+	req.Header.Set("Content-Type", "application/json")
+	if resp.StatusCode >= 200 && resp.StatusCode < 500 {
 		return nil
 	}
-	return fmt.Errorf("helix: health check returned %d", resp.StatusCode)
+	return fmt.Errorf("helix: ping returned %d", resp.StatusCode)
 }
 
 // ---------------------------------------------------------------------------
