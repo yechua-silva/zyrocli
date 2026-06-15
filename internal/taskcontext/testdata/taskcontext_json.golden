@@ -1,0 +1,57 @@
+{
+  "task_id": 42,
+  "skills": [
+    {
+      "id": 1,
+      "type": "Skill",
+      "properties": {
+        "name": "golang"
+      }
+    }
+  ],
+  "code_nodes": [
+    {
+      "id": 2,
+      "type": "CodeNode",
+      "properties": {
+        "name": "main.go"
+      }
+    }
+  ],
+  "docs": [
+    {
+      "id": 3,
+      "type": "Doc",
+      "properties": {
+        "name": "README.md"
+      }
+    }
+  ],
+  "patterns": [
+    {
+      "id": 4,
+      "type": "Pattern",
+      "properties": {
+        "name": "repository"
+      }
+    }
+  ],
+  "dependents": [
+    {
+      "id": 5,
+      "type": "Task",
+      "properties": {
+        "name": "auth-module"
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "id": 6,
+      "type": "Task",
+      "properties": {
+        "name": "db-layer"
+      }
+    }
+  ]
+}

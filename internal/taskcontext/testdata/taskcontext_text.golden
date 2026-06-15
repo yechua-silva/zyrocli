@@ -1,0 +1,21 @@
+Task 42 Context
+============================================================
+
+Skills (1):
+  - [1] Skill — golang
+
+Code Nodes (1):
+  - [2] CodeNode — main.go
+
+Docs (1):
+  - [3] Doc — README.md
+
+Patterns (1):
+  - [4] Pattern — repository
+
+Dependents (1):
+  - [5] Task — auth-module
+
+Dependencies (1):
+  - [6] Task — db-layer
+

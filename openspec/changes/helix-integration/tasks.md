@@ -37,15 +37,15 @@ Chain strategy: stacked-to-main
 
 ## Phase B: Go SDK Implementation
 
-- [ ] B1. Create `internal/db/helix/errors.go` — sentinel errors (ErrNotFound, ErrConnectionFailed, ErrInvalidRequest, ErrTaskNotFound) (~15 lines)
-- [ ] B2. Create `internal/db/helix/types.go` — Node, Edge, SearchResult, IndexSpec structs with JSON tags (~55 lines)
-- [ ] B3. Implement `internal/db/helix/helix.go` — wrap official SDK (`github.com/helixdb/helix-db/sdks/go`): NewClient with health check, CreateNode, GetNode, UpdateNode, DeleteNode, CreateEdge, GetOutgoing, GetIncoming, DeleteEdge, TextSearch, VectorSearch, CreateIndex, ListIndexes; map SDK errors to sentinels (~180 lines)
-- [ ] B4. Implement `internal/taskcontext/taskcontext.go` — TaskContext struct (Skills, Code, Docs, Patterns, Dependents, Dependencies fields), GetTaskContext with 6 sequential `client.Exec()` calls, FormatJSON (indented), FormatPrompt (section headers), FormatText (human-readable) (~120 lines)
-- [ ] B5. Create `internal/db/helix/helix_test.go` — table-driven tests for error mapping with mock HTTP responses; build tag `//go:build integration` for live tests (~90 lines)
-- [ ] B6. Create `internal/taskcontext/taskcontext_test.go` — golden file tests for FormatJSON, FormatPrompt, FormatText with fixture TaskContext data (~90 lines)
-- [ ] B7. Update `cmd/zyrocli/context.go` — verify deprecation warning + `--format` flag still work with real SDK; no logic changes needed (existing code already compatible) (~0 lines, verify only)
-- [ ] B8. Run `go mod tidy` to fetch `github.com/helixdb/helix-db/sdks/go`
-- [ ] B9. Verify build: `go build ./...` and `go test ./internal/db/helix/ ./internal/taskcontext/`
+- [x] B1. Create `internal/db/helix/errors.go` — sentinel errors (ErrNotFound, ErrConnectionFailed, ErrInvalidRequest, ErrTaskNotFound) (~15 lines)
+- [x] B2. Create `internal/db/helix/types.go` — Node, Edge, SearchResult, IndexSpec structs with JSON tags (~55 lines)
+- [x] B3. Implement `internal/db/helix/helix.go` — net/http client with all CRUD, search, and schema methods; mapped to sentinel errors (~425 lines)
+- [x] B4. Implement `internal/taskcontext/taskcontext.go` — TaskContext struct + GetTaskContext with 6 traversals + 3 formatters (~181 lines)
+- [x] B5. Create `internal/db/helix/helix_test.go` — table-driven error mapping + functional tests with httptest (~320 lines)
+- [x] B6. Create `internal/taskcontext/taskcontext_test.go` — golden file tests for all 3 formatters with fixture data (~85 lines)
+- [x] B7. Verify `cmd/zyrocli/context.go` — deprecation warning + `--format` flag compile and work with new API
+- [x] B8. Run `go mod tidy` — no new dependencies needed (net/http + encoding/json only)
+- [x] B9. Verify build: `go build ./...` and `go test ./...` — all passing
 
 ## Phase C: Python MCP Tools
 
