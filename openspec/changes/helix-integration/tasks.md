@@ -49,14 +49,14 @@ Chain strategy: stacked-to-main
 
 ## Phase C: Python MCP Tools
 
-- [ ] C1. Create `mcp-tools/pyproject.toml` — uv project config with deps: pydantic-ai, httpx (~20 lines)
-- [ ] C2. Create `mcp-tools/helix_client.py` — HelixClient class wrapping httpx for HelixDB HTTP API; methods: query(gql, params), health_check() (~80 lines)
-- [ ] C3. Create `mcp-tools/runner.py` — PydanticAI MCP server entry point; registers task_context, search_code, search_skills tools (~40 lines)
-- [ ] C4. Create `mcp-tools/task_context.py` — @mcp.tool() task_context(id: int) → calls HelixClient, returns 6-section JSON (~50 lines)
-- [ ] C5. Create `mcp-tools/search_code.py` — @mcp.tool() search_code(query: str, limit: int = 10) → text search on CodeNode (~40 lines)
-- [ ] C6. Create `mcp-tools/search_skills.py` — @mcp.tool() search_skills(query: str, limit: int = 10) → text search + shared skills merge (~40 lines)
-- [ ] C7. Create `mcp-tools/README.md` — registration docs for `~/.config/opencode/opencode.json` mcpTools.helix-integration config (~30 lines)
-- [ ] C8. Verify: `uv run mcp-tools/runner.py` starts without import errors
+- [x] C1. Create `mcp-tools/pyproject.toml` — uv project config with deps: pydantic-ai, httpx (12 lines)
+- [x] C2. Create `mcp-tools/helix_client.py` — HelixClient class wrapping httpx for HelixDB HTTP API; methods: query(payload), health(), text_search(), get_node(), get_outgoing(), get_incoming (99 lines)
+- [x] C3. Create `mcp-tools/runner.py` — FastMCP server entry point; registers task_context, search_code, search_skills tools via server.add_tool() (26 lines)
+- [x] C4. Create `mcp-tools/task_context.py` — async task_context_tool(id: int) → calls HelixClient, returns 6-section JSON with error handling (100 lines)
+- [x] C5. Create `mcp-tools/search_code.py` — async search_code_tool(query: str, limit: int = 10) → text search on CodeNode (31 lines)
+- [x] C6. Create `mcp-tools/search_skills.py` — async search_skills_tool(query: str, limit: int = 10) → text search on Skill nodes (31 lines)
+- [x] C7. Create `mcp-tools/README.md` — registration docs for `~/.config/opencode/opencode.json` mcpTools.helix-integration config (39 lines)
+- [x] C8. Verify: `uv run -> python -c` import check passes; `uv run runner.py` starts on stdio cleanly
 
 ## Phase D: Verification & Documentation
 

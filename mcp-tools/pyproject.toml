@@ -1,0 +1,12 @@
+[project]
+name = "helix-mcp-tools"
+version = "0.1.0"
+description = "Python MCP tools for HelixDB integration — task context, code search, skills search"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic-ai",
+    "httpx",
+]
+
+[dependency-groups]
+dev = []
