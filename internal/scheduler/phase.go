@@ -9,6 +9,7 @@ import (
 type Phase string
 
 const (
+	PhaseF0 Phase = "F0"
 	PhaseF1 Phase = "F1"
 	PhaseF2 Phase = "F2"
 	PhaseF3 Phase = "F3"
@@ -16,7 +17,7 @@ const (
 )
 
 // AllPhases is the ordered list of all phases.
-var AllPhases = []Phase{PhaseF1, PhaseF2, PhaseF3, PhaseF4}
+var AllPhases = []Phase{PhaseF0, PhaseF1, PhaseF2, PhaseF3, PhaseF4}
 
 // Status represents a phase execution result status.
 type Status string

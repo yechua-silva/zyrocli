@@ -3,133 +3,29 @@
     "zyro-orchestrator": {
       "mode": "primary",
       "description": "Orchestrator — delegates SDD phases to sub-agents, never writes code directly",
-      "model": "opencode-go/deepseek-v4-flash",
       "prompt": "{file:AGENT.md}",
       "permission": {
         "read": "allow",
         "task": {
           "*": "deny",
-          "sdd-apply": "allow",
-          "sdd-verify": "allow",
-          "sdd-explore": "allow",
-          "sdd-propose": "allow",
-          "sdd-spec": "allow",
-          "sdd-tasks": "allow",
-          "sdd-design": "allow",
-          "sdd-archive": "allow"
+          "zyro-sdd-apply": "allow",
+          "zyro-sdd-verify": "allow",
+          "zyro-sdd-explore": "allow",
+          "zyro-sdd-propose": "allow",
+          "zyro-sdd-spec": "allow",
+          "zyro-sdd-tasks": "allow",
+          "zyro-sdd-design": "allow",
+          "zyro-sdd-archive": "allow",
+          "zyro-phase-0-patterns": "allow",
+          "zyro-phase-0-libraries": "allow",
+          "zyro-skills-find": "allow",
+          "zyro-skills-audit": "allow",
+          "zyro-skills-apply": "allow"
         },
         "write": "deny",
         "edit": "deny",
         "bash": "deny"
       }
-    },
-    "sdd-apply": {
-      "mode": "subagent",
-      "description": "Implements SDD tasks — writes code, creates files, runs tests",
-      "hidden": true,
-      "prompt": "{skill:sdd-apply}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "allow",
-        "bash": "allow",
-        "task": {
-          "*": "allow"
-        }
-      }
-    },
-    "sdd-verify": {
-      "mode": "subagent",
-      "description": "Verifies implementation matches specs, design, and tasks",
-      "hidden": true,
-      "prompt": "{skill:sdd-verify}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "deny",
-        "bash": "allow",
-        "task": {
-          "*": "allow"
-        }
-      }
-    },
-    "sdd-explore": {
-      "mode": "subagent",
-      "description": "Explores codebase and requirements before committing to a change",
-      "hidden": true,
-      "prompt": "{skill:sdd-explore}",
-      "permission": {
-        "read": "allow",
-        "bash": "allow",
-        "write": "deny",
-        "edit": "deny"
-      }
-    },
-    "sdd-propose": {
-      "mode": "subagent",
-      "description": "Creates SDD change proposals with intent, scope, and approach",
-      "hidden": true,
-      "prompt": "{skill:sdd-propose}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "sdd-spec": {
-      "mode": "subagent",
-      "description": "Writes SDD delta specs with requirements and scenarios",
-      "hidden": true,
-      "prompt": "{skill:sdd-spec}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "sdd-tasks": {
-      "mode": "subagent",
-      "description": "Breaks SDD changes into implementation tasks",
-      "hidden": true,
-      "prompt": "{skill:sdd-tasks}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "sdd-design": {
-      "mode": "subagent",
-      "description": "Creates SDD technical design and architecture approach",
-      "hidden": true,
-      "prompt": "{skill:sdd-design}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
-    "sdd-archive": {
-      "mode": "subagent",
-      "description": "Archives completed SDD changes by syncing delta specs",
-      "hidden": true,
-      "prompt": "{skill:sdd-archive}",
-      "permission": {
-        "read": "allow",
-        "write": "allow",
-        "edit": "deny",
-        "bash": "deny"
-      }
-    }
-  },
-  "mcpServers": {
-    "helix-integration": {
-      "command": "uv",
-      "args": ["run", "--directory", "/ABSOLUTE/PATH/TO/mcp-tools", "runner.py"]
     }
   }
 }

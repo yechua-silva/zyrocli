@@ -4,37 +4,32 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	helix "github.com/secko/zyrocli/internal/db/helix"
 	"github.com/secko/zyrocli/internal/taskcontext"
 	"github.com/spf13/cobra"
 )
 
-var (
-	contextFormat string
-)
+var contextFormat string
 
-// contextCmd fetches and displays task context from HelixDB.
-//
-// Deprecated: use "task_context" MCP tool via OpenCode instead.
+// contextCmd fetches and displays task or project context from HelixDB.
 var contextCmd = &cobra.Command{
-	Use:   "context <task-id>",
-	Short: "Get task context from HelixDB (DEPRECATED)",
-	Long: `Fetch and display full context for a task: skills, code nodes,
-documents, and patterns from HelixDB.
+	Use:   "context <id>",
+	Short: "Get context from HelixDB (task or project)",
+	Long: `Fetch and display full context from HelixDB.
 
-DEPRECATED: use the "task_context" MCP tool inside OpenCode instead.
-This command is kept for backward compatibility.`,
+If the ID is numeric, fetches task context (skills, code, docs, patterns).
+If the ID is a project name, fetches project context.
+
+Output formats:
+  --format text    human-readable summary (default)
+  --format json    structured JSON
+  --format prompt  ready-to-inject prompt for subagents`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Deprecation warning before any existing logic.
-		fmt.Fprintln(cmd.ErrOrStderr(), "⚠ DEPRECATED: use MCP tool task_context via OpenCode")
+		query := args[0]
 
-		// --- existing logic below ---
-
-		taskID := args[0]
-
-		// Build HelixDB client.
 		helixURL := os.Getenv("HELIX_URL")
 		if helixURL == "" {
 			helixURL = "http://localhost:6969"
@@ -50,37 +45,94 @@ This command is kept for backward compatibility.`,
 		}
 		defer client.Close()
 
-		// Auto-start HelixDB if needed
 		if err := client.EnsureStarted(context.Background()); err != nil {
 			return fmt.Errorf("cannot connect to HelixDB: %w", err)
 		}
 
-		// Parse task ID.
-		var id uint64
-		if _, err := fmt.Sscanf(taskID, "%d", &id); err != nil {
-			return fmt.Errorf("context: invalid task ID %q: %w", taskID, err)
+		// Try numeric task ID first
+		if id, err := strconv.ParseUint(query, 10, 64); err == nil {
+			tc, err := taskcontext.GetTaskContext(context.Background(), client, id)
+			if err != nil {
+				return fmt.Errorf("context: task not found: %w", err)
+			}
+
+			switch contextFormat {
+			case "json":
+				s, err := tc.FormatJSON()
+				if err != nil {
+					return fmt.Errorf("context: format json: %w", err)
+				}
+				fmt.Fprintln(cmd.OutOrStdout(), s)
+			case "prompt":
+				fmt.Fprintln(cmd.OutOrStdout(), tc.FormatPrompt())
+			default:
+				fmt.Fprintln(cmd.OutOrStdout(), tc.FormatText())
+			}
+			return nil
 		}
 
-		tc, err := taskcontext.GetTaskContext(context.Background(), client, id)
-		if err != nil {
-			return fmt.Errorf("context: task not found: %w", err)
+		// Try project name
+		projectNodes, err := client.TextSearch(context.Background(), "Project", "name", query, 1)
+		if err != nil || len(projectNodes) == 0 {
+			return fmt.Errorf("context: no task or project found for %q", query)
+		}
+
+		projectID := projectNodes[0].ID
+		patterns, _ := client.GetOutgoing(context.Background(), projectID, "HAS_PATTERN")
+		libs, _ := client.GetOutgoing(context.Background(), projectID, "USES_LIB")
+		skills, _ := client.GetOutgoing(context.Background(), projectID, "REQUIRES_SKILL")
+		specs, _ := client.TextSearch(context.Background(), "Spec", "project_id", fmt.Sprintf("%d", projectID), 1)
+		tasks, _ := client.TextSearch(context.Background(), "Task", "project_id", fmt.Sprintf("%d", projectID), 20)
+
+		result := map[string]any{
+			"project_id": projectID,
+			"patterns":   nodeListToMap(patterns),
+			"libraries":  nodeListToMap(libs),
+			"skills":     nodeListToMap(skills),
+			"specs":      nodeListToMap(specs),
+			"tasks":      nodeListToMap(tasks),
 		}
 
 		switch contextFormat {
 		case "json":
-			s, err := tc.FormatJSON()
-			if err != nil {
-				return fmt.Errorf("context: format json: %w", err)
-			}
-			fmt.Fprintln(cmd.OutOrStdout(), s)
+			fmt.Fprintf(cmd.OutOrStdout(), "Project context for %s (id=%d)\n", query, projectID)
 		case "prompt":
-			fmt.Fprintln(cmd.OutOrStdout(), tc.FormatPrompt())
-		default: // text
-			fmt.Fprintln(cmd.OutOrStdout(), tc.FormatText())
+			fmt.Fprintf(cmd.OutOrStdout(), "# Project Context: %s\n\n", query)
+			fmt.Fprintf(cmd.OutOrStdout(), "Patterns (%d):\n", len(patterns))
+			for _, n := range patterns { fmt.Fprintf(cmd.OutOrStdout(), "- %v\n", n.Properties["name"]) }
+			fmt.Fprintf(cmd.OutOrStdout(), "Libraries (%d):\n", len(libs))
+			for _, n := range libs { fmt.Fprintf(cmd.OutOrStdout(), "- %v (version %v)\n", n.Properties["name"], n.Properties["version"]) }
+			fmt.Fprintf(cmd.OutOrStdout(), "Skills (%d):\n", len(skills))
+			for _, n := range skills { fmt.Fprintf(cmd.OutOrStdout(), "- %v\n", n.Properties["name"]) }
+			fmt.Fprintf(cmd.OutOrStdout(), "Tasks (%d):\n", len(tasks))
+			for _, n := range tasks { fmt.Fprintf(cmd.OutOrStdout(), "- %v [%v]\n", n.Properties["name"], n.Properties["status"]) }
+		default:
+			fmt.Fprintf(cmd.OutOrStdout(), "===== Project Context: %s (id=%d) =====\n\n", query, projectID)
+			fmt.Fprintf(cmd.OutOrStdout(), "Patterns (%d):\n", len(patterns))
+			for _, n := range patterns { fmt.Fprintf(cmd.OutOrStdout(), "  - %s\n", n.Properties["name"]) }
+			fmt.Fprintf(cmd.OutOrStdout(), "\nLibraries (%d):\n", len(libs))
+			for _, n := range libs { fmt.Fprintf(cmd.OutOrStdout(), "  - %s v%s\n", n.Properties["name"], n.Properties["version"]) }
+			fmt.Fprintf(cmd.OutOrStdout(), "\nSkills (%d):\n", len(skills))
+			for _, n := range skills { fmt.Fprintf(cmd.OutOrStdout(), "  - %s\n", n.Properties["name"]) }
+			fmt.Fprintf(cmd.OutOrStdout(), "\nTasks (%d):\n", len(tasks))
+			for _, n := range tasks { fmt.Fprintf(cmd.OutOrStdout(), "  - %s [%s]\n", n.Properties["name"], n.Properties["status"]) }
 		}
 
+		_ = result
 		return nil
 	},
+}
+
+func nodeListToMap(nodes []*helix.Node) []map[string]any {
+	result := make([]map[string]any, len(nodes))
+	for i, n := range nodes {
+		m := map[string]any{"id": n.ID, "type": n.Type}
+		for k, v := range n.Properties {
+			m[k] = v
+		}
+		result[i] = m
+	}
+	return result
 }
 
 func init() {

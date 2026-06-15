@@ -169,5 +169,18 @@ func TestRunPhaseFlagValid(t *testing.T) {
 	}
 }
 
+func TestRunPhaseF0Valid(t *testing.T) {
+	handoffDir := writeHandoffInTemp(t, runTestHandoffYAML)
 
-
+	t.Setenv("ZYRO_TEST", "1")
+	
+	output, err := runCmdDirect(t, handoffDir, func() {
+		runPhase = "F0"
+	})
+	if err != nil {
+		t.Logf("F0 phase error (expected in test): %v", err)
+	}
+	if !strings.Contains(output, "Fase 0") && !strings.Contains(output, "F0") {
+		t.Errorf("expected F0 reference, got: %s", output)
+	}
+}

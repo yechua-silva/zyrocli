@@ -257,17 +257,6 @@ func TestValidateMissingFields(t *testing.T) {
 			expected: "project.name",
 		},
 		{
-			name: "missing project.language",
-			payload: &Payload{
-				Version: "2.0",
-				Source:  Source{System: "holdin-admin"},
-				Project: Project{Name: "Test", Language: ""},
-				Governance: Governance{Mode: "structured"},
-				Testing:    Testing{Strategy: "unit"},
-			},
-			expected: "project.language",
-		},
-		{
 			name: "missing governance.mode",
 			payload: &Payload{
 				Version: "2.0",
@@ -330,8 +319,8 @@ func TestValidateMultiError(t *testing.T) {
 	}
 
 	errStr := err.Error()
-	// We should have 6 violations: version, source.system, project.name, project.language, governance.mode, testing.strategy
-	for _, field := range []string{"version", "source.system", "project.name", "project.language", "governance.mode", "testing.strategy"} {
+	// We should have 5 violations: version, source.system, project.name, governance.mode, testing.strategy (language is now optional)
+	for _, field := range []string{"version", "source.system", "project.name", "governance.mode", "testing.strategy"} {
 		if !strings.Contains(errStr, field) {
 			t.Errorf("expected error to contain %q, got: %v", field, errStr)
 		}

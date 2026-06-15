@@ -1,0 +1,32 @@
+version: "2.0"
+source:
+  system: "holdin-admin"
+project:
+  name: "todo-frontend"
+  language: ""
+  repository: "github.com/usuario/todo-frontend"
+validated_idea:
+  problem: "Los usuarios necesitan una interfaz visual moderna para gestionar tareas diarias"
+  solution: "Aplicación frontend SPA con persistencia local y diseño responsive"
+  rationale: "Que Fase 0 investigue y recomiende el mejor stack frontend moderno"
+user_story:
+  story: "Como usuario quiero una interfaz web bonita para gestionar mis tareas"
+  acceptance: |
+    - UI responsive + dark mode
+    - CRUD de tareas con localStorage
+    - Sin backend
+mvp:
+  scope: "SPA frontend, 4 CRUD, diseño responsive + dark mode, localStorage"
+  features:
+    - "Campo + botón para agregar tarea"
+    - "Lista con checkbox para completar"
+    - "Botón eliminar"
+    - "Filtros: todas/pendientes/completadas"
+    - "Persistencia localStorage"
+    - "Modo oscuro"
+    - "Diseño responsive"
+governance:
+  mode: "always_approve"
+  strict_tdd: false
+testing:
+  strategy: "visual"

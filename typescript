@@ -1,0 +1,63 @@
+Script iniciado en 2026-06-15 02:36:21-04:00 [TERM="xterm-256color" TTY="/dev/pts/1" COLUMNS="68" LINES="29"]
+]0;secko@pc-yechua:~/Projects/ZyroAgentCLI[?2004h
+[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m c[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [Cd[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [C[C scripts/
+[?2004l]0;secko@pc-yechua:~/Projects/ZyroAgentCLI/scripts[?2004h
+[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m l[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m [Cs[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m [C[C
+[?2004l[4mPermissions[0m [4mSize[0m [4mUser[0m  [4mDate Modified[0m [4mName[0m
+.[1;33mr[31mw[90m-[0m[33mr[1;90m--[0m[33mr[1;90m--[0m  [1;32m2,9k[0m [1;33msecko[0m [34m15 jun 02:32[0m   install.sh
+]0;secko@pc-yechua:~/Projects/ZyroAgentCLI/scripts[?2004h
+[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m i[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m [Cn[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m [C[Cst
+[01;32m...all[0m[K                [01;36m...allkernel[0m[K@         [01;32m...modsh[0m[K
+[01;32m...all-info[0m[K           [01;32m...all-printerdriver[0m[K  
+
+[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m❯[0m insttal[K[K[K[Ktall.sh
+[?2004lbash: command not found: install.sh
+]0;secko@pc-yechua:~/Projects/ZyroAgentCLI/scripts[?2004h
+[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m✗[0m [1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m✗[0m s[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m✗[0m [Co[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m✗[0m [C[Curve install.sh 
+[?2004lbash: command not found: sourve
+]0;secko@pc-yechua:~/Projects/ZyroAgentCLI/scripts[?2004h
+[1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m✗[0m [1;36mZyroAgentCLI/scripts[0m [3;36mmain[0m [36m ? [1m✗[0m sourve install.sh [1P[1@c
+[?2004l🚀 Installing ZyroCLI...
+  1. Building binary...
+     ✅ Binary installed: /home/secko/.local/bin/zyrocli
+  2. ✅ HelixDB already installed
+  3. Installing ZyroCLI ecosystem...
+  Extracting MCP tools...
+    ✓ MCP tools: /home/secko/.config/zyrocli/mcp-tools
+  Installing skills...
+    ✓ Skills installed: 11
+  Writing OpenCode config...
+    ✓ Config: /home/secko/.config/opencode/opencode.jsonc
+    ✓ HelixDB reachable
+
+✓ ZyroCLI ecosystem installed successfully!
+
+  Next steps:
+    1. zyrocli init <handoff.yaml>     — Create a new project
+    2. OpenCode will open. Type:        "iniciemos"
+    3. Fase 0 runs automatically:
+       - phase0-patterns   (patterns)
+       - phase0-libraries  (libraries)
+       - phase0-skills     (skills + validation)
+     ✅ Ecosystem configured
+
+  ─────────────────────────────────────────────
+  ✅ ZyroCLI installed successfully!
+  ─────────────────────────────────────────────
+
+  Binary:  /home/secko/.local/bin/zyrocli
+  Config:  ~/.config/opencode/opencode.jsonc
+  Skills:  ~/.config/opencode/skills/
+  MCP:     ~/.config/zyrocli/mcp-tools/
+
+  Quick start:
+    zyrocli install              # (re)configure ecosystem
+    zyrocli init handoff.yaml    # Create a new project
+
+]0;secko@pc-yechua:~/Projects/ZyroAgentCLI[?2004h
+[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m z[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [Cy[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [C[Crocl[K[K[K[K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [C[C[K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [C[K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [K[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m c[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [Cd[1;36mZyroAgentCLI[0m [3;36mmain[0m [36m ? [1m❯[0m [C[C ..
+[?2004l]0;secko@pc-yechua:~/Projects[?2004h
+[1;36m~/Projects[0m [1;36m❯[0m [1;36m~/Projects[0m [1;36m❯[0m cd ..
+[?2004l]0;secko@pc-yechua:~[?2004h
+[1;36m~[0m [1;36m❯[0m [1;36m~[0m [1;36m❯[0m cd p[?2004l
+Script terminado en 2026-06-15 02:58:01-04:00 [CÓDIGO_SALIDA_ORDEN="1"]

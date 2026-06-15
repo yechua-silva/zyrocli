@@ -1,36 +1,40 @@
-# Binaries
-/bin/
-*.exe
-*.dll
-*.so
-*.dylib
+# Binarios
+zyrocli
+zyrocli.exe
+zyrocli-*
 
-# Test binary, built with `go test -c`
-*.test
+# Dependencias
+node_modules/
+vendor/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
 
-# Output of the go coverage tool
-*.out
-*.prof
+# Build
+dist/
+build/
 
-# IDE files
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*~
+*.swn
 
-# Environment files
-.env
-.env.local
-
-# Dependency directories
-vendor/
-
-# OS artifacts
+# OS
 .DS_Store
 Thumbs.db
 
-# Build artifacts
-/zyrocli
-/tmp/
-__pycache__/
+# Proyectos generados por zyrocli init (no subir proyectos de prueba)
+/test-scaffold/
+/todo-frontend/
+todo-app/
+
+# Config local
+.zyro/

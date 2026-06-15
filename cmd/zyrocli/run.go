@@ -16,13 +16,13 @@ var runPhase string
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Execute SDD pipeline (F1→F2→F3→F4)",
-	Long: `Execute the 4-phase SDD pipeline sequentially with human-validation
-approval gates after each phase. All phases require explicit approval before
-proceeding — there is no automatic mode.
+	Short: "Execute SDD pipeline (F0→F1→F2→F3→F4)",
+	Long: `Execute the 5-phase SDD pipeline (F0→F1→F2→F3→F4) sequentially
+with human-validation approval gates after each phase. All phases require
+explicit approval before proceeding — there is no automatic mode.
 
 Flags:
-  --phase F2   Run a single phase only (F1, F2, F3, or F4)`,
+  --phase F0   Run a single phase only (F0, F1, F2, F3, or F4)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check if project is already initialized
 		projectDir := "." // current directory, or read from handoff.yaml project.name
@@ -60,8 +60,9 @@ Flags:
 			return fmt.Errorf("run: %w", err)
 		}
 
-		// Build phase runners in order
+		// Build phase runners in order (F0→F4)
 		runners := []scheduler.PhaseRunner{
+			&scheduler.F0Runner{},
 			&scheduler.F1Runner{},
 			&scheduler.F2Runner{},
 			&scheduler.F3Runner{},
@@ -84,7 +85,7 @@ Flags:
 				}
 			}
 			if !valid {
-				return fmt.Errorf("run: invalid phase %q, must be one of: F1, F2, F3, F4", runPhase)
+				return fmt.Errorf("run: invalid phase %q, must be one of: F0, F1, F2, F3, F4", runPhase)
 			}
 
 			cmd.Printf("▶ Running phase %s...\n", phase)
@@ -94,7 +95,7 @@ Flags:
 			}
 			results = append(results, result)
 		} else {
-			cmd.Println("▶ Starting SDD pipeline (F1→F2→F3→F4)")
+			cmd.Println("▶ Iniciando el proceso de desarrollo (F0 → F1 → F2 → F3 → F4)")
 
 			var err error
 			results, err = s.Run(ctx)
@@ -121,5 +122,5 @@ Flags:
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringVarP(&runPhase, "phase", "p", "", "run a single phase only (F1, F2, F3, F4)")
+	runCmd.Flags().StringVarP(&runPhase, "phase", "p", "", "run a single phase only (F0, F1, F2, F3, F4)")
 }

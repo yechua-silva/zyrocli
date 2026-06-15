@@ -21,10 +21,6 @@ func Validate(p *Payload) error {
 		errs = append(errs, errors.New("project.name: required field is missing"))
 	}
 
-	if p.Project.Language == "" {
-		errs = append(errs, errors.New("project.language: required field is missing"))
-	}
-
 	if p.Governance.Mode == "" {
 		errs = append(errs, errors.New("governance.mode: required field is missing"))
 	}
