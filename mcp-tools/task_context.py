@@ -38,43 +38,15 @@ async def task_context_tool(id: int) -> str:
     }
 
     try:
-        # Traverse outgoing edges for related resources
-        outgoing_edges = await client.get_outgoing(id, "has_skill")
-        for edge in outgoing_edges:
-            target = edge.get("target", {})
-            if target and isinstance(target, dict):
-                sections["skills"].append(target)
-
-        code_edges = await client.get_outgoing(id, "has_code")
-        for edge in code_edges:
-            target = edge.get("target", {})
-            if target and isinstance(target, dict):
-                sections["code"].append(target)
-
-        doc_edges = await client.get_outgoing(id, "has_doc")
-        for edge in doc_edges:
-            target = edge.get("target", {})
-            if target and isinstance(target, dict):
-                sections["docs"].append(target)
-
-        pattern_edges = await client.get_outgoing(id, "has_pattern")
-        for edge in pattern_edges:
-            target = edge.get("target", {})
-            if target and isinstance(target, dict):
-                sections["patterns"].append(target)
+        # Traverse outgoing edges for related resources (returns nodes directly)
+        sections["skills"] = await client.get_outgoing(id, "has_skill")
+        sections["code"] = await client.get_outgoing(id, "has_code")
+        sections["docs"] = await client.get_outgoing(id, "has_doc")
+        sections["patterns"] = await client.get_outgoing(id, "has_pattern")
 
         # Traverse incoming / outgoing for dependents / dependencies
-        inbound = await client.get_incoming(id, "depends_on")
-        for edge in inbound:
-            source = edge.get("source", {})
-            if source and isinstance(source, dict):
-                sections["dependents"].append(source)
-
-        outbound = await client.get_outgoing(id, "depends_on")
-        for edge in outbound:
-            target = edge.get("target", {})
-            if target and isinstance(target, dict):
-                sections["dependencies"].append(target)
+        sections["dependents"] = await client.get_incoming(id, "depends_on")
+        sections["dependencies"] = await client.get_outgoing(id, "depends_on")
 
     except Exception as exc:
         return json.dumps(

@@ -24,7 +24,7 @@ func TestErrorMapping(t *testing.T) {
 		{
 			name:       "CreateNode success",
 			statusCode: http.StatusOK,
-			respBody:   `{"results":{"n":[{"id":1,"type":"Skill","properties":{"name":"go"}}]}}`,
+			respBody:   `{"n":{"properties":[{"id":1}]}}`,
 			method: func(c *Client) error {
 				_, err := c.CreateNode(context.Background(), "Skill", map[string]any{"name": "go"})
 				return err
@@ -42,9 +42,9 @@ func TestErrorMapping(t *testing.T) {
 			wantErr: ErrNotFound,
 		},
 		{
-			name:       "GetNode not found (error code)",
+			name:       "GetNode not found (empty ids)",
 			statusCode: http.StatusOK,
-			respBody:   `{"error":{"code":"NOT_FOUND","message":"node not found"}}`,
+			respBody:   `{"n":{"ids":[]}}`,
 			method: func(c *Client) error {
 				_, err := c.GetNode(context.Background(), "Skill", 999)
 				return err
@@ -54,7 +54,7 @@ func TestErrorMapping(t *testing.T) {
 		{
 			name:       "TextSearch success",
 			statusCode: http.StatusOK,
-			respBody:   `{"results":{"n":[{"id":10,"type":"Skill","properties":{"name":"testing"}}]}}`,
+			respBody:   `{"n":{"ids":[10]}}`,
 			method: func(c *Client) error {
 				_, err := c.TextSearch(context.Background(), "Skill", "name", "testing", 10)
 				return err
@@ -137,18 +137,20 @@ func TestConnectionFailed(t *testing.T) {
 
 func TestCreateAndGetNode(t *testing.T) {
 	var capturedBody map[string]any
+	callCount := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewDecoder(r.Body).Decode(&capturedBody); err != nil {
 			t.Fatal(err)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
-			"results": map[string]any{
-				"n": []map[string]any{
-					{"id": 42, "type": "Skill", "properties": map[string]any{"name": "go"}},
-				},
-			},
-		})
+		callCount++
+		if callCount == 1 {
+			// CreateNode response: AddN + Project returns properties with id
+			w.Write([]byte(`{"n":{"properties":[{"id":42}]}}`))
+		} else {
+			// GetNode response: NWhere returns ids
+			w.Write([]byte(`{"n":{"ids":[42]}}`))
+		}
 	}))
 	defer ts.Close()
 
@@ -168,22 +170,78 @@ func TestCreateAndGetNode(t *testing.T) {
 	if node.Type != "Skill" {
 		t.Fatalf("type = %q, want Skill", node.Type)
 	}
-	if node.Properties["name"] != "go" {
-		t.Fatalf("name = %v, want go", node.Properties["name"])
+
+	// Verify request body uses v3 envelope
+	reqType, ok := capturedBody["request_type"].(string)
+	if !ok || reqType != "write" {
+		t.Fatalf("request_type = %v, want write", capturedBody["request_type"])
+	}
+	queries, ok := capturedBody["query"].(map[string]any)["queries"].([]any)
+	if !ok || len(queries) != 1 {
+		t.Fatalf("expected 1 query, got %v", queries)
+	}
+	q := queries[0].(map[string]any)["Query"].(map[string]any)
+	if q["name"] != "n" {
+		t.Fatalf("query name = %v, want n", q["name"])
+	}
+	steps := q["steps"].([]any)
+	if len(steps) != 2 {
+		t.Fatalf("expected 2 steps, got %d", len(steps))
 	}
 
-	// Verify request body
-	batch, ok := capturedBody["batch"].([]any)
-	if !ok || len(batch) != 1 {
-		t.Fatalf("expected batch with 1 op, got %v", capturedBody["batch"])
+	// Get
+	node2, err := client.GetNode(context.Background(), "Skill", 42)
+	if err != nil {
+		t.Fatal(err)
 	}
-	op := batch[0].(map[string]any)
-	if op["var"] != "n" {
-		t.Fatalf("var = %v, want n", op["var"])
+	if node2.ID != 42 {
+		t.Fatalf("id = %d, want 42", node2.ID)
+	}
+	if node2.Type != "Skill" {
+		t.Fatalf("type = %q, want Skill", node2.Type)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// UpdateNode
+// ---------------------------------------------------------------------------
+
+func TestUpdateNode(t *testing.T) {
+	var capturedBody map[string]any
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&capturedBody); err != nil {
+			t.Fatal(err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"n":{"ids":[42]}}`))
+	}))
+	defer ts.Close()
+
+	client, err := NewClient(context.Background(), WithBaseURL(ts.URL))
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	// Verify x-project-id header
-	// (we can't easily capture headers in this simple handler, but we trust doQuery)
+	node, err := client.UpdateNode(context.Background(), "Skill", 42, map[string]any{"name": "updated"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if node.ID != 42 {
+		t.Fatalf("id = %d, want 42", node.ID)
+	}
+
+	// Verify request uses SetProperty steps
+	steps := capturedBody["query"].(map[string]any)["queries"].([]any)[0].(map[string]any)["Query"].(map[string]any)["steps"].([]any)
+	if len(steps) != 2 {
+		t.Fatalf("expected 2 steps (NWhere + SetProperty), got %d", len(steps))
+	}
+	setStep, ok := steps[1].(map[string]any)
+	if !ok {
+		t.Fatalf("step[1] should be a map, got %T", steps[1])
+	}
+	if _, ok := setStep["SetProperty"]; !ok {
+		t.Fatalf("expected SetProperty step, got %v", setStep)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -193,14 +251,7 @@ func TestCreateAndGetNode(t *testing.T) {
 func TestGetOutgoing(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
-			"results": map[string]any{
-				"n": []map[string]any{
-					{"id": 1, "type": "Skill", "properties": map[string]any{"name": "golang"}},
-					{"id": 2, "type": "Skill", "properties": map[string]any{"name": "testing"}},
-				},
-			},
-		})
+		w.Write([]byte(`{"n":{"ids":[1,2]}}`))
 	}))
 	defer ts.Close()
 
@@ -216,21 +267,18 @@ func TestGetOutgoing(t *testing.T) {
 	if len(nodes) != 2 {
 		t.Fatalf("got %d nodes, want 2", len(nodes))
 	}
-	if nodes[0].Type != "Skill" {
-		t.Fatalf("type = %q, want Skill", nodes[0].Type)
+	if nodes[0].ID != 1 {
+		t.Fatalf("id = %d, want 1", nodes[0].ID)
+	}
+	if nodes[1].ID != 2 {
+		t.Fatalf("id = %d, want 2", nodes[1].ID)
 	}
 }
 
 func TestGetIncoming(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
-			"results": map[string]any{
-				"n": []map[string]any{
-					{"id": 10, "type": "Project", "properties": map[string]any{"name": "zyrocli"}},
-				},
-			},
-		})
+		w.Write([]byte(`{"n":{"ids":[10]}}`))
 	}))
 	defer ts.Close()
 
@@ -246,8 +294,8 @@ func TestGetIncoming(t *testing.T) {
 	if len(nodes) != 1 {
 		t.Fatalf("got %d nodes, want 1", len(nodes))
 	}
-	if nodes[0].Type != "Project" {
-		t.Fatalf("type = %q, want Project", nodes[0].Type)
+	if nodes[0].ID != 10 {
+		t.Fatalf("id = %d, want 10", nodes[0].ID)
 	}
 }
 
@@ -258,7 +306,7 @@ func TestGetIncoming(t *testing.T) {
 func TestDeleteNode(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"results":{}}`))
+		w.Write([]byte(`{}`))
 	}))
 	defer ts.Close()
 
@@ -273,15 +321,13 @@ func TestDeleteNode(t *testing.T) {
 }
 
 func TestCreateEdge(t *testing.T) {
+	var capturedBody map[string]any
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&capturedBody); err != nil {
+			t.Fatal(err)
+		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
-			"results": map[string]any{
-				"e": []map[string]any{
-					{"id": 100, "source_id": 1, "target_id": 2, "relation": "REQUIRES_SKILL", "properties": map[string]any{}},
-				},
-			},
-		})
+		w.Write([]byte(`{"e":{"edges":[{"from":1,"to":2,"context":1,"edge_id":100}]}}`))
 	}))
 	defer ts.Close()
 
@@ -300,12 +346,28 @@ func TestCreateEdge(t *testing.T) {
 	if edge.Relation != "REQUIRES_SKILL" {
 		t.Fatalf("relation = %q, want REQUIRES_SKILL", edge.Relation)
 	}
+	if edge.SourceID != 1 {
+		t.Fatalf("source_id = %d, want 1", edge.SourceID)
+	}
+	if edge.TargetID != 2 {
+		t.Fatalf("target_id = %d, want 2", edge.TargetID)
+	}
+
+	// Verify the request has 3 queries (src, target, e)
+	queries := capturedBody["query"].(map[string]any)["queries"].([]any)
+	if len(queries) != 3 {
+		t.Fatalf("expected 3 queries, got %d", len(queries))
+	}
 }
 
 func TestDeleteEdge(t *testing.T) {
+	var capturedBody map[string]any
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&capturedBody); err != nil {
+			t.Fatal(err)
+		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"results":{}}`))
+		w.Write([]byte(`{}`))
 	}))
 	defer ts.Close()
 
@@ -316,5 +378,15 @@ func TestDeleteEdge(t *testing.T) {
 
 	if err := client.DeleteEdge(context.Background(), 100); err != nil {
 		t.Fatal(err)
+	}
+
+	// Verify the request uses DropEdgeById
+	steps := capturedBody["query"].(map[string]any)["queries"].([]any)[0].(map[string]any)["Query"].(map[string]any)["steps"].([]any)
+	if len(steps) != 1 {
+		t.Fatalf("expected 1 step, got %d", len(steps))
+	}
+	step := steps[0].(map[string]any)
+	if _, ok := step["DropEdgeById"]; !ok {
+		t.Fatalf("expected DropEdgeById step, got %v", step)
 	}
 }
