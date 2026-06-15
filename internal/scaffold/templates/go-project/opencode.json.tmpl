@@ -126,35 +126,10 @@
       }
     }
   },
-  "mcp_servers": {
-    "task_context": {
-      "description": "Fetch task context from HelixDB — skills, code nodes, documents, patterns",
-      "endpoint": "http://localhost:6969"
-    },
-    "search_code": {
-      "description": "Search codebase via HelixDB vector/text index",
-      "endpoint": "http://localhost:6969"
-    },
-    "search_skills": {
-      "description": "Search installed agent skills by trigger and keyword",
-      "endpoint": "http://localhost:6969"
-    }
-  },
-  "mcp_tools": {
-    "task_context": {
-      "type": "helix",
-      "description": "Fetch task context: skills, code nodes, documents, and patterns from HelixDB",
-      "endpoint": "http://localhost:6969"
-    },
-    "search_code": {
-      "type": "helix",
-      "description": "Vector and text search over indexed code in HelixDB",
-      "endpoint": "http://localhost:6969"
-    },
-    "search_skills": {
-      "type": "helix",
-      "description": "Search skill registry by trigger keywords",
-      "endpoint": "http://localhost:6969"
+  "mcpServers": {
+    "helix-integration": {
+      "command": "uv",
+      "args": ["run", "--directory", "/ABSOLUTE/PATH/TO/mcp-tools", "runner.py"]
     }
   }
 }
