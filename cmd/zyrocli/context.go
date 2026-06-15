@@ -50,6 +50,11 @@ This command is kept for backward compatibility.`,
 		}
 		defer client.Close()
 
+		// Auto-start HelixDB if needed
+		if err := client.EnsureStarted(context.Background()); err != nil {
+			return fmt.Errorf("cannot connect to HelixDB: %w", err)
+		}
+
 		// Parse task ID.
 		var id uint64
 		if _, err := fmt.Sscanf(taskID, "%d", &id); err != nil {

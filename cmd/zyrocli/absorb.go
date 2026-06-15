@@ -64,6 +64,11 @@ Connects to HelixDB at localhost:6969 (override via HELIX_URL env var).`,
 		}
 		defer client.Close()
 
+		// Auto-start HelixDB if needed
+		if err := client.EnsureStarted(context.Background()); err != nil {
+			return fmt.Errorf("cannot connect to HelixDB: %w", err)
+		}
+
 		// Walk the directory tree looking for .md files.
 		var ingested int
 		var errors []string

@@ -1,0 +1,42 @@
+version: "2.0"
+source:
+  system: "holdin-admin"
+  url: "https://holdin.example.com/ideas/42"
+project:
+  name: "mi-app"
+  language: "go"
+  repository: "github.com/usuario/mi-app"
+validated_idea:
+  problem: "Los desarrolladores pierden tiempo configurando herramientas manualmente"
+  solution: "Un CLI que automatiza la configuración del entorno de desarrollo"
+  rationale: "Similar a gentle-ai pero para el ecosistema Zyro"
+user_story:
+  story: "Como desarrollador, quiero ejecutar un solo comando para tener todo configurado"
+  acceptance: "El comando init crea el proyecto, instala dependencias y abre OpenCode"
+mvp:
+  scope: "Comando init funcional con scaffold básico"
+  features:
+    - "Scaffold de proyecto Go"
+    - "Instalación de HelixDB"
+    - "Registro de MCP tools"
+    - "Apertura de OpenCode"
+governance:
+  mode: "always_approve"
+  module: "github.com/usuario/mi-app"
+  go_version: "1.22"
+  strict_tdd: true
+  approvals:
+    - name: "F1-Plan"
+      approved_by: "dev"
+    - name: "F2-Spec"
+      approved_by: "dev"
+testing:
+  strategy: "unit"
+  golden: true
+  mock: "httptest"
+limits:
+  max_tasks: 10
+  max_lines: 800
+  max_loops: 3
+  phase_timeout: "10m"
+  chained_prs: true

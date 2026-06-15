@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os/exec"
 	"time"
 )
 
@@ -52,6 +53,48 @@ func NewClient(ctx context.Context, opts ...Option) (*Client, error) {
 // Close releases client resources.
 func (c *Client) Close() error {
 	return nil
+}
+
+// EnsureStarted checks if HelixDB is reachable. If not, it tries to start it
+// via `helix start dev --disk`. Returns nil when HelixDB is ready.
+func (c *Client) EnsureStarted(ctx context.Context) error {
+	// Quick health check
+	if err := c.ping(ctx); err == nil {
+		return nil // already running
+	}
+
+	// Try to start it
+	cmd := exec.CommandContext(ctx, "helix", "start", "dev", "--disk")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("helix: auto-start failed: %w\n%s", err, string(out))
+	}
+
+	// Wait for it to be ready (up to 15s)
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		if err := c.ping(ctx); err == nil {
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return fmt.Errorf("helix: auto-started but not ready after 15s")
+}
+
+// ping checks if HelixDB is reachable.
+func (c *Client) ping(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/health", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+	return fmt.Errorf("helix: health check returned %d", resp.StatusCode)
 }
 
 // ---------------------------------------------------------------------------

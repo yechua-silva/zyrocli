@@ -1,0 +1,54 @@
+version: "2.0"
+source:
+  system: "holdin-admin"
+  url: ""
+project:
+  name: "todo-app"
+  language: "go"
+  repository: "github.com/usuario/todo-app"
+validated_idea:
+  problem: "Los usuarios necesitan una aplicación simple para gestionar tareas diarias con operaciones CRUD básicas y persistencia"
+  solution: "API REST en Go con soporte para crear, listar, completar y eliminar tareas, más un CLI interactivo"
+  rationale: "Go es ideal para CLIs y APIs rápidas. Sin framework pesado, solo stdlib + cobra para el CLI"
+user_story:
+  story: "Como usuario, quiero poder agregar, ver, completar y eliminar tareas desde la terminal"
+  acceptance: |
+    - `todo add "comprar leche"` crea una tarea pendiente
+    - `todo list` muestra todas las tareas con su estado
+    - `todo done 1` marca la tarea #1 como completada
+    - `todo rm 1` elimina la tarea #1
+    - Las tareas persisten entre ejecuciones (archivo JSON o SQLite)
+mvp:
+  scope: "CLI funcional con persistencia JSON y 4 comandos (add, list, done, rm)"
+  features:
+    - "Comando add con descripción de tarea"
+    - "Comando list con estado (pendiente/completada)"
+    - "Comando done para marcar como completada"
+    - "Comando rm para eliminar"
+    - "Persistencia en ~/.todo/tasks.json"
+    - "Test unitarios para cada comando"
+    - "Código 100% en Go, cero dependencias externas"
+governance:
+  mode: "always_approve"
+  module: "github.com/usuario/todo-app"
+  go_version: "1.22"
+  strict_tdd: true
+  approvals:
+    - name: "F1-Plan"
+      approved_by: "dev"
+    - name: "F2-Spec"
+      approved_by: "dev"
+    - name: "F3-Impl"
+      approved_by: "dev"
+    - name: "F4-Cierre"
+      approved_by: "dev"
+testing:
+  strategy: "unit"
+  golden: true
+  mock: "httptest"
+limits:
+  max_tasks: 8
+  max_lines: 600
+  max_loops: 3
+  phase_timeout: "10m"
+  chained_prs: false

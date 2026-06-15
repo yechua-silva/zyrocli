@@ -26,14 +26,14 @@ Chain strategy: stacked-to-main
 
 ## Phase A: Cleanup — Delete Old Go MCP Server
 
-- [ ] A1. Delete `internal/mcp/server.go` (102 lines)
-- [ ] A2. Delete `internal/mcp/handlers.go` (177 lines)
-- [ ] A3. Delete `internal/mcp/types.go` (46 lines)
-- [ ] A4. Delete `internal/mcp/errors.go` (18 lines)
-- [ ] A5. Delete `internal/mcp/server_test.go` (371 lines)
-- [ ] A6. Delete `cmd/zyrocli/mcp.go` (41 lines)
-- [ ] A7. Verify build: `go build ./...` compiles without errors
-- [ ] A8. Commit: `chore: delete internal/mcp/ Go MCP server (superseded by Python MCP)`
+- [x] A1. Delete `internal/mcp/server.go` (102 lines)
+- [x] A2. Delete `internal/mcp/handlers.go` (177 lines)
+- [x] A3. Delete `internal/mcp/types.go` (46 lines)
+- [x] A4. Delete `internal/mcp/errors.go` (18 lines)
+- [x] A5. Delete `internal/mcp/server_test.go` (371 lines)
+- [x] A6. Delete `cmd/zyrocli/mcp.go` (41 lines)
+- [x] A7. Verify build: `go build ./...` compiles without errors
+- [x] A8. Commit: `chore: delete internal/mcp/ Go MCP server (superseded by Python MCP)`
 
 ## Phase B: Go SDK Implementation
 
@@ -60,7 +60,7 @@ Chain strategy: stacked-to-main
 
 ## Phase D: Verification & Documentation
 
-- [ ] D1. Run full Go test suite: `go test ./...`
-- [ ] D2. Verify `zyrocli context <id>` prints deprecation warning and works
-- [ ] D3. Manual E2E: invoke each Python MCP tool via `uv run` against live HelixDB
-- [ ] D4. Update `openspec/changes/helix-integration/` artifacts with final status
+- [x] D1. Run full Go test suite: `go test ./...`
+- [x] D2. Verify `zyrocli context <id>` prints deprecation warning and works
+- [x] D3. Manual E2E: invoke each Python MCP tool via `uv run` against live HelixDB
+- [x] D4. Update `openspec/changes/helix-integration/` artifacts with final status
