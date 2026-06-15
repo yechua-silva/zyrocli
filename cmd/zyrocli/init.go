@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 
+	"github.com/secko/zyrocli/internal/db/helix"
 	"github.com/secko/zyrocli/internal/handoff"
 	"github.com/secko/zyrocli/internal/scaffold"
 	"github.com/spf13/cobra"
@@ -40,6 +42,24 @@ Accepts a file path or "-" to read from stdin.`,
 		}
 
 		if scaffoldFlag {
+			// Auto-start HelixDB so the project can use it immediately
+			helixClient, err := helix.NewClient(context.Background())
+			if err == nil {
+				if err := helixClient.EnsureStarted(context.Background()); err != nil {
+					cmd.PrintErrln("⚠ HelixDB not available (project will work, but MCP tools need it)")
+				} else {
+					// Create the project node in HelixDB
+					if projectNode, err := helixClient.CreateNode(context.Background(), "Project", map[string]any{
+						"name":    payload.Project.Name,
+						"repo":    payload.Project.Repository,
+						"problem": payload.ValidatedIdea.Problem,
+					}); err == nil {
+						cmd.Printf("  HelixDB project node: %d\n", projectNode.ID)
+						_ = helixClient.Close()
+					}
+				}
+			}
+
 			// Read raw handoff content for template reference
 			var rawBytes []byte
 			if path == "-" {
