@@ -10,38 +10,50 @@
 
 ## Stack
 - Go 1.22+, module: `github.com/secko/zyrocli`
+- HelixDB (graph-vector DB, localhost:6969, HTTP API + Go SDK)
 - OpenCode MCP (engram, graphify)
-- skills.sh para descubrimiento de skills
+- Python MCP tools (PydanticAI, httpx) via `uv run`
 - Context (Neuledge) `npm i -g @neuledge/context` + GitMCP fallback
 
 ## Estructura del proyecto
 ```
 zyrocli/
 ├── cmd/zyrocli/main.go        # Entry point (cobra CLI)
+├── cmd/zyrocli/init.go        # zyrocli init <handoff.yaml> [--scaffold] [--opencode]
+├── cmd/zyrocli/context.go     # zyrocli context <task-id> (deprecado → MCP tool)
+├── cmd/zyrocli/run.go         # zyrocli run
 ├── internal/
+│   ├── db/helix/              # Go SDK client para HelixDB (Capa 3: writes)
+│   │   ├── client.go          # CRUD + search + schema (stateless, net/http)
+│   │   ├── errors.go          # ErrNotFound, ErrConnectionFailed, ErrInvalidRequest
+│   │   └── types.go           # Node, Edge, SearchResult, IndexSpec
+│   ├── taskcontext/           # Contexto de tarea desde HelixDB
+│   │   └── taskcontext.go     # 6 traversals + 3 formatters (text/json/prompt)
 │   ├── scheduler/             # State machine de 4 fases
 │   │   └── scheduler.go       # DAG executor con goroutines + channels
 │   ├── handoff/               # Parsea handoff.yaml
-│   │   └── payload.go         # Structs Go del contrato Holdin Admin
-│   ├── skilladvisor/          # Go nativo, determinístico
-│   │   ├── registry.go        # Carga registry YAML local
-│   │   ├── score.go           # ScoreSkill() tags-vector dot product
-│   │   └── discover.go        # skills.sh API cache
-│   ├── spec/                  # C-I-O DSL
-│   │   ├── cio.go             # Structs Contract/Interface/Behavior/Constraints/Operation/Testing
-│   │   └── compile.go         # Compilación opcional → OpenAPI/protobuf
-│   ├── context/               # Integración Context MCP server
-│   │   └── bridge.go          # Arranca `context serve --libs`
-│   ├── apply/                 # Implementación contra C-I-O
-│   │   └── runner.go          # Task runner con goroutines
-│   └── test/                  # Contract testing
-│       ├── contracts.go       # given/when/then executor
-│       └── report.go          # Reporte con graphify diff
-├── .opencode/
-│   └── skills/                # Skills instaladas per-repo por npx skills add
-├── AGENT.md
-├── handoff.yaml               # Input de Holdin Admin
-└── zyro-skill-overrides.yaml  # Skills custom NO en skills.sh
+│   │   ├── parser.go          # Parseo de handoff.yaml v2.0
+│   │   ├── payload.go         # Structs Go del contrato Holdin Admin
+│   │   └── validate.go        # Validación de campos requeridos
+│   ├── scaffold/              # Generación de proyecto desde handoff
+│   │   ├── scaffold.go        # Run(): crea estructura, templates, .zyro/
+│   │   ├── renderer.go        # Renderiza templates Go
+│   │   ├── writer.go          # Escribe archivos en disco
+│   │   └── templates/         # Templates de proyecto Go
+│   └── context/               # Integración Context MCP server
+│       └── bridge.go          # Arranca `context serve --libs` (GitMCP local)
+├── mcp-tools/                 # Python MCP tools (Capa 2: contexto trazable)
+│   ├── runner.py              # FastMCP server entry point (stdio)
+│   ├── helix_client.py        # httpx wrapper para HelixDB HTTP API
+│   ├── task_context.py        # MCP tool: task_context(id)
+│   ├── search_code.py         # MCP tool: search_code(query, limit)
+│   ├── search_skills.py       # MCP tool: search_skills(query, limit)
+│   ├── pyproject.toml         # uv project config
+│   └── README.md              # Instrucciones de registro en opencode.json
+├── docs/                      # Documentación y decisiones arquitectónicas
+│   ├── architecture-v2.md     # Arquitectura decisional (3 capas)
+│   └── roadmap.md             # Progreso del proyecto
+└── AGENT.md
 ```
 
 ## Flujo de 4 macro-fases (scheduler state machine)
