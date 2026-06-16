@@ -1,9 +1,0 @@
-/home/secko/Projects/ZyroAgentCLI/.atl/skill-registry.md
-/home/secko/Projects/ZyroAgentCLI/AGENT.md
-/home/secko/Projects/ZyroAgentCLI/handoff.yaml
-/home/secko/Projects/ZyroAgentCLI/openspec/changes/archive/2026-06-13-inicializar-modulo-go/design.md
-/home/secko/Projects/ZyroAgentCLI/openspec/changes/archive/2026-06-13-inicializar-modulo-go/proposal.md
-/home/secko/Projects/ZyroAgentCLI/openspec/changes/archive/2026-06-13-inicializar-modulo-go/tasks.md
-/home/secko/Projects/ZyroAgentCLI/openspec/config.yaml
-/home/secko/Projects/ZyroAgentCLI/openspec/specs/project-scaffold/spec.md
-/home/secko/Projects/ZyroAgentCLI/zyro-skill-overrides.yaml
