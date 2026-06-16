@@ -5,7 +5,7 @@ const { get } = require('https');
 const { join } = require('path');
 const { platform, arch } = require('os');
 
-const VERSION = '2.0.0';
+const { version } = require('../package.json');
 const REPO = 'yechua-silva/zyrocli';
 
 const PLATFORM_MAP = {
@@ -38,25 +38,39 @@ if (existsSync(binaryPath)) {
   process.exit(0);
 }
 
-const url = `https://github.com/${REPO}/releases/download/v${VERSION}/zyrocli_${VERSION}_${mapped}.tar.gz`;
+const url = `https://github.com/${REPO}/releases/download/v${version}/zyrocli_${version}_${mapped}.tar.gz`;
 
-console.log(`📦 Downloading zyrocli v${VERSION} for ${mapped}...`);
+console.log(`📦 Downloading zyrocli v${version} for ${mapped}...`);
 
-get(url, (response) => {
-  if (response.statusCode !== 200) {
-    console.error(`❌ Download failed (${response.statusCode})`);
+function download(url, redirects = 0) {
+  if (redirects > 5) {
+    console.error('❌ Too many redirects');
     process.exit(1);
   }
 
-  const file = createWriteStream(binaryPath);
-  response.pipe(file);
+  get(url, (response) => {
+    // Seguir redirects (GitHub mueve URLs)
+    if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+      return download(response.headers.location, redirects + 1);
+    }
 
-  file.on('finish', () => {
-    file.close();
-    chmodSync(binaryPath, '755');
-    console.log(`✅ zyrocli v${VERSION} installed successfully`);
+    if (response.statusCode !== 200) {
+      console.error(`❌ Download failed (${response.statusCode})`);
+      process.exit(1);
+    }
+
+    const file = createWriteStream(binaryPath);
+    response.pipe(file);
+
+    file.on('finish', () => {
+      file.close();
+      chmodSync(binaryPath, '755');
+      console.log(`✅ zyrocli v${version} installed successfully`);
+    });
+  }).on('error', (err) => {
+    console.error(`❌ Download failed: ${err.message}`);
+    process.exit(1);
   });
-}).on('error', (err) => {
-  console.error(`❌ Download failed: ${err.message}`);
-  process.exit(1);
-});
+}
+
+download(url);
