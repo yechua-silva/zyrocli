@@ -366,9 +366,246 @@ func TestPhaseTimeout_SubsequentPhasesSkipped(t *testing.T) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-// captureStdout runs fn while capturing stdout to avoid test noise.
-// In this implementation we simply run fn; output goes to test log.
-func captureStdout(t *testing.T, fn func()) {
-	t.Helper()
-	fn()
+// ---------------------------------------------------------------------------
+// GuidedApproval detail mode tests
+// ---------------------------------------------------------------------------
+
+func TestGuidedApproval_DetailMode(t *testing.T) {
+	// Input: "d" to see detail, then "s" to approve
+	old := stdinReader
+	stdinReader = bufio.NewReader(strings.NewReader("d\ns\n"))
+	t.Cleanup(func() { stdinReader = old })
+
+	g := NewGuidedApproval(PhaseF1, "test summary").
+		WithDetail("Full agent output here\nWith multiple lines")
+
+	approved, err := g.PromptApproval()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !approved {
+		t.Error("expected approved=true after detail then yes")
+	}
 }
+
+func TestGuidedApproval_DetailNoOutput(t *testing.T) {
+	// Input: "d" to see detail (but no FullOutput set), then "s"
+	old := stdinReader
+	stdinReader = bufio.NewReader(strings.NewReader("d\ns\n"))
+	t.Cleanup(func() { stdinReader = old })
+
+	g := NewGuidedApproval(PhaseF1, "test summary")
+	// No WithDetail set
+
+	approved, err := g.PromptApproval()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !approved {
+		t.Error("expected approved=true after detail then yes")
+	}
+}
+
+func TestGuidedApproval_RejectAfterDetail(t *testing.T) {
+	old := stdinReader
+	stdinReader = bufio.NewReader(strings.NewReader("d\nn\n"))
+	t.Cleanup(func() { stdinReader = old })
+
+	g := NewGuidedApproval(PhaseF1, "test summary").
+		WithDetail("some detail")
+
+	approved, err := g.PromptApproval()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if approved {
+		t.Error("expected approved=false after detail then no")
+	}
+}
+
+func TestGuidedApproval_WithRecommendAndRisk(t *testing.T) {
+	old := stdinReader
+	stdinReader = bufio.NewReader(strings.NewReader("s\n"))
+	t.Cleanup(func() { stdinReader = old })
+
+	g := NewGuidedApproval(PhaseF1, "test summary").
+		WithRecommend("Continue to next phase").
+		WithRisk("High complexity in F3")
+
+	approved, err := g.PromptApproval()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !approved {
+		t.Error("expected approved=true")
+	}
+}
+
+func TestGuidedApproval_MultipleInvalidThenApprove(t *testing.T) {
+	old := stdinReader
+	// Multiple invalid inputs, then approve
+	stdinReader = bufio.NewReader(strings.NewReader("x\n?\nfoo\ny\n"))
+	t.Cleanup(func() { stdinReader = old })
+
+	g := NewGuidedApproval(PhaseF1, "test")
+	approved, err := g.PromptApproval()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !approved {
+		t.Error("expected approved=true after retries")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// HarnessValidator tests
+// ---------------------------------------------------------------------------
+
+func TestHarnessValidator_ValidateTransitionRequiresApproval(t *testing.T) {
+	v := NewHarnessValidator(AllPhases)
+	v.SetCurrent(PhaseF1)
+
+	err := v.ValidateTransition(PhaseF1, PhaseF2, false)
+	if err == nil {
+		t.Fatal("expected error for unapproved transition")
+	}
+	if !strings.Contains(err.Error(), "blocked") {
+		t.Errorf("expected 'blocked' in error, got %v", err)
+	}
+}
+
+func TestHarnessValidator_ValidTransition(t *testing.T) {
+	v := NewHarnessValidator(AllPhases)
+	v.SetCurrent(PhaseF1)
+
+	err := v.ValidateTransition(PhaseF1, PhaseF2, true)
+	if err != nil {
+		t.Errorf("expected nil error for valid approved transition, got %v", err)
+	}
+}
+
+func TestHarnessValidator_CurrentPhase(t *testing.T) {
+	v := NewHarnessValidator(AllPhases)
+	v.SetCurrent(PhaseF2)
+
+	if v.CurrentPhase() != PhaseF2 {
+		t.Errorf("expected F2, got %s", v.CurrentPhase())
+	}
+}
+
+func TestHarnessValidator_NextPhase(t *testing.T) {
+	v := NewHarnessValidator(AllPhases)
+
+	v.SetCurrent(PhaseF1)
+	if v.NextPhase() != PhaseF2 {
+		t.Errorf("expected F2 after F1, got %s", v.NextPhase())
+	}
+
+	v.SetCurrent(PhaseF2)
+	if v.NextPhase() != PhaseF3 {
+		t.Errorf("expected F3 after F2, got %s", v.NextPhase())
+	}
+
+	v.SetCurrent(PhaseF3)
+	if v.NextPhase() != PhaseF4 {
+		t.Errorf("expected F4 after F3, got %s", v.NextPhase())
+	}
+
+	v.SetCurrent(PhaseF4)
+	if v.NextPhase() != "" {
+		t.Errorf("expected empty after F4, got %s", v.NextPhase())
+	}
+}
+
+func TestHarnessValidator_InvalidPhase(t *testing.T) {
+	v := NewHarnessValidator(AllPhases)
+	v.SetCurrent("F5")
+
+	err := v.ValidateTransition("F5", "F6", true)
+	if err == nil {
+		t.Fatal("expected error for unknown phase")
+	}
+	if !strings.Contains(err.Error(), "unknown") {
+		t.Errorf("expected 'unknown' in error, got %v", err)
+	}
+
+	if v.NextPhase() != "" {
+		t.Errorf("expected empty next for unknown phase")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// MacroPhaseRunner tests
+// ---------------------------------------------------------------------------
+
+func TestMacroPhaseRunner_Success(t *testing.T) {
+	runner := NewMacroPhaseRunner(PhaseF1, func(ctx context.Context, cfg *Config) (*Result, error) {
+		return &Result{Phase: PhaseF1, Status: StatusSuccess, Summary: "done"}, nil
+	})
+
+	result, err := runner.Run(context.Background(), &Config{PhaseTimeout: 5 * time.Second})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Status != StatusSuccess {
+		t.Errorf("expected success, got %s", result.Status)
+	}
+}
+
+func TestMacroPhaseRunner_WithValidatorPass(t *testing.T) {
+	runner := NewMacroPhaseRunner(PhaseF1, func(ctx context.Context, cfg *Config) (*Result, error) {
+		return &Result{Phase: PhaseF1, Status: StatusSuccess, Summary: "ok"}, nil
+	}).WithValidator(DefaultValidator())
+
+	result, err := runner.Run(context.Background(), &Config{PhaseTimeout: 5 * time.Second})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Status != StatusSuccess {
+		t.Errorf("expected success, got %s", result.Status)
+	}
+}
+
+func TestMacroPhaseRunner_WithValidatorFail(t *testing.T) {
+	runner := NewMacroPhaseRunner(PhaseF1, func(ctx context.Context, cfg *Config) (*Result, error) {
+		return &Result{Phase: PhaseF1, Status: StatusFail, Summary: "failed"}, nil
+	}).WithValidator(DefaultValidator())
+
+	result, err := runner.Run(context.Background(), &Config{PhaseTimeout: 5 * time.Second})
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+	if result.Status != StatusFail {
+		t.Errorf("expected fail, got %s", result.Status)
+	}
+}
+
+func TestMacroPhaseRunner_ContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // already cancelled
+
+	runner := NewMacroPhaseRunner(PhaseF1, func(ctx context.Context, cfg *Config) (*Result, error) {
+		return &Result{Phase: PhaseF1, Status: StatusSuccess, Summary: "should not run"}, nil
+	})
+
+	result, err := runner.Run(ctx, &Config{PhaseTimeout: 5 * time.Second})
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if result.Status != StatusFail {
+		t.Errorf("expected fail after cancel, got %s", result.Status)
+	}
+}
+
+func TestMacroPhaseRunner_Name(t *testing.T) {
+	runner := NewMacroPhaseRunner(PhaseF3, nil)
+	if runner.Name() != PhaseF3 {
+		t.Errorf("expected F3, got %s", runner.Name())
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+

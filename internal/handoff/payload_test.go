@@ -43,6 +43,14 @@ limits:
   max_loops: 5
   phase_timeout: 10m
   chained_prs: false
+capabilities:
+  - testing
+  - deployment
+  - monitoring
+dependencies:
+  - auth
+  - payments
+  - storage
 `
 
 // requiredOnlyYAML is the minimal valid v2.0 handoff file.
@@ -121,6 +129,32 @@ func TestParseFile(t *testing.T) {
 	}
 	if got.Limits.PhaseTimeout != "10m" {
 		t.Errorf("expected limits.phase_timeout '10m', got %q", got.Limits.PhaseTimeout)
+	}
+	if len(got.Capabilities) != 3 {
+		t.Errorf("expected 3 capabilities, got %d", len(got.Capabilities))
+	} else {
+		if got.Capabilities[0] != "testing" {
+			t.Errorf("expected capabilities[0] 'testing', got %q", got.Capabilities[0])
+		}
+		if got.Capabilities[1] != "deployment" {
+			t.Errorf("expected capabilities[1] 'deployment', got %q", got.Capabilities[1])
+		}
+		if got.Capabilities[2] != "monitoring" {
+			t.Errorf("expected capabilities[2] 'monitoring', got %q", got.Capabilities[2])
+		}
+	}
+	if len(got.Dependencies) != 3 {
+		t.Errorf("expected 3 dependencies, got %d", len(got.Dependencies))
+	} else {
+		if got.Dependencies[0] != "auth" {
+			t.Errorf("expected dependencies[0] 'auth', got %q", got.Dependencies[0])
+		}
+		if got.Dependencies[1] != "payments" {
+			t.Errorf("expected dependencies[1] 'payments', got %q", got.Dependencies[1])
+		}
+		if got.Dependencies[2] != "storage" {
+			t.Errorf("expected dependencies[2] 'storage', got %q", got.Dependencies[2])
+		}
 	}
 }
 
@@ -369,5 +403,11 @@ func TestIntegrationParseValidateMinimal(t *testing.T) {
 	}
 	if payload.Limits.PhaseTimeout != "" {
 		t.Errorf("expected empty limits.phase_timeout, got %q", payload.Limits.PhaseTimeout)
+	}
+	if len(payload.Capabilities) != 0 {
+		t.Errorf("expected empty capabilities, got %v", payload.Capabilities)
+	}
+	if len(payload.Dependencies) != 0 {
+		t.Errorf("expected empty dependencies, got %v", payload.Dependencies)
 	}
 }

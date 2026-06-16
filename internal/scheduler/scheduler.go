@@ -28,8 +28,11 @@ func NewScheduler(cfg *Config, runners []PhaseRunner) *Scheduler {
 // If a phase fails or is aborted, remaining phases are skipped.
 func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 	var results []*Result
+	validator := NewHarnessValidator(AllPhases)
 
 	for _, phase := range s.phases {
+		validator.SetCurrent(phase.Name())
+
 		phaseCtx, cancel := context.WithTimeout(ctx, s.config.PhaseTimeout)
 
 		// MEMORIA CAUSAL: inyectar contexto antes de ejecutar la fase
@@ -96,14 +99,22 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 			return results, fmt.Errorf("scheduler: phase %s ended with status %s", phaseName, result.Status)
 		}
 
-		// Mandatory approval gate — always prompts for human validation
-		approved, err := PromptApproval(result.Phase, result.Summary)
+		// Mandatory approval gate — GuidedApproval with context
+		approval := NewGuidedApproval(result.Phase, result.Summary).
+			WithRecommend(fmt.Sprintf("Phase %s completed successfully. Suggested next: %s.", phaseName, validator.NextPhase()))
+		approved, err := approval.PromptApproval()
 		if err != nil {
 			return results, fmt.Errorf("scheduler: approval error: %w", err)
 		}
+
+		// HarnessValidator enforces human validation
+		if err := validator.ValidateTransition(phaseName, phaseName, approved); err != nil {
+			return results, fmt.Errorf("scheduler: harness validation: %w", err)
+		}
+
 		if !approved {
 			results = append(results, &Result{
-				Phase:   result.Phase,
+				Phase:   phaseName,
 				Status:  StatusAbort,
 				Summary: "rejected by user",
 			})
@@ -135,4 +146,70 @@ func (s *Scheduler) RunPhase(ctx context.Context, phase Phase) (*Result, error) 
 		}
 	}
 	return nil, fmt.Errorf("scheduler: phase %s not found", phase)
+}
+
+// HarnessValidator enforces that phase transitions require human approval.
+// It acts as a deterministic gate between macro-phases: without explicit
+// human validation, no transition is allowed.
+type HarnessValidator struct {
+	currentPhase Phase
+	allPhases    []Phase
+}
+
+// NewHarnessValidator creates a validator for the given phase sequence.
+func NewHarnessValidator(phases []Phase) *HarnessValidator {
+	return &HarnessValidator{
+		allPhases: phases,
+	}
+}
+
+// ValidateTransition checks that moving from `from` to `to` is valid:
+//   - `approved` MUST be true (human validation is required)
+//   - The transition MUST follow the sequential DAG order
+func (h *HarnessValidator) ValidateTransition(from Phase, to Phase, approved bool) error {
+	if !approved {
+		return fmt.Errorf("harness: transition %s→%s blocked: human approval required", from, to)
+	}
+
+	fromIdx := -1
+	toIdx := -1
+	for i, p := range h.allPhases {
+		if p == from {
+			fromIdx = i
+		}
+		if p == to {
+			toIdx = i
+		}
+	}
+	if fromIdx == -1 {
+		return fmt.Errorf("harness: unknown phase %q in transition %s→%s", from, from, to)
+	}
+	// Allow same-phase validation (phase just completed)
+	if toIdx == -1 || toIdx == fromIdx {
+		return nil
+	}
+	if toIdx != fromIdx+1 {
+		return fmt.Errorf("harness: invalid transition %s→%s: must be sequential", from, to)
+	}
+	return nil
+}
+
+// CurrentPhase returns the currently active phase.
+func (h *HarnessValidator) CurrentPhase() Phase {
+	return h.currentPhase
+}
+
+// NextPhase returns the next phase in the sequence, or empty if at the end.
+func (h *HarnessValidator) NextPhase() Phase {
+	for i, p := range h.allPhases {
+		if p == h.currentPhase && i+1 < len(h.allPhases) {
+			return h.allPhases[i+1]
+		}
+	}
+	return ""
+}
+
+// SetCurrent sets the current phase for the validator.
+func (h *HarnessValidator) SetCurrent(phase Phase) {
+	h.currentPhase = phase
 }

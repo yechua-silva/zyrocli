@@ -74,4 +74,6 @@ type Payload struct {
 	Governance    Governance    `yaml:"governance"`
 	Testing       Testing       `yaml:"testing"`
 	Limits        Limits        `yaml:"limits,omitempty"`
+	Capabilities  []string      `yaml:"capabilities,omitempty"`  // project capabilities for C-I-O traceability
+	Dependencies  []string      `yaml:"dependencies,omitempty"`  // external dependencies for C-I-O traceability
 }
