@@ -9,14 +9,14 @@
 
 ## 📋 Tabla de Contenidos
 
-- [✨ ¿Qué hace ZyroCLI?](#-qué-hace-zyrocli)
-- [🧠 ¿Por qué existe?](#-por-qué-existe)
-- [🏗️ Arquitectura](#️-arquitectura)
-- [🚀 Instalación](#-instalación)
-- [⚡ Quick Start](#-quick-start)
-- [📚 Documentación](#-documentación)
-- [🛡️ Seguridad](#️-seguridad)
-- [✅ Estado del Proyecto](#-estado-del-proyecto)
+- [✨ ¿Qué hace ZyroCLI?](#qué-hace-zyrocli)
+- [🧠 ¿Por qué existe?](#por-qué-existe)
+- [🏗️ Arquitectura](#arquitectura)
+- [🚀 Instalación](#instalación)
+- [⚡ Quick Start](#quick-start)
+- [📚 Documentación](#documentación)
+- [🛡️ Seguridad](#seguridad)
+- [✅ Estado del Proyecto](#estado-del-proyecto)
 
 ZyroCLI es un orquestador que ejecuta un **pipeline de desarrollo de software** usando agentes de IA sobre OpenCode. No es un chat, no es un IDE — es un **ingeniero de software automatizado** que planifica, especifica, diseña, implementa y verifica usando agentes especializados.
 
