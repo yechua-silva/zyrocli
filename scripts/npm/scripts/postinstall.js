@@ -6,7 +6,7 @@ const { join } = require('path');
 const { platform, arch } = require('os');
 
 const VERSION = '2.0.0';
-const REPO = 'secko/zyrocli';
+const REPO = 'yechua-silva/zyrocli';
 
 const PLATFORM_MAP = {
   'linux-x64': 'linux_amd64',
