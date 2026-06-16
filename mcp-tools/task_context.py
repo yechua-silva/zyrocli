@@ -1,72 +1,28 @@
-"""MCP tool: ``task_context(id)`` — return full task context from HelixDB.
-
-Returns six sections (skills, code, docs, patterns, dependents, dependencies)
-as a structured JSON string.
-"""
+"""Task context retrieval — async function, not MCP tool."""
 
 from __future__ import annotations
-
-import json
 
 from helix_client import HelixClient
 
 
-async def task_context_tool(id: int) -> str:
-    """Get full context for a task by ID: skills, code, docs, patterns.
+async def get_task_context(task_id: int, project_id: str | None = None) -> str:
+    """Fetch full task context from HelixDB: skills, code, docs, patterns."""
+    client = HelixClient(project_id=project_id)
+    result_parts = []
 
-    Args:
-        id: The HelixDB node ID of the task to fetch context for.
-    """
-    client = HelixClient()
+    # Get the task node
+    task = await client.get_node("Task", task_id)
+    if not task:
+        return f"Task {task_id} not found"
+    result_parts.append(f"Task ID: {task_id}")
 
-    # Fetch the task node first
-    task_node = await client.get_node("Task", id)
-    if task_node is None:
-        return json.dumps(
-            {"error": f"Task {id} not found", "helix_url": client.base_url},
-            indent=2,
-        )
+    # Traverse outgoing edges
+    skills = await client.get_outgoing(task_id, "REQUIRES_SKILL")
+    if skills:
+        result_parts.append(f"Skills: {len(skills)}")
 
-    # Run six traversals
-    sections: dict[str, list[dict]] = {
-        "skills": [],
-        "code": [],
-        "docs": [],
-        "patterns": [],
-        "dependents": [],
-        "dependencies": [],
-    }
+    code_nodes = await client.get_outgoing(task_id, "REFERENCES")
+    if code_nodes:
+        result_parts.append(f"Code nodes: {len(code_nodes)}")
 
-    try:
-        # Traverse outgoing edges for related resources (returns nodes directly)
-        sections["skills"] = await client.get_outgoing(id, "has_skill")
-        sections["code"] = await client.get_outgoing(id, "has_code")
-        sections["docs"] = await client.get_outgoing(id, "has_doc")
-        sections["patterns"] = await client.get_outgoing(id, "has_pattern")
-
-        # Traverse incoming / outgoing for dependents / dependencies
-        sections["dependents"] = await client.get_incoming(id, "depends_on")
-        sections["dependencies"] = await client.get_outgoing(id, "depends_on")
-
-    except Exception as exc:
-        return json.dumps(
-            {
-                "error": f"HelixDB query failed: {exc}",
-                "helix_url": client.base_url,
-                "task_id": id,
-            },
-            indent=2,
-        )
-
-    return json.dumps(
-        {
-            "task_id": id,
-            "skills": sections["skills"],
-            "code": sections["code"],
-            "docs": sections["docs"],
-            "patterns": sections["patterns"],
-            "dependents": sections["dependents"],
-            "dependencies": sections["dependencies"],
-        },
-        indent=2,
-    )
+    return "\n".join(result_parts) if result_parts else f"Task {task_id}: no context"

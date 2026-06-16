@@ -1,0 +1,11 @@
+[project]
+name = "ZyroAgentCLI"
+queries = "db"
+container_runtime = "docker"
+
+[local.zyrocli]
+port = 6969
+image = "ghcr.io/helixdb/enterprise-dev"
+tag = "latest"
+
+[enterprise]

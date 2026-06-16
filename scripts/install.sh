@@ -4,62 +4,69 @@ set -euo pipefail
 # ═══════════════════════════════════════════════════════════════
 # ZyroCLI — Install script
 # ═══════════════════════════════════════════════════════════════
-# Usage: ./scripts/install.sh
+# Usage: ./scripts/install.sh [version]
 #
-# What this does:
-#   1. Builds the zyrocli binary
-#   2. Installs it to ~/.local/bin/zyrocli
-#   3. Installs HelixDB (if not present)
-#   4. Runs `zyrocli install` to configure OpenCode ecosystem globally
-#
-# The binary is fully self-contained — no repo path needed at runtime.
+# Descarga el binario pre-compilado desde GitHub Releases.
+# Si no se especifica versión, descarga la última (latest).
 # ═══════════════════════════════════════════════════════════════
 
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BINARY_NAME="zyrocli"
+REPO="secko/zyrocli"
+VERSION="${1:-latest}"
 INSTALL_DIR="${HOME}/.local/bin"
+BINARY_NAME="zyrocli"
 
-echo "🚀 Installing ZyroCLI..."
+# ── Detectar plataforma ───────────────────────────────────────
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
 
-# ── Step 1: Build binary ──────────────────────────────────────
-echo "  1. Building binary..."
-cd "$REPO_DIR"
-go build -o "${INSTALL_DIR}/${BINARY_NAME}" ./cmd/zyrocli
-chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
-echo "     ✅ Binary installed: ${INSTALL_DIR}/${BINARY_NAME}"
+case "$ARCH" in
+    x86_64|amd64) ARCH="amd64" ;;
+    aarch64|arm64) ARCH="arm64" ;;
+    *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
+esac
 
-# ── Step 2: Install HelixDB ───────────────────────────────────
-if ! command -v helix &>/dev/null; then
-    echo "  2. Installing HelixDB..."
-    curl -sSL "https://install.helix-db.com" | bash
-    echo "     ✅ HelixDB installed"
-else
-    echo "  2. ✅ HelixDB already installed"
+PLATFORM="${OS}_${ARCH}"
+BINARY="${BINARY_NAME}"
+[ "$OS" = "windows" ] && BINARY="${BINARY}.exe"
+
+# ── Obtener última versión si es latest ────────────────────────
+if [ "$VERSION" = "latest" ]; then
+    echo "🔍 Fetching latest version..."
+    VERSION=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest" \
+        | grep '"tag_name"' \
+        | cut -d'"' -f4 \
+        | sed 's/^v//')
+    if [ -z "$VERSION" ]; then
+        echo "❌ Could not determine latest version"
+        exit 1
+    fi
+    echo "   Latest version: v${VERSION}"
 fi
 
-# ── Step 3: Install ZyroCLI ecosystem ─────────────────────────
-echo "  3. Installing ZyroCLI ecosystem..."
-zyrocli install
-echo "     ✅ Ecosystem configured"
+URL="https://github.com/${REPO}/releases/download/v${VERSION}/zyrocli_${VERSION}_${PLATFORM}.tar.gz"
 
-# ── Step 4: Verify ────────────────────────────────────────────
+echo "🚀 Installing ZyroCLI v${VERSION} for ${PLATFORM}..."
+echo "   Downloading from ${URL}"
+
+mkdir -p "$INSTALL_DIR"
+
+# Descargar y extraer tarball
+curl -sSL "$URL" | tar -xz -C "$INSTALL_DIR" "${BINARY}" 2>/dev/null || {
+    # Fallback: descarga directa del binario (sin tarball)
+    echo "   ⚠️  Tarball not found, trying direct download..."
+    curl -sSL "https://github.com/${REPO}/releases/download/v${VERSION}/${BINARY}" \
+        -o "${INSTALL_DIR}/${BINARY}"
+}
+chmod +x "${INSTALL_DIR}/${BINARY}"
+
 echo ""
 echo "  ─────────────────────────────────────────────"
-echo "  ✅ ZyroCLI installed successfully!"
+echo "  ✅ ZyroCLI v${VERSION} installed!"
 echo "  ─────────────────────────────────────────────"
 echo ""
-echo "  Binary:  ${INSTALL_DIR}/${BINARY_NAME}"
-echo "  Config:  ~/.config/opencode/opencode.jsonc"
-echo "  Skills:  ~/.config/opencode/skills/"
-echo "  MCP:     ~/.config/zyrocli/mcp-tools/"
-echo ""
-# ── Step 4: Install find-skills discovery skill ────────────────
-echo "  4. Installing find-skills discovery skill..."
-npx skills add vercel-labs/skills --skill find-skills -g -y 2>/dev/null || true
-echo "     ✅ find-skills installed"
-
+echo "  Binary:  ${INSTALL_DIR}/${BINARY}"
 echo ""
 echo "  Quick start:"
-    echo "    zyrocli install              # (re)configure ecosystem"
-    echo "    zyrocli init handoff.yaml    # Create a new project"
+echo "    zyrocli --help"
+echo "    zyrocli setup"
 echo ""

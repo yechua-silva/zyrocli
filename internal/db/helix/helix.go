@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
+	helixsdk "github.com/helixdb/helix-db/sdks/go"
 )
 
 // Option configures a Client.
@@ -633,12 +635,27 @@ func (c *Client) VectorSearch(ctx context.Context, label, property string, vecto
 // Schema
 // ---------------------------------------------------------------------------
 
-// CreateIndex creates a new text index for the given label+property.
+// CreateIndex creates a new index for the given label+property.
 func (c *Client) CreateIndex(ctx context.Context, spec IndexSpec) error {
+	var nodeType string
+	switch spec.IndexType {
+	case IndexVector:
+		nodeType = "NodeVector"
+	case IndexText:
+		nodeType = "NodeText"
+	case IndexEquality:
+		nodeType = "NodeEquality"
+	case IndexRange:
+		nodeType = "NodeRange"
+	case IndexUnique:
+		nodeType = "NodeUnique"
+	default:
+		nodeType = "NodeText"
+	}
 	specMap := map[string]any{
-		"NodeText": map[string]any{
-			"label":    spec.Fields[0],
-			"property": spec.Fields[1],
+		nodeType: map[string]any{
+			"label":    spec.Label,
+			"property": spec.Property,
 		},
 	}
 	payload := buildV3Envelope([]v3Query{
@@ -662,4 +679,84 @@ func (c *Client) CreateIndex(ctx context.Context, spec IndexSpec) error {
 func (c *Client) ListIndexes(ctx context.Context) ([]IndexSpec, error) {
 	// v3 does not expose a "list indexes" operation.
 	return []IndexSpec{}, nil
+}
+
+// ---------------------------------------------------------------------------
+// SDK Client Wrapper (T-2.1)
+// ---------------------------------------------------------------------------
+
+// SDKClientOptions configura el cliente HelixDB SDK.
+type SDKClientOptions struct {
+	BaseURL    string
+	Timeout    time.Duration
+	MaxRetries int
+}
+
+// DefaultSDKClientOptions retorna opciones por defecto.
+func DefaultSDKClientOptions() SDKClientOptions {
+	return SDKClientOptions{
+		BaseURL:    "http://localhost:6969",
+		Timeout:    30 * time.Second,
+		MaxRetries: 3,
+	}
+}
+
+// SDKClient es el wrapper sobre el SDK oficial de HelixDB.
+type SDKClient struct {
+	inner *helixsdk.Client
+	opts  SDKClientOptions
+}
+
+// NewSDKClient crea un nuevo cliente HelixDB SDK.
+func NewSDKClient(opts SDKClientOptions) (*SDKClient, error) {
+	if opts.BaseURL == "" {
+		opts.BaseURL = "http://localhost:6969"
+	}
+	if opts.Timeout == 0 {
+		opts.Timeout = 30 * time.Second
+	}
+	if opts.MaxRetries == 0 {
+		opts.MaxRetries = 3
+	}
+
+	// Configurar HTTP client con timeout personalizado
+	httpClient := &http.Client{Timeout: opts.Timeout}
+	inner, err := helixsdk.NewClient(opts.BaseURL, helixsdk.WithHTTPClient(httpClient))
+	if err != nil {
+		return nil, fmt.Errorf("helix: new sdk client: %w", err)
+	}
+
+	return &SDKClient{inner: inner, opts: opts}, nil
+}
+
+// Exec ejecuta una query con reintentos.
+func (c *SDKClient) Exec(ctx context.Context, q helixsdk.Request, out interface{}) error {
+	var lastErr error
+	for i := 0; i <= c.opts.MaxRetries; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(100*i) * time.Millisecond)
+		}
+		if err := c.inner.Exec(ctx, q, out); err != nil {
+			lastErr = err
+			continue
+		}
+		return nil
+	}
+	return fmt.Errorf("helix: exec after %d retries: %w", c.opts.MaxRetries, lastErr)
+}
+
+// HealthCheck verifica que HelixDB responda.
+func (c *SDKClient) HealthCheck(ctx context.Context) error {
+	// Use a simple read query to check health
+	q := helixsdk.ReadQuery("health").
+		VarAs("h",
+			helixsdk.G().NWithLabel("_ping").Limit(1),
+		).
+		Returning("h")
+	return c.Exec(ctx, q, nil)
+}
+
+// Close cierra el cliente. No-op ya que el SDK maneja su propio cleanup.
+func (c *SDKClient) Close() {
+	// SDK maneja su propio cleanup
 }

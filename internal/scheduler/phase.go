@@ -3,6 +3,8 @@ package scheduler
 import (
 	"context"
 	"time"
+
+	"github.com/secko/zyrocli/internal/boomerang"
 )
 
 // Phase identifies an SDD phase.
@@ -30,21 +32,24 @@ const (
 
 // Config holds scheduler configuration from handoff.yaml governance.
 type Config struct {
-	Mode         string        // governance.mode
-	Module       string        // governance.module
-	GoVersion    string        // governance.go_version
-	MaxTasks     int           // limits.max_tasks
-	MaxLines     int           // limits.max_lines
-	MaxLoops     int           // limits.max_loops
-	PhaseTimeout time.Duration // parsed from limits.phase_timeout
+	Mode         string                      // governance.mode
+	Module       string                      // governance.module
+	GoVersion    string                      // governance.go_version
+	MaxTasks     int                         // limits.max_tasks
+	MaxLines     int                         // limits.max_lines
+	MaxLoops     int                         // limits.max_loops
+	PhaseTimeout time.Duration               // parsed from limits.phase_timeout
+	MemoryHooks  *MemoryHooks                // hooks de memoria causal (T-4.9)
+	Boomerang    *boomerang.BoomerangOrchestrator // orquestador Boomerang (T-5.12)
 }
 
 // Result holds the outcome of a single phase execution.
 type Result struct {
-	Phase   Phase
-	Status  Status
-	Summary string
-	Error   error
+	Phase         Phase
+	Status        Status
+	Summary       string
+	Error         error
+	MemoryContext string // contexto de memoria causal inyectado (T-4.9)
 }
 
 // PhaseRunner is the interface each phase must implement.

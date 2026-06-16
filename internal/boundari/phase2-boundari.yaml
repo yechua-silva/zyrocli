@@ -1,0 +1,25 @@
+version: "1.0"
+phase: "F2"
+description: "Diseño — solo lectura y escritura de documentos de diseño."
+budget:
+  max_tool_calls: 80
+  max_runtime_seconds: 400
+tools:
+  - name: "search_code"
+    action: allow
+  - name: "task_context"
+    action: allow
+  - name: "read_file"
+    action: allow
+  - name: "write_file"
+    action: allow
+    conditions:
+      extensions: [".md", ".yaml"]
+  - name: "edit_file"
+    action: allow
+    conditions:
+      extensions: [".md", ".yaml"]
+  - name: "execute_command"
+    action: deny
+  - name: "save_to_helix"
+    action: deny

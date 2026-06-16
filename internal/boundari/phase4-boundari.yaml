@@ -1,0 +1,26 @@
+version: "1.0"
+phase: "F4"
+description: "Cierre — solo lectura y archive. No modificar nada."
+budget:
+  max_tool_calls: 30
+  max_runtime_seconds: 300
+tools:
+  - name: "read_file"
+    action: allow
+  - name: "search_code"
+    action: allow
+  - name: "task_context"
+    action: allow
+  - name: "write_file"
+    action: deny
+  - name: "edit_file"
+    action: deny
+  - name: "execute_command"
+    action: allow
+    conditions:
+      commands: ["go build", "go test"]
+  - name: "save_to_helix"
+    action: allow
+    require_approval: true
+  - name: "delete_file"
+    action: deny

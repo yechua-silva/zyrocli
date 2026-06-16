@@ -1,0 +1,29 @@
+version: "1.0"
+phase: "F1"
+description: "Especificación — investigación + escritura de documentos. No ejecutar código."
+budget:
+  max_tool_calls: 100
+  max_runtime_seconds: 600
+tools:
+  - name: "search_code"
+    action: allow
+  - name: "search_skills"
+    action: allow
+  - name: "task_context"
+    action: allow
+  - name: "web_search"
+    action: allow
+  - name: "read_file"
+    action: allow
+  - name: "write_file"
+    action: allow
+    require_approval: true
+    conditions:
+      extensions: [".md", ".yaml", ".json"]
+  - name: "edit_file"
+    action: allow
+    require_approval: true
+    conditions:
+      extensions: [".md", ".yaml", ".json"]
+  - name: "execute_command"
+    action: deny

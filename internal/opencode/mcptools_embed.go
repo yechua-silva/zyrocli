@@ -1,3 +1,6 @@
+// DEPRECATED: MCP tools now load via opencode-lazy-loader plugin.
+// This file is kept for backward compatibility but should not be used
+// for new configurations. See internal/boomerang/ for the new pipeline.
 package opencode
 
 import (

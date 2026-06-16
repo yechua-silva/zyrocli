@@ -1,0 +1,27 @@
+{
+  "name": "zyrocli",
+  "version": "2.0.0",
+  "description": "Orquestador Go para desarrollo asistido por IA con pipeline F0-F4",
+  "bin": {
+    "zyrocli": "bin/zyrocli.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/secko/zyrocli.git"
+  },
+  "keywords": ["zyro", "cli", "ai", "orchestrator", "sdd"],
+  "author": "ZyroCLI Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/secko/zyrocli/issues"
+  },
+  "homepage": "https://github.com/secko/zyrocli#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["x64", "arm64"]
+}

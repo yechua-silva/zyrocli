@@ -1,203 +1,171 @@
-# ZyroCLI — Orquestador Go para desarrollo asistido por IA
+# ZyroCLI — Orquestador Autónomo para Desarrollo Asistido por IA
 
-ZyroCLI configura y orquesta el pipeline de desarrollo F0→F1→F2→F3→F4 usando agentes de IA sobre OpenCode, con HelixDB como fuente de verdad.
+> **Pipeline SDD completo (F0→F4) · Memoria Causal · Seguridad por Fase · Auto-instalable**
 
-## Requisitos previos
+ZyroCLI es un orquestador que ejecuta un **pipeline de desarrollo de software** usando agentes de IA sobre OpenCode. No es un chat, no es un IDE — es un **ingeniero de software automatizado** que planifica, especifica, diseña, implementa y verifica usando agentes especializados.
 
-Antes de instalar, necesitás tener instalado en tu sistema:
+## ✨ ¿Qué hace ZyroCLI?
 
-- **Go 1.26+** — para compilar el binario (`go version`)
-- **OpenCode** — agente de IA (`npx opencode --version` o instalado globalmente)
-- **uv** — gestor de proyectos Python (`uv --version`)
-- **Docker** — para HelixDB (`docker --version`)
-- **Node.js 18+** — para npx y skills.sh (`node --version`)
+| Comando | Qué hace |
+|---------|----------|
+| `zyro setup` | Instala todo el ecosistema (Go, Python, HelixDB, Ollama) automáticamente |
+| `zyro init` | Crea un proyecto desde un handoff.yaml |
+| `zyro run --phase F0` | **Investigación**: busca patrones, librerías y skills en paralelo |
+| `zyro run --phase F1` | **Especificación**: genera spec técnica C-I-O |
+| `zyro run --phase F2` | **Diseño**: desglose en componentes y tareas atómicas |
+| `zyro run --phase F3` | **Implementación**: apply + verify (loop hasta pasar) |
+| `zyro run --phase F4` | **Cierre**: archive, lint, build final |
+| `zyro doctor --fix` | Diagnostica y repara la configuración |
 
-## Instalación
+## 🧠 ¿Por qué existe?
+
+El desarrollo asistido por IA tiene un problema fundamental: **cada sesión empieza en blanco**. El agente no recuerda decisiones anteriores, repite errores, y no tiene contexto del proyecto.
+
+ZyroCLI resuelve esto con **4 innovaciones** basadas en investigación técnica:
+
+### 1. Memoria Causal (en lugar de chat stateless)
+
+Basado en el concepto de **engram** (traza física de memoria, Semon 1904). Cada decisión, error y preferencia se almacena como un nodo `Fact` en un **grafo causal** con relaciones como `CAUSED`, `PRECEDES`, `CONTRADICTS`. Antes de cada fase, el agente recibe automáticamente el contexto relevante. Después de cada fase, se extraen nuevos hechos y se resuelven contradicciones.
+
+**Por qué:** Los LLMs no tienen memoria persistente. HelixDB (grafos + vectores) permite búsqueda semántica y navegación causal que SQLite no puede ofrecer.
+
+*[Investigación: docs/explorations/investigacion-04-engram-memoria-causal.md]*
+
+### 2. Agent-as-Validator (el agente opina, Go ejecuta)
+
+El agente Python **nunca escribe en la base de datos**. Devuelve un `AgentDecision` validado con Pydantic, y el orquestador Go decide si ejecutarlo. Esto evita que el agente se salte fases o corrompa el estado global.
+
+**Por qué:** Un agente autónomo sin restricciones puede inventar herramientas, modificar estado o ejecutar acciones no autorizadas. Separar "opinar" de "ejecutar" es un patrón probado (verificar y validar).
+
+*[Investigación: docs/explorations/investigacion-01-pydanticai-harness.md]*
+
+### 3. Seguridad por Fase (Boundari)
+
+Cada fase del pipeline tiene una **política Boundari** que define qué herramientas puede usar el agente. F0 solo lectura, F3 escritura intensiva con approval para comandos peligrosos. Las políticas están escritas en YAML y se cargan dinámicamente.
+
+**Por qué:** No todas las fases tienen los mismos permisos. Un agente en fase de investigación no debería poder ejecutar código. Boundari aplica el principio de mínimo privilegio.
+
+*[Investigación: docs/explorations/investigacion-03-boundari-politicas-seguridad.md]*
+
+### 4. Búsqueda Híbrida + Embeddings Locales
+
+La memoria causal se consulta con **búsqueda híbrida** (vector ANN + BM25 + RRF fusion). Los embeddings se generan localmente con Ollama + `mxbai-embed-large` (CPU-friendly). Si no hay embeddings, cae a BM25 puro (degradación graceful).
+
+**Por qué:** La búsqueda semántica permite encontrar hechos conceptualmente similares aunque usen palabras diferentes. El modelo mxbai-embed-large es el mejor quality/speed para CPU según MTEB benchmark.
+
+*[Investigación: docs/explorations/investigacion-06-embedding-system.md]*
+
+## 🏗️ Arquitectura
+
+```
+Humano ──→ ZyroCLI (Go) ──→ OpenCode (Agentes IA)
+              │                     │
+              ├── HelixDB (grafos)  ├── PydanticAI (Agent-as-Validator)
+              ├── Boundari (seguridad) ├── Boomerang (ciclo 6 pasos)
+              └── Memoria Causal    └── Skills (patrones, librerías, etc.)
+```
+
+## 🚀 Instalación
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/secko/zyrocli
-cd zyrocli
+# Opción 1: npm (recomendado)
+npx zyrocli setup
 
-# 2. Compilar e instalar todo
-./scripts/install.sh
+# Opción 2: npm global
+npm install -g zyrocli
+zyrocli setup
+
+# Opción 3: go install
+go install github.com/secko/zyrocli@latest
+zyrocli setup
+
+# Opción 4: script directo
+curl -sSL https://github.com/secko/zyrocli/releases/latest/download/install.sh | bash
 ```
 
-### Qué esperar
+> `zyro setup` detecta tu sistema, instala dependencias (Go, uv, HelixDB, Ollama opcional), configura todo y te deja listo para usar.
 
-Durante la instalación vas a ver:
+## 📚 Documentación
+
+| Documento | Contenido |
+|-----------|----------|
+| [Especificación Técnica](docs/spec-zyrov2.md) | Spec completa C-I-O del sistema |
+| [Diseño Técnico](docs/design-zyrov2.md) | Arquitectura detallada, firmas, schemas |
+| [Roadmap](docs/roadmap-integrado.md) | Plan de implementación y sprints |
+| [FAQ - PydanticAI Harness](docs/explorations/investigacion-01-pydanticai-harness.md) | Por qué Agent-as-Validator |
+| [FAQ - HelixDB](docs/explorations/investigacion-02-helixdb-deep-integration.md) | Por qué grafos + vectores |
+| [FAQ - Boundari](docs/explorations/investigacion-03-boundari-politicas-seguridad.md) | Por qué seguridad por fase |
+| [FAQ - Memoria Causal](docs/explorations/investigacion-04-engram-memoria-causal.md) | Por qué engram custom sobre HelixDB |
+| [FAQ - OpenCode](docs/explorations/investigacion-05-opencode-ecosistema-plugins.md) | Por qué OpenCode como runtime |
+| [FAQ - Embeddings](docs/explorations/investigacion-06-embedding-system.md) | Por qué mxbai-embed-large + Scaleway |
+
+## 🛡️ Seguridad
+
+ZyroCLI aplica el **principio de mínimo privilegio** en cada fase del pipeline:
 
 ```
-🚀 Installing ZyroCLI...
-  1. Building binary...                  ✅ zyrocli en ~/.local/bin/
-  2. Installing HelixDB...               ✅ Docker container (localhost:6969)
-  3. Installing ZyroCLI ecosystem...     ✅ 14 skills + 6 MCP tools + agentes
-  4. Installing find-skills skill...     ✅ descubrimiento global de skills
+F0 (Investigación) → solo lectura de código y web
+F1 (Especificación) → lectura + escritura de documentos .md
+F2 (Diseño) → escritura de planos .md .yaml
+F3 (Implementación) → escritura de código + ejecución controlada
+F4 (Cierre) → solo lectura, archive con approval
 ```
 
-### Post-instalación
+## ✅ Estado del Proyecto
 
-Verificá que todo funciona:
+- **Pipeline F0-F4**: Completo e integrado con Boomerang
+- **Memoria Causal**: 6 tipos de Facts, 7 aristas causales, curva de Ebbinghaus
+- **Embeddings**: Ollama + mxbai-embed-large + fallback Scaleway/BM25
+- **Seguridad**: Boundari con políticas YAML por fase
+- **Tests**: 383 tests, 100% passing
+- **Distribución**: npm, GitHub Releases, Homebrew, go install
+
+## 📦 Publicación en npm
+
+### Requisitos
+- Cuenta en npm (npmjs.com)
+- Token de acceso en GitHub Secrets
+
+### Paso a paso (primera vez)
 
 ```bash
-zyrocli --help           # Ver comandos disponibles
-zyrocli profile list     # Ver 14 agentes configurados
+# 1. Crear cuenta en https://www.npmjs.com/signup (si no tenés)
+# 2. Configurar npm local
+npm login
+# 3. Crear token de acceso
+npm token create
+#   → Copiar el token que empieza con "npm_..."
+
+# 4. Agregar el token a GitHub Secrets
+#   Ir a: https://github.com/secko/zyrocli/settings/secrets/actions
+#   → New repository secret
+#   → Name: NPM_TOKEN
+#   → Value: pegar el token
+
+# 5. Publicar la primera versión
+git tag v2.0.0
+git push origin v2.0.0
+#   → GitHub Actions publica automáticamente en npm
 ```
 
-## Primeros pasos
+### ¿Se puede hacer en CI? Sí
+El workflow `release.yml` ya incluye un job `npm-publish` que:
+1. Toma el binario compilado por GoReleaser
+2. Arma el paquete npm (package.json + postinstall.js)
+3. Publica en npm usando `NPM_TOKEN` de los Secrets
 
+### Verificar que se publicó
 ```bash
-# 1. Creá un handoff.yaml con la descripción de tu proyecto
-# 2. Inicializá el proyecto
-zyrocli init docs/examples/test-frontend-handoff.yaml
-
-# 3. Se abre OpenCode. Escribí "iniciemos"
-# 4. Fase 0 corre automáticamente (3 subagentes en paralelo)
-# 5. Revisá resultados, aprobá skills, seguí con F1→F4
+npx zyrocli --version
+# → 2.0.0
 ```
 
-## Stack
-
-- **Go 1.26+** — CLI (Cobra), scheduler, state-gating
-- **OpenCode** — runtime de agentes (MCP stdio)
-- **HelixDB** — grafo+vector persistente (localhost:6969)
-- **Python** — MCP tools (PydanticAI + httpx) vía `uv run`
-- **NVIDIA SkillSpector** — validación de seguridad de skills
-- **skills.sh** — descubrimiento de skills comunitarias
-
-## Instalación
-
+### Actualizar versión
 ```bash
-git clone https://github.com/secko/zyrocli
-cd zyrocli && ./scripts/install.sh
-```
-
-Esto:
-1. Compila el binario `zyrocli` y lo instala en `~/.local/bin/`
-2. Instala HelixDB (Docker) si no está presente
-3. Ejecuta `zyrocli install` para configurar el ecosistema global
-
-Si preferís hacerlo paso a paso:
-
-```bash
-cd zyrocli && go build -o ~/.local/bin/zyrocli ./cmd/zyrocli
-zyrocli install
-```
-
-## Comandos
-
-| Comando | Descripción |
-|---------|-------------|
-| `zyrocli install` | (Re)configura el ecosistema global (skills, agentes, MCP) |
-| `zyrocli init <handoff.yaml>` | Crea proyecto desde handoff y abre OpenCode |
-| `zyrocli run [--phase F0\|F1\|F2\|F3\|F4]` | Ejecuta el pipeline completo o una fase específica |
-| `zyrocli profile list\|set\|tui` | Gestiona modelos por agente/asignación |
-| `zyrocli context <id>` | Obtiene contexto de tarea o proyecto desde HelixDB |
-| `zyrocli skill-advisor <query>` | Busca skills, valida con SkillSpector, puntúa |
-
-## Pipeline F0→F4
-
-Cada fase requiere **aprobación humana explícita** antes de continuar. No hay modo automático.
-
-```
-F0: Investigación — patrones, librerías, skills
-  ↓ [¿Aprobás?]
-F1: Especificación técnica — arquitectura, módulos, dependencias
-  ↓ [¿Aprobás?]
-F2: Diseño + planificación — componentes, tareas atómicas
-  ↓ [¿Aprobás?]
-F3: Implementación — apply ↔ verify (loop, máx 5 intentos)
-  ↓ [¿Aprobás?]
-F4: Cierre — archive, limpieza
-```
-
-### Fase 0 en detalle
-
-Ejecuta 5 subagentes atómicos en paralelo:
-
-| Subagente | Qué hace | Output en HelixDB |
-|-----------|----------|-------------------|
-| `zyro-phase-0-patterns` | Busca proyectos similares + patrones | Nodos `Pattern` |
-| `zyro-phase-0-libraries` | Investiga librerías recomendadas | Nodos `Library` |
-| `zyro-skills-find` | Busca skills en skills.sh | Nodos `Skill` |
-| `zyro-skills-audit` | Valida seguridad (Gen Agent, Socket, Snyk) | Update `Skill` |
-| `zyro-skills-apply` | Instala skills aprobadas por el humano | Edge `REQUIRES_SKILL` |
-
-Go verifica en HelixDB que los nodos se hayan creado antes de dar la fase por completa.
-
-## Arquitectura
-
-```
-Humano ↔ zyro-orchestrator (default, plan mode)
-              │
-              ├── zyro-sdd-explore    → leer código (solo lectura)
-              ├── zyro-sdd-spec       → especificación técnica
-              ├── zyro-sdd-design     → diseño de componentes
-              ├── zyro-sdd-tasks      → planificación de tareas
-              ├── zyro-sdd-apply      → implementación (escribe código)
-              ├── zyro-sdd-verify     → verificación contra specs
-              ├── zyro-sdd-archive    → cierre del proyecto
-              ├── zyro-phase-0-*      → Fase 0
-              └── model-assigner      → /zyro-model (cambiar modelos)
-```
-
-Los agentes se comunican mediante **HelixDB (nodos + edges)**, no texto libre. Go verifica el estado en HelixDB entre cada fase. Si un agente no escribió los nodos esperados, la fase falla.
-
-## Skills embebidas (14)
-
-Todas las skills están compiladas dentro del binario. Se instalan en `~/.config/opencode/skills/` al ejecutar `zyrocli install`.
-
-| Skill | Propósito |
-|-------|-----------|
-| `zyro-orchestrator` | Orquestador principal (default) |
-| `zyro-phase-0-patterns` | Busca patrones similares |
-| `zyro-phase-0-libraries` | Investiga librerías |
-| `zyro-skills-find` | Descubre skills en skills.sh |
-| `zyro-skills-audit` | Valida seguridad de skills |
-| `zyro-skills-apply` | Instala skills aprobadas |
-| `zyro-sdd-spec` | Especificación técnica |
-| `zyro-sdd-design` | Diseño técnico |
-| `zyro-sdd-tasks` | Planificación de tareas |
-| `zyro-sdd-apply` | Implementación de código |
-| `zyro-sdd-verify` | Verificación contra specs |
-| `zyro-sdd-explore` | Investigación de código |
-| `zyro-sdd-propose` | Propuesta de cambios |
-| `zyro-sdd-archive` | Cierre y archive |
-
-## MCP Tools (6)
-
-Servidor MCP en Python que expone herramientas para interactuar con HelixDB:
-
-| Tool | Descripción |
-|------|-------------|
-| `task_context(id)` | Contexto completo de tarea (skills, code, docs, patterns) |
-| `search_code(query)` | Búsqueda de código en HelixDB |
-| `search_skills(query)` | Búsqueda de skills en HelixDB |
-| `save_to_helix(label, properties)` | Crea nodo con validación de campos required |
-| `link_to_project(project_id, target, edge)` | Crea edge desde Project a otro nodo |
-| `find_project(name)` | Busca proyecto por nombre |
-
-## Configuración global
-
-El ecosistema se configura automáticamente en:
-
-```
-~/.config/opencode/opencode.jsonc   → 14 agentes, 6 MCP tools, /zyro-model
-~/.config/opencode/skills/           → 14 skills
-~/.config/zyrocli/mcp-tools/         → MCP server Python
-```
-
-## Desarrollo
-
-```bash
-# Compilar
-go build -o ~/.local/bin/zyrocli ./cmd/zyrocli
-
-# Tests
-go test ./... -timeout 120s
-
-# Re-instalar ecosistema después de cambios
-zyrocli install
+# Cambiar version en scripts/npm/package.json y .goreleaser.yaml
+git commit -m "chore: bump version to 2.0.1"
+git tag v2.0.1
+git push origin v2.0.1
 ```
 
 ## Licencia
