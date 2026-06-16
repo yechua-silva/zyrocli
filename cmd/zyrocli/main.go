@@ -16,10 +16,10 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "zyrocli",
-	Short: "ZyroCLI — Gentle AI orchestration for structured SDD workflows",
-	Long: `ZyroCLI orchestrates the SDD lifecycle: propose, spec, design, tasks,
-apply, verify, and archive. Each phase is a subcommand powered by
-domain-specific internal packages.`,
+	Short: "ZyroCLI — Orquestador para desarrollo asistido por IA",
+	Long: `ZyroCLI orquesta el pipeline SDD: especificar, diseñar, implementar,
+verificar y archivar. Cada fase es un subcomando ejecutado por
+agentes de IA especializados.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if verbose {
 			fmt.Println("ZyroCLI — verbose mode enabled")
@@ -38,18 +38,16 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
-	rootCmd.Flags().BoolP("version", "", false, "print version information")
 	rootCmd.AddCommand(versionCmd)
 
-	// Override root Run to intercept --version
-	originalRun := rootCmd.Run
+	// Soporte para --version como flag (antes que el subcomando)
+	rootCmd.Flags().Bool("version", false, "print version information")
 	rootCmd.Run = func(cmd *cobra.Command, args []string) {
-		showVersion, _ := cmd.Flags().GetBool("version")
-		if showVersion {
+		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
 			fmt.Printf("zyrocli %s (commit: %s, built: %s)\n", version, commit, date)
 			return
 		}
-		originalRun(cmd, args)
+		_ = cmd.Help()
 	}
 }
 
