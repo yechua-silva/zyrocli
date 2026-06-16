@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const { createWriteStream, chmodSync, existsSync, mkdirSync } = require('fs');
+const { chmodSync, existsSync, mkdirSync, unlinkSync } = require('fs');
 const { get } = require('https');
 const { join } = require('path');
 const { platform, arch } = require('os');
+const { execSync } = require('child_process');
+const { createWriteStream } = require('fs');
 
 const { version } = require('../package.json');
 const REPO = 'yechua-silva/zyrocli';
@@ -39,6 +41,7 @@ if (existsSync(binaryPath)) {
 }
 
 const url = `https://github.com/${REPO}/releases/download/v${version}/zyrocli_${version}_${mapped}.tar.gz`;
+const tmpPath = join(binDir, `zyrocli_${version}_${mapped}.tar.gz`);
 
 console.log(`📦 Downloading zyrocli v${version} for ${mapped}...`);
 
@@ -49,7 +52,6 @@ function download(url, redirects = 0) {
   }
 
   get(url, (response) => {
-    // Seguir redirects (GitHub mueve URLs)
     if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
       return download(response.headers.location, redirects + 1);
     }
@@ -59,13 +61,23 @@ function download(url, redirects = 0) {
       process.exit(1);
     }
 
-    const file = createWriteStream(binaryPath);
+    const file = createWriteStream(tmpPath);
     response.pipe(file);
 
     file.on('finish', () => {
       file.close();
-      chmodSync(binaryPath, '755');
-      console.log(`✅ zyrocli v${version} installed successfully`);
+      
+      // Extraer el binario del tar.gz
+      try {
+        console.log(`📦 Extracting...`);
+        execSync(`tar -xzf "${tmpPath}" -C "${binDir}" "${binaryName}"`, { stdio: 'ignore' });
+        chmodSync(binaryPath, '755');
+        unlinkSync(tmpPath); // borrar temporal
+        console.log(`✅ zyrocli v${version} installed successfully`);
+      } catch (err) {
+        console.error(`❌ Extraction failed: ${err.message}`);
+        process.exit(1);
+      }
     });
   }).on('error', (err) => {
     console.error(`❌ Download failed: ${err.message}`);
