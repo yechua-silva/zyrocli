@@ -59,3 +59,64 @@ type PhaseRunner interface {
 	// Name returns the phase identifier.
 	Name() Phase
 }
+
+// MacroPhaseRunner wraps a function as a PhaseRunner with optional validator.
+type MacroPhaseRunner struct {
+	fn        func(ctx context.Context, cfg *Config) (*Result, error)
+	phase     Phase
+	validator *HarnessValidator
+}
+
+// NewMacroPhaseRunner creates a MacroPhaseRunner for the given phase and function.
+func NewMacroPhaseRunner(phase Phase, fn func(ctx context.Context, cfg *Config) (*Result, error)) *MacroPhaseRunner {
+	return &MacroPhaseRunner{
+		fn:    fn,
+		phase: phase,
+	}
+}
+
+// WithValidator attaches a harness validator to this runner.
+func (m *MacroPhaseRunner) WithValidator(v *HarnessValidator) *MacroPhaseRunner {
+	m.validator = v
+	return m
+}
+
+// Run executes the wrapped function and validates the transition.
+func (m *MacroPhaseRunner) Run(ctx context.Context, cfg *Config) (*Result, error) {
+	select {
+	case <-ctx.Done():
+		return &Result{Phase: m.phase, Status: StatusFail, Summary: "cancelled"}, ctx.Err()
+	default:
+	}
+
+	result, err := m.fn(ctx, cfg)
+	if err != nil {
+		return result, err
+	}
+
+	if m.validator != nil {
+		m.validator.SetCurrent(m.phase)
+		if err := m.validator.ValidateTransition(m.phase, m.phase, result.Status == StatusSuccess); err != nil {
+			return result, err
+		}
+	}
+
+	return result, nil
+}
+
+// Name returns the phase identifier.
+func (m *MacroPhaseRunner) Name() Phase {
+	return m.phase
+}
+
+// DefaultValidator returns a HarnessValidator for all phases.
+func DefaultValidator() *HarnessValidator {
+	return NewHarnessValidator(AllPhases)
+}
+
+// Validator is the interface for phase transition validation.
+type Validator interface {
+	SetCurrent(phase Phase)
+	ValidateTransition(from, to Phase, approved bool) error
+	NextPhase() string
+}

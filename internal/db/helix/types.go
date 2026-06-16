@@ -1,12 +1,5 @@
 package helix
 
-// Node represents a graph node in HelixDB.
-type Node struct {
-	ID         int64          `json:"id"`
-	Type       string         `json:"type"`
-	Properties map[string]any `json:"properties,omitempty"`
-}
-
 // Edge represents a directed edge between two nodes.
 type Edge struct {
 	ID         int64          `json:"id"`

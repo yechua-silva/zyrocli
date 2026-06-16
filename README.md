@@ -29,7 +29,7 @@ Basado en el concepto de **engram** (traza física de memoria, Semon 1904). Cada
 
 **Por qué:** Los LLMs no tienen memoria persistente. HelixDB (grafos + vectores) permite búsqueda semántica y navegación causal que SQLite no puede ofrecer.
 
-*[Investigación: docs/explorations/investigacion-04-engram-memoria-causal.md]*
+[Investigación →](docs/explorations/investigacion-04-engram-memoria-causal.md)
 
 ### 2. Agent-as-Validator (el agente opina, Go ejecuta)
 
@@ -37,7 +37,7 @@ El agente Python **nunca escribe en la base de datos**. Devuelve un `AgentDecisi
 
 **Por qué:** Un agente autónomo sin restricciones puede inventar herramientas, modificar estado o ejecutar acciones no autorizadas. Separar "opinar" de "ejecutar" es un patrón probado (verificar y validar).
 
-*[Investigación: docs/explorations/investigacion-01-pydanticai-harness.md]*
+[Investigación →](docs/explorations/investigacion-01-pydanticai-harness.md)
 
 ### 3. Seguridad por Fase (Boundari)
 
@@ -45,7 +45,7 @@ Cada fase del pipeline tiene una **política Boundari** que define qué herramie
 
 **Por qué:** No todas las fases tienen los mismos permisos. Un agente en fase de investigación no debería poder ejecutar código. Boundari aplica el principio de mínimo privilegio.
 
-*[Investigación: docs/explorations/investigacion-03-boundari-politicas-seguridad.md]*
+[Investigación →](docs/explorations/investigacion-03-boundari-politicas-seguridad.md)
 
 ### 4. Búsqueda Híbrida + Embeddings Locales
 
@@ -53,7 +53,7 @@ La memoria causal se consulta con **búsqueda híbrida** (vector ANN + BM25 + RR
 
 **Por qué:** La búsqueda semántica permite encontrar hechos conceptualmente similares aunque usen palabras diferentes. El modelo mxbai-embed-large es el mejor quality/speed para CPU según MTEB benchmark.
 
-*[Investigación: docs/explorations/investigacion-06-embedding-system.md]*
+[Investigación →](docs/explorations/investigacion-06-embedding-system.md)
 
 ## 🏗️ Arquitectura
 

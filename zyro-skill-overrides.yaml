@@ -1,0 +1,22 @@
+# zyro-skill-overrides.yaml
+# Override settings for installed agent skills.
+# Each entry maps a skill name to its overridden configuration.
+---
+# Skill-level configuration overrides
+overrides:
+  go-testing:
+    enabled: true
+    golden_file_path: "testdata/golden/"
+  comment-writer:
+    enabled: true
+    tone: warm-direct
+  custom-skills:
+    - name: my-custom-skill
+      path: /path/to/custom-skill/SKILL.md
+      triggers:
+        - "deploy"
+        - "release"
+# Feature flags for experimental behaviour
+features:
+  parallel_execution: false
+  strict_tdd: false

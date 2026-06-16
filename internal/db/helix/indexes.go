@@ -25,7 +25,7 @@ type IndexSpec struct {
 }
 
 // EnsureIndexes crea índices si no existen
-func EnsureIndexes(ctx context.Context, client *SDKClient, specs []IndexSpec) error {
+func EnsureIndexes(ctx context.Context, client *Client, specs []IndexSpec) error {
 	for _, spec := range specs {
 		if err := client.Exec(ctx, AddIndex(spec.Label, spec.Property, string(spec.IndexType)), nil); err != nil {
 			return fmt.Errorf("index %s.%s: %w", spec.Label, spec.Property, err)

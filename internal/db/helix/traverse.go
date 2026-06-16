@@ -36,7 +36,7 @@ type FactWithPath struct {
 
 // DiscoverCrossProjectSkills descubre proyectos que comparten un skill
 // navegando Skill ← REQUIRES_SKILL ← Project.
-func DiscoverCrossProjectSkills(ctx context.Context, client *SDKClient, skillName string) ([]ProjectRow, error) {
+func DiscoverCrossProjectSkills(ctx context.Context, client *Client, skillName string) ([]ProjectRow, error) {
 	q := helixsdk.ReadQuery("cross_project_skills").
 		VarAs("skills",
 			helixsdk.G().NWithLabel("Skill").
@@ -56,7 +56,7 @@ func DiscoverCrossProjectSkills(ctx context.Context, client *SDKClient, skillNam
 
 // TraverseProjectContext arma el contexto completo de un proyecto navegando
 // out-edges: HAS_TASK, REQUIRES_SKILL, FOLLOWS.
-func TraverseProjectContext(ctx context.Context, client *SDKClient, projectID int) (*ProjectContext, error) {
+func TraverseProjectContext(ctx context.Context, client *Client, projectID int) (*ProjectContext, error) {
 	q := helixsdk.ReadQuery("project_context").
 		VarAs("project",
 			helixsdk.G().N(helixsdk.NodeID(uint64(projectID))).ValueMap(),
@@ -113,7 +113,7 @@ func TraverseProjectContext(ctx context.Context, client *SDKClient, projectID in
 
 // TraverseCausalChain navega la cadena causal desde un fact usando
 // Repeat(Out(CAUSED|PRECEDES|DERIVES_FROM)) con maxDepth.
-func TraverseCausalChain(ctx context.Context, client *SDKClient, factID, maxDepth int) ([]FactWithPath, error) {
+func TraverseCausalChain(ctx context.Context, client *Client, factID, maxDepth int) ([]FactWithPath, error) {
 	if maxDepth <= 0 {
 		maxDepth = 5
 	}
@@ -142,7 +142,7 @@ func TraverseCausalChain(ctx context.Context, client *SDKClient, factID, maxDept
 }
 
 // FindContradictions busca nodos con label CONTRADICTS.
-func FindContradictions(ctx context.Context, client *SDKClient, threshold float64) ([]FactRow, error) {
+func FindContradictions(ctx context.Context, client *Client, threshold float64) ([]FactRow, error) {
 	if threshold <= 0 {
 		threshold = 0.85
 	}

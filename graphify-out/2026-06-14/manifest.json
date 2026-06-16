@@ -1,0 +1,672 @@
+{
+  ".atl/.skill-registry.cache.json": {
+    "mtime": 1781422081.3606932,
+    "ast_hash": "2bbb31ffb098399fea952303b33ab035",
+    "semantic_hash": "2bbb31ffb098399fea952303b33ab035"
+  },
+  "internal/apply/runner.go": {
+    "mtime": 1781422081.3756936,
+    "ast_hash": "b1a8e7352057111738f9c5702c8df710",
+    "semantic_hash": ""
+  },
+  "internal/context/bridge.go": {
+    "mtime": 1781422081.3763235,
+    "ast_hash": "43c2b5d0440815828844b6c5d6135800",
+    "semantic_hash": ""
+  },
+  "internal/handoff/payload.go": {
+    "mtime": 1781422081.3528366,
+    "ast_hash": "5a82fe85967469883fb5467ed8f9510e",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/scheduler.go": {
+    "mtime": 1781422081.353693,
+    "ast_hash": "a4a16c8804787f09d874a68cef10f0d1",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/discover.go": {
+    "mtime": 1781422204.4067583,
+    "ast_hash": "58aed694072cf415ed453b90caad8724",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/registry.go": {
+    "mtime": 1781422188.334358,
+    "ast_hash": "f31e921035956c35ed44460af48f3b2d",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/score.go": {
+    "mtime": 1781422151.391438,
+    "ast_hash": "027e2817327bc782d721700bcebd5145",
+    "semantic_hash": ""
+  },
+  "internal/spec/cio.go": {
+    "mtime": 1781422081.3780148,
+    "ast_hash": "11f8aa6c4170d907a4c4b736d8dfb903",
+    "semantic_hash": ""
+  },
+  "internal/spec/compile.go": {
+    "mtime": 1781422081.3783355,
+    "ast_hash": "40f8d66a15376674cdd7dcca00fdf5ba",
+    "semantic_hash": ""
+  },
+  "internal/test/contracts.go": {
+    "mtime": 1781422081.3783355,
+    "ast_hash": "7d12f3794bf5b9d8c0050717ccb566d7",
+    "semantic_hash": ""
+  },
+  "internal/test/report.go": {
+    "mtime": 1781422081.3784912,
+    "ast_hash": "7edcc46351809977bc7ead3eb9fdfd8b",
+    "semantic_hash": ""
+  },
+  ".atl/skill-registry.md": {
+    "mtime": 1781422081.3606932,
+    "ast_hash": "7c845d2be446ce513054069a55ab1503",
+    "semantic_hash": "7c845d2be446ce513054069a55ab1503"
+  },
+  "AGENT.md": {
+    "mtime": 1781422081.3606932,
+    "ast_hash": "7dc5cf09f107efde15113538d61f1dfd",
+    "semantic_hash": ""
+  },
+  "handoff.yaml": {
+    "mtime": 1781422081.3756936,
+    "ast_hash": "78b81a2471fe64f31f5aab60368c09d7",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-inicializar-modulo-go/design.md": {
+    "mtime": 1781422081.3792841,
+    "ast_hash": "7b09aa77aa2ed329865fec6d7f426423",
+    "semantic_hash": "7b09aa77aa2ed329865fec6d7f426423"
+  },
+  "openspec/changes/archive/2026-06-13-inicializar-modulo-go/proposal.md": {
+    "mtime": 1781422081.3794427,
+    "ast_hash": "d61061877c8a1691ff4430d0134b6713",
+    "semantic_hash": "d61061877c8a1691ff4430d0134b6713"
+  },
+  "openspec/changes/archive/2026-06-13-inicializar-modulo-go/tasks.md": {
+    "mtime": 1781422081.3794427,
+    "ast_hash": "1e1751435a7e03c164d3fe5d10afb7af",
+    "semantic_hash": "1e1751435a7e03c164d3fe5d10afb7af"
+  },
+  "openspec/config.yaml": {
+    "mtime": 1781422081.3825219,
+    "ast_hash": "47f609d329e430b75377fedcd62733b6",
+    "semantic_hash": "47f609d329e430b75377fedcd62733b6"
+  },
+  "openspec/specs/project-scaffold/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "72c278c27f185c15733b18af72a63c61",
+    "semantic_hash": ""
+  },
+  "zyro-skill-overrides.yaml": {
+    "mtime": 1781422081.3838432,
+    "ast_hash": "5193b952d0d26b597197af65b6a273b5",
+    "semantic_hash": "5193b952d0d26b597197af65b6a273b5"
+  },
+  "cmd/zyrocli/init.go": {
+    "mtime": 1781395658.4023418,
+    "ast_hash": "d2456af3f5eaeeb89fb1b4b5b8ecedb5",
+    "semantic_hash": "d2456af3f5eaeeb89fb1b4b5b8ecedb5"
+  },
+  "cmd/zyrocli/init_test.go": {
+    "mtime": 1781395667.7965744,
+    "ast_hash": "c139eaef00c001c7beecdd03e3164dd9",
+    "semantic_hash": "c139eaef00c001c7beecdd03e3164dd9"
+  },
+  "cmd/zyrocli/main.go": {
+    "mtime": 1781387792.8135006,
+    "ast_hash": "67816dfd5d70cbffef2869864d23ecd0",
+    "semantic_hash": "67816dfd5d70cbffef2869864d23ecd0"
+  },
+  "internal/handoff/parser.go": {
+    "mtime": 1781389424.4803855,
+    "ast_hash": "5f38a7db108088ed785b099ce88288a8",
+    "semantic_hash": "5f38a7db108088ed785b099ce88288a8"
+  },
+  "internal/handoff/payload_test.go": {
+    "mtime": 1781422081.3528366,
+    "ast_hash": "8bb2b60442d66623cc066a9ff6250e0a",
+    "semantic_hash": ""
+  },
+  "internal/handoff/validate.go": {
+    "mtime": 1781389426.3794696,
+    "ast_hash": "6c0b6a99bb6de73bd40943949d384ddf",
+    "semantic_hash": "6c0b6a99bb6de73bd40943949d384ddf"
+  },
+  "internal/scaffold/renderer.go": {
+    "mtime": 1781394736.7512794,
+    "ast_hash": "aa20ca3db13830ac8385f376bc465a5f",
+    "semantic_hash": "aa20ca3db13830ac8385f376bc465a5f"
+  },
+  "internal/scaffold/scaffold.go": {
+    "mtime": 1781422221.9531953,
+    "ast_hash": "805ad4f4daca7fcf780b5cb44f006ef4",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/scaffold_test.go": {
+    "mtime": 1781422495.2309968,
+    "ast_hash": "f0dee797d35f2b70a13af6fc5b235ffa",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/writer.go": {
+    "mtime": 1781394739.9593513,
+    "ast_hash": "e02039833b78c00d7c4f9413cb8db286",
+    "semantic_hash": "e02039833b78c00d7c4f9413cb8db286"
+  },
+  "openspec/changes/archive/2026-06-13-implementar-parser-handoff/design.md": {
+    "mtime": 1781422081.3790574,
+    "ast_hash": "7554d97e5219c16a9b9aa6dd374cbcbf",
+    "semantic_hash": "7554d97e5219c16a9b9aa6dd374cbcbf"
+  },
+  "openspec/changes/archive/2026-06-13-implementar-parser-handoff/proposal.md": {
+    "mtime": 1781422081.3792841,
+    "ast_hash": "a7b6d30e75770405766af00a6110698f",
+    "semantic_hash": "a7b6d30e75770405766af00a6110698f"
+  },
+  "openspec/changes/archive/2026-06-13-implementar-parser-handoff/tasks.md": {
+    "mtime": 1781422081.3792841,
+    "ast_hash": "1a484635df34d5e2fa20b2dc2b304f27",
+    "semantic_hash": "1a484635df34d5e2fa20b2dc2b304f27"
+  },
+  "openspec/changes/scaffold-opencode-init/design.md": {
+    "mtime": 1781422081.3816938,
+    "ast_hash": "aa9bb0a22a7835b6a6ca8dcaf18cdfa5",
+    "semantic_hash": "aa9bb0a22a7835b6a6ca8dcaf18cdfa5"
+  },
+  "openspec/changes/scaffold-opencode-init/proposal.md": {
+    "mtime": 1781422081.3816938,
+    "ast_hash": "bc84de65a5dc71d7d835a91f5281a739",
+    "semantic_hash": "bc84de65a5dc71d7d835a91f5281a739"
+  },
+  "openspec/changes/scaffold-opencode-init/specs/handoff-parser/spec.md": {
+    "mtime": 1781422081.382086,
+    "ast_hash": "1a15b9aecb70b0d35616a75327b06349",
+    "semantic_hash": "1a15b9aecb70b0d35616a75327b06349"
+  },
+  "openspec/changes/scaffold-opencode-init/specs/scaffold-engine/spec.md": {
+    "mtime": 1781422081.382086,
+    "ast_hash": "a5b07c544ac6ae170bac6e96ec6aa051",
+    "semantic_hash": "a5b07c544ac6ae170bac6e96ec6aa051"
+  },
+  "openspec/changes/scaffold-opencode-init/tasks.md": {
+    "mtime": 1781422081.382086,
+    "ast_hash": "4d8b077b6f3d19fc45fa86e61676be5b",
+    "semantic_hash": "4d8b077b6f3d19fc45fa86e61676be5b"
+  },
+  "openspec/changes/scaffold-opencode-init/verify-report.md": {
+    "mtime": 1781422081.382086,
+    "ast_hash": "8d5b0ad4bef5e627f915aa7a1abb521f",
+    "semantic_hash": "8d5b0ad4bef5e627f915aa7a1abb521f"
+  },
+  "openspec/specs/handoff-parser/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "68a4a090df5a40a9b84077d9b8d513be",
+    "semantic_hash": ""
+  },
+  "cmd/zyrocli/doc.go": {
+    "mtime": 1781422081.3606932,
+    "ast_hash": "1109e37594ed21cbdd69d97e9adc2fdc",
+    "semantic_hash": ""
+  },
+  "cmd/zyrocli/run.go": {
+    "mtime": 1781422427.3733084,
+    "ast_hash": "6a70444237cc693be79bf9f46a0d8670",
+    "semantic_hash": ""
+  },
+  "cmd/zyrocli/run_test.go": {
+    "mtime": 1781422081.3528366,
+    "ast_hash": "7a5d5196c18b2f10d60b037041ddd778",
+    "semantic_hash": ""
+  },
+  "internal/apply/runner_test.go": {
+    "mtime": 1781422081.3763235,
+    "ast_hash": "9606db0ec436c3d9d0c9393672e8e608",
+    "semantic_hash": ""
+  },
+  "internal/apply/types.go": {
+    "mtime": 1781422081.3763235,
+    "ast_hash": "749ffd94b302a3808be63120b8db1321",
+    "semantic_hash": ""
+  },
+  "internal/context/bridge_test.go": {
+    "mtime": 1781422081.376503,
+    "ast_hash": "2b47fefa65b53523d67deac015874913",
+    "semantic_hash": ""
+  },
+  "internal/context/types.go": {
+    "mtime": 1781422081.376503,
+    "ast_hash": "6db1950b25595bf72485838b9a31cb77",
+    "semantic_hash": ""
+  },
+  "internal/doc/doc_test.go": {
+    "mtime": 1781422081.376665,
+    "ast_hash": "73d8a412e6839e5659c3dd26ba7ba8b5",
+    "semantic_hash": ""
+  },
+  "internal/doc/export.go": {
+    "mtime": 1781422081.376665,
+    "ast_hash": "4d8f87a9a2bd5ffb16a229a2be54a2f5",
+    "semantic_hash": ""
+  },
+  "internal/doc/graphify.go": {
+    "mtime": 1781422081.376665,
+    "ast_hash": "40cfff1562e3bea9beb2f4575e3b950e",
+    "semantic_hash": ""
+  },
+  "internal/doc/index.go": {
+    "mtime": 1781422081.376665,
+    "ast_hash": "5445cc22d4263d07e887d122da77a88b",
+    "semantic_hash": ""
+  },
+  "internal/doc/search.go": {
+    "mtime": 1781422081.376665,
+    "ast_hash": "5c8ed8b4c75e9f7b6c1bbd06aa1398dc",
+    "semantic_hash": ""
+  },
+  "internal/doc/sync.go": {
+    "mtime": 1781422081.376665,
+    "ast_hash": "bfe1bf339f9ebfd7fa27f51637eff67d",
+    "semantic_hash": ""
+  },
+  "internal/investigation/advisor.go": {
+    "mtime": 1781422081.3766937,
+    "ast_hash": "df1ee9813b9a86f5c87a988f19da0476",
+    "semantic_hash": ""
+  },
+  "internal/investigation/integration_test.go": {
+    "mtime": 1781422081.377082,
+    "ast_hash": "1f095d92facb95de60c7ccf7d81fee0f",
+    "semantic_hash": ""
+  },
+  "internal/investigation/research.go": {
+    "mtime": 1781422081.377082,
+    "ast_hash": "2bdc79a9f28ada6fd1cbae80cb0c94fa",
+    "semantic_hash": ""
+  },
+  "internal/investigation/research_test.go": {
+    "mtime": 1781422081.377082,
+    "ast_hash": "c4cb787d420f5829b9e34ec6d997644b",
+    "semantic_hash": ""
+  },
+  "internal/planning/decomposer.go": {
+    "mtime": 1781422081.377082,
+    "ast_hash": "f3b8c72d4a4d571e38f41f5e2e2302a5",
+    "semantic_hash": ""
+  },
+  "internal/planning/planning_test.go": {
+    "mtime": 1781422081.3777108,
+    "ast_hash": "94f7835b8d1a3d62d0ca0aff08e8321a",
+    "semantic_hash": ""
+  },
+  "internal/planning/scheduler.go": {
+    "mtime": 1781422081.3777108,
+    "ast_hash": "9d65e9598d754524f40ed23fccb34bed",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/scripts.go": {
+    "mtime": 1781422215.3060298,
+    "ast_hash": "1f88273b4d6c4e3c8604f02da192d80a",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/state.go": {
+    "mtime": 1781406492.5488768,
+    "ast_hash": "837cff754553c819d97349b96a317173",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/state_test.go": {
+    "mtime": 1781406502.3901415,
+    "ast_hash": "1ed561fa5f0a33fe9aea2c8a9d6beebb",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/templates/go-project/scripts/explorer.py": {
+    "mtime": 1781397525.9549372,
+    "ast_hash": "5ed8ad01c4160cdd76c563cf110f8527",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/templates/go-project/scripts/linter.py": {
+    "mtime": 1781402706.6529121,
+    "ast_hash": "161c76f4fe2ee1d946b6086e15f9d5ac",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/templates/go-project/scripts/test-runner.py": {
+    "mtime": 1781402907.777408,
+    "ast_hash": "e2cafc44cb716b3683637e387af46512",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/approval.go": {
+    "mtime": 1781422081.353693,
+    "ast_hash": "35785b388eff44a4786a38a4a293d489",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/config.go": {
+    "mtime": 1781404169.0861833,
+    "ast_hash": "46eaf54a7d137074d8abda1adc9dc313",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/config_test.go": {
+    "mtime": 1781404179.2854176,
+    "ast_hash": "3e3f44f4d1a2671235830f8b915f458f",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/macro_runner.go": {
+    "mtime": 1781422422.4231853,
+    "ast_hash": "d8eebd73e607b030138161d083e468ba",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/phase.go": {
+    "mtime": 1781422418.6340911,
+    "ast_hash": "ed9f36695dc188a625bf71d60b0e41e1",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/phase_stubs.go": {
+    "mtime": 1781404410.2865353,
+    "ast_hash": "a1c66f7b7802af293e6db75feb6bd941",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/scheduler_test.go": {
+    "mtime": 1781422081.353693,
+    "ast_hash": "0df839bf5058a05b1a2a508076bae434",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/skilladvisor_test.go": {
+    "mtime": 1781422473.3124516,
+    "ast_hash": "d0365b090a7ba1572f484ce6802c87aa",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/types.go": {
+    "mtime": 1781422110.5874214,
+    "ast_hash": "fcda5eb94719f7e12cb671a6b7275e5c",
+    "semantic_hash": ""
+  },
+  "internal/spec/compile_test.go": {
+    "mtime": 1781422081.3783355,
+    "ast_hash": "fe767f09afe5d5492adb811bb0a8077b",
+    "semantic_hash": ""
+  },
+  "internal/test/contracts_test.go": {
+    "mtime": 1781422081.3784912,
+    "ast_hash": "561a09b52ff63e8b33da89c324553dc4",
+    "semantic_hash": ""
+  },
+  ".zyro/conventions.yaml": {
+    "mtime": 1781422081.3606932,
+    "ast_hash": "5df07f729c6cb9c2cda7cd5e07b79be8",
+    "semantic_hash": ""
+  },
+  "docs/architecture-validation.md": {
+    "mtime": 1781422081.3606932,
+    "ast_hash": "dc6f23cc59236e7d33e5f660e5b79967",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-python-tools-compliance/design.md": {
+    "mtime": 1781422081.3787122,
+    "ast_hash": "843b1fe89adb6e187710f13dec41ebe7",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-python-tools-compliance/proposal.md": {
+    "mtime": 1781422081.3787775,
+    "ast_hash": "e44073fba8340bdacdf2604fcb21a9db",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-python-tools-compliance/specs/python-tools/spec.md": {
+    "mtime": 1781422081.378836,
+    "ast_hash": "105a6c003ca818855c965cdbbcc546ae",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-python-tools-compliance/tasks.md": {
+    "mtime": 1781422081.378836,
+    "ast_hash": "27ceb64d6fcf09dd6a3e3ffd6ea28b44",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-zyrocli-run-scaffold/design.md": {
+    "mtime": 1781422081.378836,
+    "ast_hash": "aec8c9bc4f1097e94c650a9363e2c3ea",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-zyrocli-run-scaffold/specs/zyrocli-run/spec.md": {
+    "mtime": 1781422081.3790574,
+    "ast_hash": "008a6c8d7dca8cd11bac2d831a60defb",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-fix-zyrocli-run-scaffold/tasks.md": {
+    "mtime": 1781422081.3790574,
+    "ast_hash": "da43391e48dd82fb0662a18feb64df4a",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-python-tools-scaffold/design.md": {
+    "mtime": 1781422081.3794427,
+    "ast_hash": "1845ccbe0d9a2264016ef2edc939f7e1",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-python-tools-scaffold/proposal.md": {
+    "mtime": 1781422081.3796017,
+    "ast_hash": "9050c0d80e3065c10a20a9ab201ded58",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-python-tools-scaffold/specs/python-tools/spec.md": {
+    "mtime": 1781422081.3800957,
+    "ast_hash": "4a576484d0c4e6a5d38cbfa98c41fb7f",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-python-tools-scaffold/verify-report.md": {
+    "mtime": 1781422081.3800957,
+    "ast_hash": "c202c01baaf9d349e8be382d69bae248",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-scheduler-zyrocli-run/design.md": {
+    "mtime": 1781422081.3800957,
+    "ast_hash": "4469c18ba83f6a0425f1922504ce22f9",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-scheduler-zyrocli-run/proposal.md": {
+    "mtime": 1781422081.3803844,
+    "ast_hash": "58b673dec387eafc680a3adc6b1bec1d",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-scheduler-zyrocli-run/specs/scheduler-engine/spec.md": {
+    "mtime": 1781422081.3804681,
+    "ast_hash": "b7d214c5ee294660b86e8efb51d3f77e",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-scheduler-zyrocli-run/specs/zyrocli-run/spec.md": {
+    "mtime": 1781422081.3804681,
+    "ast_hash": "52a5f0def4984c09a73a5365a294ea36",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-13-scheduler-zyrocli-run/tasks.md": {
+    "mtime": 1781422081.3804681,
+    "ast_hash": "4899fa1ecb80aaaadc4c91b7a8cc593a",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/design.md": {
+    "mtime": 1781422081.3804681,
+    "ast_hash": "5ad39c067a22d011105fef136674c3b3",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/apply-runner/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "7d1f8909e3d95faebe483332f38dac41",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/cio-dsl-compile/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "22f6e7e392d86108b6e407cfebacd597",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/context-mcp-bridge/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "90fdd4d6bb9b616eeccd61a0016bfd69",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/contract-testing/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "2ca7d27ef4562f04729d9fb1e1bc5499",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/doc-tools/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "17233d658fe5df8dfe110c246cb511d1",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/handoff-parser/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "6e01702994ce3e3b28eeec85f96a4ee0",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/investigation/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "3bea59fde084c7a8d1d732abca779d23",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/planning/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "13459bb6ae101fca1e43e324225c4edc",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/project-scaffold/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "243a20091b705b8ac13ca1ffb8570e99",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/scheduler-engine/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "f4ec8c4e23a2f2e9ef23f6af3346379f",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/skill-advisor/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "1d2c4df378d9be033ef46f70c8cd5de6",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/specs/zyrocli-run/spec.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "a00212115c294f42b6f15f5721795c05",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-zyro-architecture-mvp/tasks.md": {
+    "mtime": 1781422081.380872,
+    "ast_hash": "9d871768fbc0298783debde15dc75822",
+    "semantic_hash": ""
+  },
+  "openspec/specs/apply-runner/spec.md": {
+    "mtime": 1781422081.3826914,
+    "ast_hash": "09bec8fb4608ab29ec50bb2823f9badd",
+    "semantic_hash": ""
+  },
+  "openspec/specs/cio-dsl-compile/spec.md": {
+    "mtime": 1781422081.3826914,
+    "ast_hash": "235ae1c0efc224db907ba4277b2d4733",
+    "semantic_hash": ""
+  },
+  "openspec/specs/context-mcp-bridge/spec.md": {
+    "mtime": 1781422081.3826914,
+    "ast_hash": "c9d0a277e981b6fa6681232b8915dcdc",
+    "semantic_hash": ""
+  },
+  "openspec/specs/contract-testing/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "93c7d63e1814a2f3b63d8da983b26051",
+    "semantic_hash": ""
+  },
+  "openspec/specs/delivery/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "fd0b198d9447511098fa6ea728bef119",
+    "semantic_hash": ""
+  },
+  "openspec/specs/doc-tools/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "547bef4dc3cdb2e692ef78540a92240a",
+    "semantic_hash": ""
+  },
+  "openspec/specs/investigation/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "46a53e4d5410885564fd5c4ac102c4bd",
+    "semantic_hash": ""
+  },
+  "openspec/specs/planning/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "2febad3a361f2f5dd1450acf21e2c5f6",
+    "semantic_hash": ""
+  },
+  "openspec/specs/python-tools/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "a6076af49cb7994e522f5d6c29dce496",
+    "semantic_hash": ""
+  },
+  "openspec/specs/scheduler-engine/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "1c666f9e20eb1b280933bc1734b4b6f1",
+    "semantic_hash": ""
+  },
+  "openspec/specs/skill-advisor/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "437266c9668903efb31bd04d952a18d7",
+    "semantic_hash": ""
+  },
+  "openspec/specs/zyrocli-run/spec.md": {
+    "mtime": 1781422081.3826938,
+    "ast_hash": "b5ab013806ee4bfa6ab2890e4e715a10",
+    "semantic_hash": ""
+  },
+  "internal/scaffold/templates/go-project/scripts/discover.py": {
+    "mtime": 1781422173.2919834,
+    "ast_hash": "a9f58c59e8ba1388e5b27002209e1b50",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/pipeline.go": {
+    "mtime": 1781422438.7455914,
+    "ast_hash": "b7f54f4b05acd83a28fba177605ca35d",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/query.go": {
+    "mtime": 1781422128.7858748,
+    "ast_hash": "72afef019b4484f4d23b2a6b2f620b8a",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/verify.go": {
+    "mtime": 1781422136.0610561,
+    "ast_hash": "4650d987f534f09fc3bf8dd8e12b6985",
+    "semantic_hash": ""
+  },
+  "internal/skilladvisor/default_skills.yaml": {
+    "mtime": 1781422081.3777108,
+    "ast_hash": "5e4e1207dae890249ce23dbcf4ae79e6",
+    "semantic_hash": ""
+  },
+  "openspec/changes/agent-procedural-flow/proposal.md": {
+    "mtime": 1781422081.378612,
+    "ast_hash": "85a5dad0e3450e68a9779810cc0059f1",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-skill-validation-pipeline/archive-report.md": {
+    "mtime": 1781422868.3306835,
+    "ast_hash": "cbd17382c4789e42f1f2e2ae4a7544d3",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-skill-validation-pipeline/design.md": {
+    "mtime": 1781422081.382086,
+    "ast_hash": "42d2644c7755e00d7ff90ccba6f9a0f8",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-skill-validation-pipeline/proposal.md": {
+    "mtime": 1781422081.3825219,
+    "ast_hash": "7381a2961e0640729343e4bc303779f2",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-skill-validation-pipeline/tasks.md": {
+    "mtime": 1781422521.6906552,
+    "ast_hash": "21b9958501cd872eb8bb23cebca2570a",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-06-14-skill-validation-pipeline/verify-report.md": {
+    "mtime": 1781422795.1070251,
+    "ast_hash": "eb83628dfbf0c39f762bbbd9f6f485c2",
+    "semantic_hash": ""
+  },
+  "sdd/bridge-orchestration-agent/proposal.md": {
+    "mtime": 1781422081.3838432,
+    "ast_hash": "09a9de904a7d141552f405ae807081c3",
+    "semantic_hash": ""
+  }
+}

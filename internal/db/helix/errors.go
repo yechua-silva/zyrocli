@@ -11,6 +11,7 @@ import (
 // Sentinel errors returned by Client methods.
 var (
 	ErrNotFound         = errors.New("helix: not found")
+	ErrConnection       = errors.New("helix: connection")
 	ErrConnectionFailed = errors.New("helix: connection failed")
 	ErrInvalidRequest   = errors.New("helix: invalid request")
 	ErrTaskNotFound     = errors.New("helix: task not found")

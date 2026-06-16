@@ -99,10 +99,8 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 			return results, fmt.Errorf("scheduler: phase %s ended with status %s", phaseName, result.Status)
 		}
 
-		// Mandatory approval gate — GuidedApproval with context
-		approval := NewGuidedApproval(result.Phase, result.Summary).
-			WithRecommend(fmt.Sprintf("Phase %s completed successfully. Suggested next: %s.", phaseName, validator.NextPhase()))
-		approved, err := approval.PromptApproval()
+		// Mandatory approval gate
+		approved, err := ApprovalGate(result.Phase, result.Summary)
 		if err != nil {
 			return results, fmt.Errorf("scheduler: approval error: %w", err)
 		}

@@ -10,13 +10,13 @@ import (
 
 // HelixEngramStore implementa EngramStore sobre HelixDB
 type HelixEngramStore struct {
-	client       *dbhelix.SDKClient
+	client       *dbhelix.Client
 	embeddingSvc *dbhelix.EmbeddingService
 	defaultDecay float64
 }
 
 // NewHelixEngramStore crea un nuevo store
-func NewHelixEngramStore(client *dbhelix.SDKClient, embeddingSvc *dbhelix.EmbeddingService) *HelixEngramStore {
+func NewHelixEngramStore(client *dbhelix.Client, embeddingSvc *dbhelix.EmbeddingService) *HelixEngramStore {
 	return &HelixEngramStore{
 		client:       client,
 		embeddingSvc: embeddingSvc,

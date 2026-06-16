@@ -15,7 +15,7 @@ const hybridDefaultK = 60
 // HybridSearch ejecuta búsqueda vectorial + BM25 en paralelo y fusiona resultados
 // usando Reciprocal Rank Fusion (RRF). Si embedding está vacío, solo ejecuta BM25.
 // Si ambas búsquedas fallan, retorna el primer error. Si una falla, retorna la otra.
-func HybridSearch(ctx context.Context, client *SDKClient, query string, embedding []float32, opts HybridSearchOptions) ([]SearchResultRow, error) {
+func HybridSearch(ctx context.Context, client *Client, query string, embedding []float32, opts HybridSearchOptions) ([]SearchResultRow, error) {
 	if opts.MaxResults <= 0 {
 		opts.MaxResults = 10
 	}
@@ -75,7 +75,7 @@ func HybridSearch(ctx context.Context, client *SDKClient, query string, embeddin
 }
 
 // vectorSearch ejecuta búsqueda vectorial contra HelixDB.
-func vectorSearch(ctx context.Context, client *SDKClient, embedding []float32, opts HybridSearchOptions) ([]SearchResultRow, error) {
+func vectorSearch(ctx context.Context, client *Client, embedding []float32, opts HybridSearchOptions) ([]SearchResultRow, error) {
 	label := resolveSearchLabel(opts.NodeLabels)
 
 	q := helixsdk.ReadQuery("vector_search").
@@ -93,7 +93,7 @@ func vectorSearch(ctx context.Context, client *SDKClient, embedding []float32, o
 }
 
 // textBM25Search ejecuta búsqueda de texto BM25 contra HelixDB.
-func textBM25Search(ctx context.Context, client *SDKClient, query string, opts HybridSearchOptions) ([]SearchResultRow, error) {
+func textBM25Search(ctx context.Context, client *Client, query string, opts HybridSearchOptions) ([]SearchResultRow, error) {
 	label := resolveSearchLabel(opts.NodeLabels)
 
 	q := helixsdk.ReadQuery("text_search").

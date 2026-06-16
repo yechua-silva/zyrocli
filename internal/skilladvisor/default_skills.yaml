@@ -1,0 +1,131 @@
+- name: impeccable
+  description: "UI/UX design intelligence — diseño, crítica, pulido, animación, micro-interacciones, sistemas de diseño"
+  language: ""
+  framework: ""
+  project_type: "frontend"
+  triggers: ["diseño", "ui", "ux", "frontend", "landing", "interfaz", "componente", "rediseño"]
+  location: "~/.config/opencode/skills/impeccable/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: ui-ux-pro-max
+  description: "UI/UX pro max — 50+ estilos, 161 paletas, 57 font pairings, accesibilidad, animación"
+  language: ""
+  framework: ""
+  project_type: "frontend"
+  triggers: ["ui", "ux", "diseño", "color", "tipografía", "layout", "frontend"]
+  location: "~/.config/opencode/skills/ui-ux-pro-max/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: design-taste-frontend
+  description: "Anti-slop frontend — brief→dirección de diseño, sistemas de diseño reales, audit-first"
+  language: ""
+  framework: ""
+  project_type: "frontend"
+  triggers: ["landing", "portfolio", "rediseño", "frontend", "diseño"]
+  location: "~/.config/opencode/skills/design-taste-frontend/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: huashu-design
+  description: "Prototipos HTML de alta fidelidad, animaciones, demos interactivos, diseño visual"
+  language: ""
+  framework: ""
+  project_type: "frontend"
+  triggers: ["prototipo", "demo", "animación", "html", "diseño visual", "frontend"]
+  location: "~/.config/opencode/skills/huashu-design/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: cognitive-doc-design
+  description: "Documentación que reduce carga cognitiva — guías, README, RFCs, arquitectura"
+  language: ""
+  framework: ""
+  project_type: "documentation"
+  triggers: ["docs", "documentación", "readme", "guía", "arquitectura"]
+  location: "~/.config/opencode/skills/cognitive-doc-design/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: comment-writer
+  description: "Comentarios colaborativos cálidos y directos — PR feedback, issues, revisiones"
+  language: ""
+  framework: ""
+  project_type: "documentation"
+  triggers: ["pr", "review", "feedback", "comentario", "issue", "revisión"]
+  location: "~/.config/opencode/skills/comment-writer/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: go-testing
+  description: "Testing Go — tests, cobertura, Bubbletea teatest, golden files"
+  language: "go"
+  framework: ""
+  project_type: "testing"
+  triggers: ["go", "test", "testing", "cobertura", "golden"]
+  location: "~/.config/opencode/skills/go-testing/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: judgment-day
+  description: "Review adversarial ciego — dual review, fix, re-judge"
+  language: ""
+  framework: ""
+  project_type: "testing"
+  triggers: ["review", "auditoría", "código", "calidad", "revisión"]
+  location: "~/.config/opencode/skills/judgment-day/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: graphify
+  description: "Grafo de conocimiento del proyecto — consultas, caminos, arquitectura"
+  language: ""
+  framework: ""
+  project_type: "cli"
+  triggers: ["grafo", "arquitectura", "dependencias", "estructura"]
+  location: "~/.config/opencode/skills/graphify/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: branch-pr
+  description: "Creación de PRs con verificación issue-first"
+  language: ""
+  framework: ""
+  project_type: "cli"
+  triggers: ["pr", "pull request", "github", "git"]
+  location: "~/.config/opencode/skills/branch-pr/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: chained-pr
+  description: "PRs encadenados para cambios >400 líneas, stacked PRs"
+  language: ""
+  framework: ""
+  project_type: "cli"
+  triggers: ["pr", "chained", "stacked", "review", "split"]
+  location: "~/.config/opencode/skills/chained-pr/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
+
+- name: work-unit-commits
+  description: "Commits por unidad de trabajo revisable — conventional commits, tests con código"
+  language: ""
+  framework: ""
+  project_type: "cli"
+  triggers: ["commit", "git", "conventional", "work unit"]
+  location: "~/.config/opencode/skills/work-unit-commits/SKILL.md"
+  publisher: "opencode-community"
+  verified: true
+  socket_alerts: 0
