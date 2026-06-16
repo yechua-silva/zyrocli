@@ -1,6 +1,22 @@
 # ZyroCLI — Orquestador Autónomo para Desarrollo Asistido por IA
 
+[![npm version](https://img.shields.io/npm/v/zyrocli)](https://www.npmjs.com/package/zyrocli)
+[![Go version](https://img.shields.io/github/go-mod/go-version/secko/zyrocli)](https://go.dev/)
+[![License](https://img.shields.io/github/license/secko/zyrocli)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/secko/zyrocli)](https://goreportcard.com/report/github.com/secko/zyrocli)
+
 > **Pipeline SDD completo (F0→F4) · Memoria Causal · Seguridad por Fase · Auto-instalable**
+
+## 📋 Tabla de Contenidos
+
+- [✨ ¿Qué hace ZyroCLI?](#-qué-hace-zyrocli)
+- [🧠 ¿Por qué existe?](#-por-qué-existe)
+- [🏗️ Arquitectura](#️-arquitectura)
+- [🚀 Instalación](#-instalación)
+- [⚡ Quick Start](#-quick-start)
+- [📚 Documentación](#-documentación)
+- [🛡️ Seguridad](#️-seguridad)
+- [✅ Estado del Proyecto](#-estado-del-proyecto)
 
 ZyroCLI es un orquestador que ejecuta un **pipeline de desarrollo de software** usando agentes de IA sobre OpenCode. No es un chat, no es un IDE — es un **ingeniero de software automatizado** que planifica, especifica, diseña, implementa y verifica usando agentes especializados.
 
@@ -68,22 +84,43 @@ Humano ──→ ZyroCLI (Go) ──→ OpenCode (Agentes IA)
 ## 🚀 Instalación
 
 ```bash
-# Opción 1: npm (recomendado)
+# Opción 1: npm ([zyrocli](https://www.npmjs.com/package/zyrocli)) (recomendado)
 npx zyrocli setup
 
 # Opción 2: npm global
 npm install -g zyrocli
 zyrocli setup
 
-# Opción 3: go install
+# Opción 3: go install (requiere Go)
 go install github.com/secko/zyrocli@latest
 zyrocli setup
 
-# Opción 4: script directo
+# Opción 4: binary directo
 curl -sSL https://github.com/secko/zyrocli/releases/latest/download/install.sh | bash
 ```
 
-> `zyro setup` detecta tu sistema, instala dependencias (Go, uv, HelixDB, Ollama opcional), configura todo y te deja listo para usar.
+> `zyro setup` detecta tu sistema operativo, instala dependencias (Go, uv, HelixDB, Ollama opcional), configura MCP servers y te deja listo para usar en segundos.
+
+## ⚡ Quick Start
+
+```bash
+# 1. Instalar
+npx zyrocli setup
+
+# 2. Crear un handoff con la descripción de tu proyecto
+cat > handoff.yaml << 'EOF'
+project:
+  name: mi-app
+  description: API REST en Go con autenticación JWT
+  technologies:
+    - Go
+    - PostgreSQL
+    - JWT
+EOF
+
+# 3. Inicializar el proyecto
+zyro init handoff.yaml
+```
 
 ## 📚 Documentación
 

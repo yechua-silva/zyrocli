@@ -41,3 +41,8 @@ todo-app/
 .helix/
 target/
 *.log
+
+# Artifacts generados / basura
+typescript
+mcp-servers-extracted-entries.md
+graphify-out/
