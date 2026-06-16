@@ -1,6 +1,6 @@
 {
   "name": "zyrocli",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Orquestador Go para desarrollo asistido por IA con pipeline F0-F4",
   "bin": {
     "zyrocli": "bin/zyrocli.js"
@@ -12,7 +12,13 @@
     "type": "git",
     "url": "git+https://github.com/yechua-silva/zyrocli.git"
   },
-  "keywords": ["zyro", "cli", "ai", "orchestrator", "sdd"],
+  "keywords": [
+    "zyro",
+    "cli",
+    "ai",
+    "orchestrator",
+    "sdd"
+  ],
   "author": "yechua-silva",
   "license": "MIT",
   "bugs": {
@@ -22,6 +28,13 @@
   "engines": {
     "node": ">=18"
   },
-  "os": ["darwin", "linux", "win32"],
-  "cpu": ["x64", "arm64"]
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
 }
