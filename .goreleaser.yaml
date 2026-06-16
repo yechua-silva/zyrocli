@@ -62,14 +62,3 @@ changelog:
     - title: '🧰 Maintenance'
       order: 2
 
-brews:
-  - name: zyrocli
-    repository:
-      owner: secko
-      name: homebrew-tap
-    directory: Formula
-    homepage: "https://github.com/secko/zyrocli"
-    description: "Orquestador Go para desarrollo asistido por IA con pipeline F0-F4"
-    license: "MIT"
-    test: |
-      system "#{bin}/zyrocli --version"
