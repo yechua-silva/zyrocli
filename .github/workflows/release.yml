@@ -58,9 +58,18 @@ jobs:
           cp scripts/npm/bin/zyrocli.js dist/npm/bin/
           cp scripts/npm/scripts/postinstall.js dist/npm/scripts/
 
-      - name: Publish to npm
+      - name: Check version and publish
         run: |
           cd dist/npm
-          npm publish --access public
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "Package version: $PKG_VERSION"
+          
+          # Verificar si la versión ya existe en npm
+          if npm view zyrocli@$PKG_VERSION version &>/dev/null; then
+            echo "ℹ️ Versión $PKG_VERSION ya existe en npm. Skip."
+          else
+            echo "📦 Publicando $PKG_VERSION..."
+            npm publish --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
