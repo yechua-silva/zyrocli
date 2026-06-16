@@ -1,0 +1,39 @@
+version: "2.0"
+source:
+  system: holdin-admin
+  url: ""
+project:
+  name: ZyroAgentCLI
+  language: go
+  repository: github.com/secko/zyrocli
+validated_idea:
+  problem: "ZyroCLI necesita un parser completo de handoff.yaml que valide el contrato v2.0"
+  solution: "Implementar parser, validador y comando init con soporte para archivo y stdin"
+  rationale: "Sin este parser, el pipeline de 4 fases no puede arrancar"
+user_story:
+  story: "As an operator, I want to init my project from a handoff contract so that SDD phases are configured"
+  acceptance: "Given a valid handoff.yaml, when I run zyrocli init, then the contract is parsed and validated"
+mvp:
+  scope: "Parser + validator + init command; file and stdin support; v2.0 contract structs"
+  features:
+    - "YAML parsing with file and stdin support"
+    - "Business rule validation with multi-error reporting"
+    - "Cobra init subcommand"
+governance:
+  mode: structured
+  module: github.com/secko/zyrocli
+  go_version: "1.26"
+  strict_tdd: false
+  approvals:
+    - name: "design-review"
+      approved_by: "architect"
+testing:
+  strategy: table-driven
+  golden: false
+  mock: "stdlib interfaces around system boundaries"
+limits:
+  max_tasks: 15
+  max_lines: 400
+  max_loops: 5
+  phase_timeout: "10m"
+  chained_prs: false

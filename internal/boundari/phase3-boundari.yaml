@@ -1,0 +1,31 @@
+version: "1.0"
+phase: "F3"
+description: "Implementación — escritura intensiva de código fuente con approval para acciones peligrosas."
+budget:
+  max_tool_calls: 200
+  max_runtime_seconds: 1800
+tools:
+  - name: "search_code"
+    action: allow
+  - name: "task_context"
+    action: allow
+  - name: "read_file"
+    action: allow
+  - name: "write_file"
+    action: allow
+    conditions:
+      extensions: [".go", ".py", ".ts", ".js", ".md", ".yaml", ".json", ".toml", ".mod", ".sum"]
+  - name: "edit_file"
+    action: allow
+    conditions:
+      extensions: [".go", ".py", ".ts", ".js", ".md", ".yaml", ".json"]
+  - name: "execute_command"
+    action: allow
+    require_approval: true
+    conditions:
+      commands: ["go build", "go test", "go vet", "go fmt", "uv run", "npm run"]
+  - name: "save_to_helix"
+    action: allow
+    require_approval: true
+  - name: "delete_file"
+    action: deny

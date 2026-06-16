@@ -1,3 +1,7 @@
+// DEPRECATED: Skills and MCP tools now load via OpenCode plugins (claude-bridge,
+// embedded-skill-mcp). This file is kept for backward compatibility but should
+// not be used for new configurations. See internal/boomerang/ for the new
+// orchestration pipeline.
 package opencode
 
 import (

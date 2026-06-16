@@ -95,7 +95,7 @@ The global ZyroCLI ecosystem (skills, agents, MCP) must be installed first:
 					"problem":     payload.ValidatedIdea.Problem,
 					"current_phase": "phase0",
 				}); err == nil {
-					cmd.Printf("  HelixDB project node: %d\n", projectNode.ID)
+					cmd.Printf("  HelixDB project node: %d\n", projectNode)
 				}
 				_ = helixClient.Close()
 			}

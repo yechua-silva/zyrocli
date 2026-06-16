@@ -38,3 +38,6 @@ todo-app/
 
 # Config local
 .zyro/
+.helix/
+target/
+*.log

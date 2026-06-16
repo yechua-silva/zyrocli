@@ -1,0 +1,28 @@
+version: "1.0"
+phase: "F0"
+description: "Investigación — SOLO LECTURA. No escribir archivos ni ejecutar código."
+budget:
+  max_tool_calls: 50
+  max_runtime_seconds: 300
+  max_cost_usd: 0.0
+tools:
+  - name: "search_code"
+    action: allow
+  - name: "search_skills"
+    action: allow
+  - name: "task_context"
+    action: allow
+  - name: "web_search"
+    action: allow
+  - name: "read_file"
+    action: allow
+  - name: "write_file"
+    action: deny
+  - name: "edit_file"
+    action: deny
+  - name: "execute_command"
+    action: deny
+  - name: "save_to_helix"
+    action: deny
+  - name: "create_task"
+    action: deny

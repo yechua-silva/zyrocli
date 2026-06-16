@@ -126,7 +126,7 @@ Output formats:
 func nodeListToMap(nodes []*helix.Node) []map[string]any {
 	result := make([]map[string]any, len(nodes))
 	for i, n := range nodes {
-		m := map[string]any{"id": n.ID, "type": n.Type}
+		m := map[string]any{"id": n.ID, "type": n.Label}
 		for k, v := range n.Properties {
 			m[k] = v
 		}

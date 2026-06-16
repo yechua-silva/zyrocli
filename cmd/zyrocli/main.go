@@ -7,7 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var verbose bool
+var (
+	verbose bool
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "zyrocli",
@@ -23,8 +28,29 @@ domain-specific internal packages.`,
 	},
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version information",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("zyrocli %s (commit: %s, built: %s)\n", version, commit, date)
+	},
+}
+
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+	rootCmd.Flags().BoolP("version", "", false, "print version information")
+	rootCmd.AddCommand(versionCmd)
+
+	// Override root Run to intercept --version
+	originalRun := rootCmd.Run
+	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+		showVersion, _ := cmd.Flags().GetBool("version")
+		if showVersion {
+			fmt.Printf("zyrocli %s (commit: %s, built: %s)\n", version, commit, date)
+			return
+		}
+		originalRun(cmd, args)
+	}
 }
 
 func Execute() {

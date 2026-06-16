@@ -378,7 +378,7 @@ func (r *F4Runner) Run(ctx context.Context, cfg *Config) (*Result, error) {
 
 	// Actualizar Project node
 	fmt.Print("  Archivando proyecto...")
-	helixClient.UpdateNode(ctx, "Project", int64(projectID), map[string]any{
+	helixClient.UpdateNode(ctx, int64(projectID), map[string]any{
 		"status": "archived",
 	})
 	fmt.Println(" OK")

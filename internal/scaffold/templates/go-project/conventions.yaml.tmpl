@@ -1,0 +1,85 @@
+# .zyro/conventions.yaml — Zyro project configuration
+# Auto-generated for {{.ProjectName}}
+
+# Topic keys for Engram persistence
+topic_keys:
+  # === Per-project keys (project scope) ===
+  project:
+    context:        "zyro/{project}/context"
+    investigation:  "zyro/{project}/investigation"
+    planning:       "zyro/{project}/planning"
+    doc_index:      "zyro/{project}/doc-index"
+    architecture:   "zyro/{project}/architecture"
+    changelog:      "zyro/{project}/changelog"
+
+  # === Per-change keys (SDD flow) ===
+  change:
+    explore:        "sdd/{change}/explore"
+    proposal:       "sdd/{change}/proposal"
+    spec:           "sdd/{change}/spec"
+    design:         "sdd/{change}/design"
+    tasks:          "sdd/{change}/tasks"
+    apply_progress: "sdd/{change}/apply-progress"
+    verify_report:  "sdd/{change}/verify-report"
+    archive_report: "sdd/{change}/archive-report"
+
+  # === Graphify ===
+  graph:
+    report:         "zyro/{project}/graph-report"
+    last_diff:      "zyro/{project}/graph-diff"
+
+# Standard format for Engram entries
+entry_format:
+  required_fields:
+    - project
+    - artifact
+    - timestamp
+    - status
+  optional_fields:
+    - change
+  sections:
+    - What
+    - Why
+    - Where
+    - Decisions
+    - Next
+
+# Search protocol for sub-agents
+search_protocol:
+  fast_path:    "topic_key → mem_get_observation(id)"
+  slow_path:    "mem_search(query, project, type)"
+  fallback:     "mem_context(project)"
+  last_resort:  "ask the human"
+
+# Graphify configuration
+graphify:
+  auto_update: true
+  significant_threshold: 5
+  skip_if_no_change: true
+
+# Code and documentation conventions
+conventions:
+  - type: code
+    pattern: "**/*.go"
+    rule: "Use table-driven tests"
+    severity: must
+  - type: code
+    pattern: "**/*.go"
+    rule: "No hardcoded credentials or secrets"
+    severity: must
+  - type: code
+    pattern: "**/*.go"
+    rule: "Error messages start with lowercase"
+    severity: should
+  - type: code
+    pattern: "**/*.go"
+    rule: "Package names are lowercase, no underscores"
+    severity: must
+  - type: doc
+    pattern: "docs/**/*.md"
+    rule: "Include ## Purpose section"
+    severity: should
+  - type: review
+    pattern: "**/*.go"
+    rule: "400-line review budget"
+    severity: must
