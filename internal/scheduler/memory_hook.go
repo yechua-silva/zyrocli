@@ -2,8 +2,12 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
+	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/secko/zyrocli/internal/memory"
 )
@@ -51,18 +55,128 @@ func (h *MemoryHooks) PrePhase(ctx context.Context, phase Phase, taskDesc string
 	return formatMemoryForPrompt(results), nil
 }
 
-// PostPhase extrae hechos del log de conversación y los persiste en memoria.
-// Si el extractor Python está configurado, lo ejecuta para extracción avanzada.
-// Por ahora, es un placeholder que no ejecuta el extractor.
-// TODO: ejecutar python fact_extractor.py --input <log> --phase <phase>
+// PostPhase extrae hechos del log de conversación usando fact_extractor.py
+// y los persiste en la memoria causal.
 func (h *MemoryHooks) PostPhase(ctx context.Context, phase Phase, conversationLog string) error {
 	if h.store == nil || conversationLog == "" {
 		return nil
 	}
 
-	// Placeholder: cuando el extractor Python esté listo, se ejecutará aquí.
-	// h.runFactExtractor(conversationLog, string(phase))
-	_ = h.factExtractorPath
+	// Si hay extractor Python configurado, usarlo
+	if h.factExtractorPath != "" {
+		return h.runFactExtractor(ctx, conversationLog, string(phase))
+	}
+
+	// Fallback: extracción simple integrada
+	return h.extractSimpleFacts(ctx, conversationLog, string(phase))
+}
+
+// runFactExtractor ejecuta el script Python fact_extractor.py
+// para extracción avanzada de hechos usando LLM o patrones.
+func (h *MemoryHooks) runFactExtractor(ctx context.Context, logText string, phase string) error {
+	// Construir JSON de entrada
+	input := map[string]string{
+		"conversation": logText,
+	}
+	inputJSON, err := json.Marshal(input)
+	if err != nil {
+		return fmt.Errorf("memory: marshal input: %w", err)
+	}
+
+	// Ejecutar fact_extractor.py con el log
+	cmd := exec.CommandContext(ctx, "python3", h.factExtractorPath,
+		"--input", "-",
+		"--phase", phase,
+	)
+	cmd.Stdin = strings.NewReader(string(inputJSON))
+	output, err := cmd.Output()
+	if err != nil {
+		// Soft fail: no bloquear la fase por un error de extracción
+		log.Printf("[memory] fact_extractor error: %v (stderr: %s)", err, string(output))
+		return nil
+	}
+
+	// Parsear resultado
+	var result struct {
+		Facts []memory.Fact `json:"facts"`
+	}
+	if err := json.Unmarshal(output, &result); err != nil {
+		log.Printf("[memory] fact_extractor parse error: %v", err)
+		return nil
+	}
+
+	// Guardar cada fact
+	for i := range result.Facts {
+		f := &result.Facts[i]
+		f.Source = "extractor:postphase"
+		f.Phase = phase
+		if f.Salience == 0 {
+			f.Salience = 0.5
+		}
+		if f.Confidence == 0 {
+			f.Confidence = 0.6
+		}
+		if f.CreatedAt.IsZero() {
+			f.CreatedAt = time.Now()
+		}
+		f.IsActive = true
+
+		if _, err := h.store.SaveFact(ctx, f); err != nil {
+			log.Printf("[memory] error saving fact: %v", err)
+		}
+	}
+
+	log.Printf("[memory] PostPhase: %d facts saved from phase %s", len(result.Facts), phase)
+	return nil
+}
+
+// extractSimpleFacts extrae hechos básicos sin depender del script Python.
+// Usa palabras clave simples como fallback.
+func (h *MemoryHooks) extractSimpleFacts(ctx context.Context, logText string, phase string) error {
+	logLower := strings.ToLower(logText)
+	keywords := map[string]string{
+		"decidimos":  "decision",
+		"elegimos":   "decision",
+		"error":      "error",
+		"bug":        "error",
+		"prefiero":   "preference",
+		"observo":    "observation",
+		"noto":       "observation",
+		"dependemos": "dependency",
+		"requiere":   "dependency",
+	}
+
+	for keyword, factType := range keywords {
+		if strings.Contains(logLower, keyword) {
+			// Extraer contexto alrededor de la palabra clave
+			idx := strings.Index(logLower, keyword)
+			start := idx - 50
+			if start < 0 {
+				start = 0
+			}
+			end := idx + len(keyword) + 100
+			if end > len(logText) {
+				end = len(logText)
+			}
+			content := strings.TrimSpace(logText[start:end])
+
+			fact := &memory.Fact{
+				Type:       memory.FactType(factType),
+				Content:    content,
+				Salience:   0.5,
+				Confidence: 0.6,
+				Source:     "memory:simple-fallback",
+				Phase:      phase,
+				IsActive:   true,
+				DecayRate:  0.05,
+				CreatedAt:  time.Now(),
+			}
+
+			if _, err := h.store.SaveFact(ctx, fact); err != nil {
+				log.Printf("[memory] error saving simple fact: %v", err)
+			}
+		}
+	}
 
 	return nil
 }

@@ -132,17 +132,39 @@ El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se re
 | Avanza con aprobación humana | Es automático, no requiere aprobación |
 | 4-5 fases por feature | 6 pasos × N fases por feature |
 
-### 💰 Ahorro de Tokens — Datos Concretos
+### 📐 Medición de Tokens — Metodología
 
-El Boomerang **inyecta contexto preciso** en cada delegación, eliminando la necesidad de que el agente lea todo el codebase:
+El ahorro de tokens se mide con datos reales, no estimaciones. Cada fase ejecutada con el
+[Boomerang](#-boomerang---micro-ciclo-de-ejecución-dentro-de-cada-fase) registra automáticamente
+una medición en HelixDB.
 
-| Escenario | Sin Boomerang | Con Boomerang | Ahorro |
-|-----------|--------------|---------------|--------|
-| Agente recibe contexto | 12k-20k tokens (codebase completo) | 2k-4k tokens (solo hechos relevantes) | **~80%** |
-| Búsqueda de decisiones previas | 8k-15k tokens (scanea todo) | 0.5k tokens (una query BM25) | **~95%** |
-| Carga mental del agente | Tiene que entender el proyecto solo | Recibe hechos ya filtrados | **Menos alucinaciones** |
+**Metodología:**
 
-**Fuente:** [Memoria Causal reduce 80% tokens por sesión](docs/explorations/investigacion-04-engram-memoria-causal.md)
+1. **`zyro doctor --tokens`** muestra la tabla de mediciones acumuladas
+2. Cada medición compara:
+   - **Sin Boomerang**: tokens estimados del prompt base + codebase completo (~3000 chars baseline)
+   - **Con Boomerang**: tokens del contexto causal inyectado (solo hechos relevantes)
+3. Fórmula: `1 token ≈ 4 caracteres` (estándar OpenAI para texto y código)
+4. Se requieren **mínimo 3 muestras por fase** antes de reportar ahorro
+5. Mediciones se almacenan como Facts tipo `"measurement"` en HelixDB
+
+**Reporte:** `zyro doctor --tokens`
+
+> **Fuente:** El estándar 1 token ≈ 4 chars es el usado por OpenAI para tokenizar texto
+> en inglés y código: https://platform.openai.com/tokenizer
+>
+> **Precisión:** ±20% para rangos típicos (1k-100k chars). Para mediciones exactas,
+> integrar tiktoken (https://github.com/openai/tiktoken).
+>
+| Fase | Sin Boomerang | Con Boomerang | Ahorro | Muestras |
+|------|--------------|--------------|--------|----------|
+| F0   | —            | —            | ⏳ N<3  | 0        |
+| F1   | —            | —            | ⏳ N<3  | 0        |
+| F2   | —            | —            | ⏳ N<3  | 0        |
+| F3   | —            | —            | ⏳ N<3  | 0        |
+| F4   | —            | —            | ⏳ N<3  | 0        |
+
+> *Los datos se llenan automáticamente al ejecutar fases. Mínimo 3 muestras por fase.*
 
 ### 🔧 Integración con OpenCode
 

@@ -54,10 +54,21 @@ Flags:
 			return fmt.Errorf("run: handoff.yaml not found in current directory\nRun 'zyrocli init <file>' first")
 		}
 
-		// Load config from handoff.yaml
-		cfg, err := scheduler.LoadConfig("handoff.yaml")
-		if err != nil {
-			return fmt.Errorf("run: %w", err)
+		// Load config with Boomerang initialized, merge from handoff.yaml
+		cfg := scheduler.NewDefaultConfig(projectDir)
+		if _, err := os.Stat("handoff.yaml"); err == nil {
+			if hfCfg, err := scheduler.LoadConfig("handoff.yaml"); err == nil {
+				// Merge: handoff sobrescribe defaults
+				if hfCfg.Mode != "" {
+					cfg.Mode = hfCfg.Mode
+				}
+				if hfCfg.MaxLoops > 0 {
+					cfg.MaxLoops = hfCfg.MaxLoops
+				}
+				if hfCfg.PhaseTimeout > 0 {
+					cfg.PhaseTimeout = hfCfg.PhaseTimeout
+				}
+			}
 		}
 
 		// Build phase runners in order (F0→F4)

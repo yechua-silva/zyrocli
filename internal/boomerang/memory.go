@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/secko/zyrocli/internal/memory"
+	"github.com/secko/zyrocli/internal/tokens"
 )
 
 // MemoryStep consulta memoria causal relevante para la fase actual.
@@ -37,5 +38,10 @@ func (o *BoomerangOrchestrator) MemoryStep(ctx context.Context, phase, taskDesc 
 			i+1, r.Fact.Type, r.Fact.Content, r.Fact.Confidence*100, r.Fact.Phase))
 	}
 
-	return sb.String(), nil
+	memoryCtx := sb.String()
+
+	// Medir tokens del contexto inyectado
+	_ = tokens.Count(memoryCtx) // usado por el orchestrator
+
+	return memoryCtx, nil
 }

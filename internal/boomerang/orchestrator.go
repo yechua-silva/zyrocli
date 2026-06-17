@@ -6,6 +6,7 @@ import (
 
 	"github.com/secko/zyrocli/internal/boundari"
 	"github.com/secko/zyrocli/internal/memory"
+	"github.com/secko/zyrocli/internal/tokens"
 )
 
 // PhaseConfig configura la ejecución de una fase
@@ -71,22 +72,38 @@ type SaveResult struct {
 	Contradictions int `json:"contradictions"`
 }
 
+// MeasurementCallback se llama después de cada fase con datos de medición.
+type MeasurementCallback func(Measurement)
+
+// Measurement contiene datos de una medición de tokens.
+type Measurement struct {
+	Phase            string `json:"phase"`
+	TaskDescription  string `json:"task_description"`
+	WithoutBoomerang int64  `json:"without_boomerang"` // tokens estimados del codebase
+	WithBoomerang    int64  `json:"with_boomerang"`    // tokens del contexto inyectado
+	OutputTokens     int64  `json:"output_tokens"`     // tokens de respuesta estimados
+	CreatedAt        string `json:"created_at"`
+}
+
 // BoomerangOrchestrator ejecuta el ciclo de 6 pasos
 type BoomerangOrchestrator struct {
-	memoryStore    memory.EngramStore
-	boundariLoader func(string) (*boundari.Policy, error)
-	maxIterations  int
+	memoryStore         memory.EngramStore
+	boundariLoader      func(string) (*boundari.Policy, error)
+	maxIterations       int
+	measurementCallback MeasurementCallback
 }
 
 // NewBoomerangOrchestrator crea un nuevo orquestador
 func NewBoomerangOrchestrator(
 	store memory.EngramStore,
 	bl func(string) (*boundari.Policy, error),
+	callback MeasurementCallback,
 ) *BoomerangOrchestrator {
 	return &BoomerangOrchestrator{
-		memoryStore:    store,
-		boundariLoader: bl,
-		maxIterations:  3,
+		memoryStore:         store,
+		boundariLoader:      bl,
+		maxIterations:       3,
+		measurementCallback: callback,
 	}
 }
 
@@ -102,6 +119,11 @@ func (o *BoomerangOrchestrator) RunPhase(ctx context.Context, config PhaseConfig
 		return nil, err
 	}
 	result.MemoryUsed = len(memoryCtx)
+
+	// Estimar tokens "sin Boomerang" (prompt base + codebase completo)
+	// Asumimos ~3000 chars de prompt + taskDesc como baseline
+	withoutTokens := tokens.Count("Execute phase " + config.Phase + ": " + config.TaskDesc + ". Codebase context: ~3000 chars baseline.")
+	withTokens := tokens.Count(memoryCtx)
 
 	// Paso 2: THINK — planificar DAG de tareas
 	// (implementado en think.go)
@@ -151,6 +173,18 @@ func (o *BoomerangOrchestrator) RunPhase(ctx context.Context, config PhaseConfig
 	saveResult, err := o.SaveStep(ctx, config.Phase, delegateResult, nil)
 	if err == nil {
 		result.FactsSaved = saveResult.FactsSaved
+	}
+
+	// Guardar medición si hay callback
+	if o.measurementCallback != nil {
+		o.measurementCallback(Measurement{
+			Phase:            config.Phase,
+			TaskDescription:  config.TaskDesc,
+			WithoutBoomerang: withoutTokens,
+			WithBoomerang:    withTokens,
+			OutputTokens:     0, // se llena después si tenemos acceso
+			CreatedAt:        time.Now().UTC().Format(time.RFC3339),
+		})
 	}
 
 	result.Success = result.QualityOK
