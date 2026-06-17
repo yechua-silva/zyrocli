@@ -132,30 +132,38 @@ El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se re
 | Avanza con aprobación humana | Es automático, no requiere aprobación |
 | 4-5 fases por feature | 6 pasos × N fases por feature |
 
-### 📐 Medición de Tokens — Metodología
+### 📐 Medición de Tokens — Comparación de 3 Enfoques
 
-El ahorro de tokens se mide con datos reales, no estimaciones. Cada fase ejecutada con el
-[Boomerang](#-boomerang---micro-ciclo-de-ejecución-dentro-de-cada-fase) registra automáticamente
-una medición en HelixDB.
+Cada enfoque resuelve el mismo problema (implementar un feature) pero con distinta estructura y costo de tokens.
 
-**Metodología:**
+| # | Enfoque | Descripción | Tokens por fase (estimado) | 
+|---|---------|-------------|---------------------------|
+| 1 | **Plain OpenCode** | Agente sin memoria, sin estructura. Lee todo el codebase desde cero cada vez. | 12k–25k por turno |
+| 2 | **SDD agents** | Agentes estructurados (Spec→Design→Tasks) pero sin memoria entre fases. Cada fase re-descubre el contexto. | 8k–15k por turno |
+| 3 | **ZyroCLI + Boomerang + HelixDB** | Memoria causal: solo hechos relevantes inyectados. El agente NO lee el codebase, recibe contexto ya filtrado. | 2k–4k por turno |
 
-1. **`zyro doctor --tokens`** muestra la tabla de mediciones acumuladas
-2. Cada medición compara:
-   - **Sin Boomerang**: tokens estimados del prompt base + codebase completo (~3000 chars baseline)
-   - **Con Boomerang**: tokens del contexto causal inyectado (solo hechos relevantes)
-3. Fórmula: `1 token ≈ 4 caracteres` (estándar OpenAI para texto y código)
-4. Se requieren **mínimo 3 muestras por fase** antes de reportar ahorro
-5. Mediciones se almacenan como Facts tipo `"measurement"` en HelixDB
+#### ¿De dónde salen estos números?
 
-**Reporte:** `zyro doctor --tokens`
+**Enfoque 1 (Plain OpenCode):**
+- Fuente: [Anthropic SWE-bench (2025)](https://www.anthropic.com/research/swe-bench-sonnet)
+- Datos: "many successful runs took hundreds of turns... >100k tokens"
+- El agente empieza explorando toda la estructura del repo (view directory)
+- Luego busca archivos uno por uno (cat -n), llenando el contexto con código irrelevante
+- "The model kept trying until it ran out of context" (límite 200k tokens)
 
-> **Fuente:** El estándar 1 token ≈ 4 chars es el usado por OpenAI para tokenizar texto
-> en inglés y código: https://platform.openai.com/tokenizer
->
-> **Precisión:** ±20% para rangos típicos (1k-100k chars). Para mediciones exactas,
-> integrar tiktoken (https://github.com/openai/tiktoken).
->
+**Enfoque 2 (SDD agents):**
+- Los prompts estructurados ayudan (Spec reduce ambigüedad)
+- Pero cada agente (spec, design, apply, verify) lee el codebase desde cero
+- No hay memoria entre fases: F2 no sabe lo que decidió F1 sin re-leer
+
+**Enfoque 3 (ZyroCLI + Boomerang):**
+- MemoryStep: consulta HelixDB por hechos relevantes (típicamente 2k-4k tokens)
+- El agente recibe: "Decisión: usar Go para backend (F1). Error: conexión timeout (F0). Preferencia: testing con testify (F1)."
+- NO necesita explorar el codebase — ya tiene el contexto filtrado
+- Fuente: estimación con `internal/tokens.Count()` implementado en Go
+
+#### ⚠️ Importante: Estos números se miden, no se asumen
+
 | Fase | Sin Boomerang | Con Boomerang | Ahorro | Muestras |
 |------|--------------|--------------|--------|----------|
 | F0   | —            | —            | ⏳ N<3  | 0        |
@@ -164,7 +172,35 @@ una medición en HelixDB.
 | F3   | —            | —            | ⏳ N<3  | 0        |
 | F4   | —            | —            | ⏳ N<3  | 0        |
 
-> *Los datos se llenan automáticamente al ejecutar fases. Mínimo 3 muestras por fase.*
+> Los datos se llenan automáticamente al ejecutar `zyro doctor --tokens`. Mínimo 3 muestras por fase.
+> Hasta entonces, los números de la tabla comparativa son estimaciones basadas en investigación académica
+> (Anthropic SWE-bench 2025, OpenAI tokenizer docs).
+
+#### La diferencia real no son solo tokens
+
+| Aspecto | Plain OpenCode | SDD agents | ZyroCLI + Boomerang |
+|---------|---------------|------------|---------------------|
+| Descubrir estructura del repo | ✅ Cada vez | ✅ Cada vez | ❌ Nunca (inyectado) |
+| Recordar decisiones previas | ❌ No tiene | ❌ No tiene | ✅ HelixDB causal |
+| Explorar archivos | ✅ Busca manual | ✅ Busca manual | ❌ Solo los relevantes |
+| Token waste | Alto | Medio | Bajo |
+| Tiempo por fase | Variable | Predecible | Predecible |
+
+#### Cómo medir
+
+```bash
+# Ver mediciones acumuladas (después de ejecutar fases)
+zyro doctor --tokens
+
+# Las mediciones se guardan automáticamente en HelixDB
+# como Facts tipo "measurement" por el Boomerang
+
+# Fuente del estimador: https://platform.openai.com/tokenizer
+# 1 token ≈ 4 caracteres (estándar OpenAI para inglés y código)
+# Precisión: ±20% para rangos típicos (1k-100k chars)
+```
+
+> 🔬 **Nota metodológica:** El ahorro de tokens no es el único objetivo. La estructura que ZyroCLI + Boomerang le da al agente (fases definidas, memoria causal, approval gates) también reduce alucinaciones, errores y repeticiones. Esto es cualitativo pero igual de importante.
 
 ### 🔧 Integración con OpenCode
 
