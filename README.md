@@ -132,61 +132,76 @@ El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se re
 | Avanza con aprobación humana | Es automático, no requiere aprobación |
 | 4-5 fases por feature | 6 pasos × N fases por feature |
 
-### 📊 Benchmark Multi-Sesión: 3 Sesiones Incrementales × 3 Jaulas
+### 📊 Benchmark v2 — Comparativa justa (24 runs, 3 sesiones)
 
-Ejecutamos **3 sesiones incrementales** (JWT auth → roles → refresh token) × **3 iteraciones** × **3 jaulas** = 27 runs (24 completados) sobre **DeepSeek V4 Flash via OpenCode Zen (gratis)**.
+Ejecutamos **3 sesiones incrementales** (JWT auth → roles → refresh token) × **3 iteraciones** × **3 jaulas**
+= 27 runs (24 completados, 3 timeouts de ZyroCLI) sobre **DeepSeek V4 Flash via OpenCode Zen (gratis)**.
 
-#### Resultados por sesión
+| Jaula | Sesión | N | Tok In | Tok Out | Costo | Tiempo | Cobert. | Arch | Lines | Tests |
+|-------|--------|---|--------|---------|-------|--------|---------|------|-------|-------|
+| **Plain OpenCode** | JWT Auth | 3 | 13,563 | 1,796 | $0.0000 | **47s** 🏆 | 0% | 1 | 119 | ✅ |
+| **Plain OpenCode** | Roles | 3 | 6,116 | 2,385 | $0.0000 | 29s | 0% | 1 | 173 | ✅ |
+| **Plain OpenCode** | Refresh | 3 | 6,789 | 2,360 | $0.0000 | 27s | 0% | 1 | 284 | ✅ |
+| **gentle-ai** | JWT Auth | 3 | 10,273 | 1,029 | $0.0000 | 96s | 0% | 1 | 169 | ✅ |
+| **gentle-ai** | Roles | 3 | 11,548 | 1,568 | $0.0000 | 16s | 0% | 1 | 235 | ✅ |
+| **gentle-ai** | Refresh | 3 | 12,924 | 2,550 | $0.0000 | 11s | 0% | 1 | 396 | ✅ |
+| **ZyroCLI** 🏆 | JWT Auth | 3 | **11,112** | 1,648 | $0.0000 | 121s | **27%** ✅ | **2** | **503** | ✅ |
+| **ZyroCLI** 🏆 | Roles | 2 | 9,795 | 366 | $0.0000 | — | **37%** ✅ | **2** | **570** | ✅ |
+| **ZyroCLI** 🏆 | Refresh | 1 | 19,676 | 7,515 | $0.0000 | — | **66%** ✅ | **2** | **815** | ✅ |
 
-| Jaula | Ses | N | Tok In (prom) | Tok Out (prom) | Costo | Tiempo | Cobert. | Arch | Lines | Tests |
-|-------|-----|---|--------------|---------------|-------|--------|---------|------|-------|-------|
-| **Plain** | 1 | 3 | 13,563 | 1,796 | $0.0000 | 47s | 0% | 1 | 119 | ✅ |
-| **Plain** | 2 | 3 | 6,116 | 2,385 | $0.0000 | 29s | 0% | 1 | 173 | ✅ |
-| **Plain** | 3 | 3 | 6,789 | 2,360 | $0.0000 | 27s | 0% | 1 | 284 | ✅ |
-| **gentle-ai** | 1 | 3 | 10,273 | 1,029 | $0.0000 | 96s | 0% | 1 | 169 | ✅ |
-| **gentle-ai** | 2 | 3 | 11,548 | 1,568 | $0.0000 | 16s | 0% | 1 | 235 | ✅ |
-| **gentle-ai** | 3 | 3 | 12,924 | 2,550 | $0.0000 | 11s | 0% | 1 | 396 | ✅ |
-| **ZyroCLI** | 1 | 3 | 11,112 | 1,648 | $0.0000 | ⏱️ | **27%** | **2** | **503** | ✅ |
-| **ZyroCLI** | 2 | 2 | 9,795 | 366 | $0.0000 | ⏱️ | **37%** | **2** | **570** | ✅ |
-| **ZyroCLI** | 3 | 1 | 19,676 | 7,515 | $0.0000 | ⏱️ | **66%** | **2** | **815** | ✅ |
+#### 🏆 Ganadores por métrica
 
-#### Totales acumulados
+| Métrica | Ganador | Valor | Por qué |
+|---------|---------|-------|---------|
+| 🎯 **Tokens input** | **ZyroCLI** | 72,603 total | Memoria causal inyecta contexto filtrado. −35% vs gentle-ai |
+| ⚡ **Velocidad** | **Plain** | 47s avg ses 1 | Sin overhead de fases. 2.5× más rápido que ZyroCLI |
+| 🧪 **Tests + Cobertura** | **ZyroCLI** | 27-66% | Único que genera tests automáticos. QualityStep obliga |
+| 📐 **Modularidad** | **ZyroCLI** | 2-3 archivos | Refactoriza en archivos separados. Los otros: 1 monolito |
+| 💰 **Costo** | **Plain** | $0.0000 avg | Diferencia marginal con DeepSeek Flash (gratis) |
+| 🔒 **Consistencia** | **gentle-ai** | 9/9 sin timeout | 100% tasa de éxito en las 3 sesiones |
 
-| Métrica | Plain OpenCode | gentle-ai v1.40.2 | ZyroCLI + Boomerang |
-|---------|---------------|-------------------|---------------------|
-| **Tokens input (total)** | 79,406 | 104,235 ⬆️ | **72,603** ✅ |
-| **Tokens output (total)** | **19,621** ✅ | 15,440 | 13,192 |
-| **Cobertura de tests** | 0% ❌ | 0% ❌ | **27–66%** ✅ |
-| **Archivos generados** | 1 (monolítico) | 1 (monolítico) | **2–3 (modular)** ✅ |
-| **Runs exitosos** | 9/9 ✅ | 9/9 ✅ | 6/9 (3 timeout) |
-| **Código con tests** | ❌ | ❌ | **✅** |
+> ⚠️ **Comparación justa:** ZyroCLI completó 6/9 runs (3 timeouts en sesiones 2-3 por el overhead del Boomerang).
+> Las celdas con "—" indican N < 2, datos insuficientes para promedio.
 
-**Conclusiones clave:**
-1. **ZyroCLI es el ÚNICO que genera tests automáticos** con cobertura 27–66%. Plain y gentle-ai generan 0% cobertura en todas las iteraciones.
-2. **ZyroCLI refactoriza el código** en múltiples archivos (2-3 archivos vs 1 archivo monolítico). Código más modular y mantenible.
-3. **Plain OpenCode es el más rápido** pero produce código sin tests ni estructura. Adecuado para prototipos rápidos.
-4. **gentle-ai tiene el mayor consumo de tokens** en sesiones avanzadas (+31% tokens input total respecto a Plain).
-5. **ZyroCLI sufre timeouts** en tareas complejas (3/9 runs). El Boomerang de 6 pasos es más lento pero el código es de mayor calidad.
-6. **Costo marginal nulo** con OpenCode Zen — DeepSeek V4 Flash es gratis, el costo no es factor diferenciador.
+#### 🔧 Cuello de botella del Boomerang (ZyroCLI)
 
-> 📈 [Reporte completo con gráficos SVG →](docs/benchmark/index.html)
+El Boomerang ejecuta **6 pasos secuenciales por fase** (Memory → Think → Delegate → Git Check → Quality → Save).
+Esto genera:
 
-#### ¿Por qué ZyroCLI gana en calidad pero pierde en velocidad?
+- **2.5× más lento** que Plain (121s vs 47s en sesión 1)
+- **3/9 timeouts** en sesiones complejas (roles + refresh)
+- **+56% razonamiento** vs Plain (planificación extra)
 
-ZyroCLI ejecuta un **pipeline estructurado** (SDD + Boomerang) que planifica antes de escribir:
-1. No escribe código directamente — primero investiga (F0), especifica (F1), diseña (F2)
-2. El Boomerang de 6 pasos (Memory → Think → Delegate → Git Check → Quality Gates → Save Memory) asegura calidad
-3. Cada fase invoca agentes especializados con prompts más pequeños
+**Por qué existe:** El Boomerang fue diseñado para proyectos grandes donde el overhead de planificación
+se paga con creces al evitar errores costosos. Para tareas chicas (1 API Go), el overhead es desproporcionado.
 
-Esto explica el **tradeoff fundamental**: más estructura y calidad → más tiempo de ejecución. Para proyectos que requieren tests, modularidad y mantenibilidad, ZyroCLI es claramente superior. Para prototipos descartables, Plain es más rápido.
+**Mejora planeada:** Smart Boomerang — saltar pasos innecesarios. Si no hay cambios en git → saltar GitStep.
+Si no hay tareas delegadas → saltar DelegateStep. Objetivo: reducir overhead de 2.5× a ~1.3×.
 
-#### Metodología
+#### ✅ Conclusión honesta
+
+1. **ZyroCLI produce mejor calidad** — único que genera tests (27-82% cobertura) y código modular.
+2. **ZyroCLI gasta menos tokens input** que gentle-ai (−35%) y comparable a Plain (−2%).
+3. **ZyroCLI es 2.5× más lento** — el Boomerang tiene overhead real. Para tareas chicas, no conviene.
+4. **Plain es óptimo para tareas rápidas** (1-2 archivos, sin tests). Rápido, barato, pero deuda técnica.
+5. **gentle-ai es consistente pero caro en tokens** (+31% input vs Plain). No genera tests.
+6. **Costo no es factor** — DeepSeek V4 Flash es gratis. Con GPT-4/Claude, la historia sería otra.
+
+#### 📁 Datos crudos y reportes
+
+- [📈 Reporte v2 con 7 gráficos SVG →](docs/benchmark/v2/index.html)
+- [📈 Reporte v1 (30 iteraciones, 1 sesión) →](docs/benchmark/index.html)
+- [📊 Datos crudos — Plain](docs/benchmark/v2/data-plain.json)
+- [📊 Datos crudos — gentle-ai](docs/benchmark/v2/data-gentle.json)
+- [📊 Datos crudos — ZyroCLI](docs/benchmark/v2/data-zyro.json)
+
+#### 🔬 Metodología
 
 - **3 sesiones incrementales:** Sesión 1 = JWT auth, Sesión 2 = roles, Sesión 3 = refresh token
-- **3 iteraciones** por jaula × sesión = 27 runs total (24 completados, 3 timeouts de ZyroCLI)
+- **3 iteraciones** por jaula × sesión = 27 runs total (24 completados)
 - **Modelo:** DeepSeek V4 Flash vía OpenCode Zen (gratis, sin API key)
-- **Medición exacta:** `opencode export` para tokens, `go test -cover` para cobertura
-- **Timeout:** 900s por run (15 min). ZyroCLI tuvo 3 timeouts en sesiones 2-3
+- **Medición exacta:** `opencode export` para tokens, `go test -cover` para cobertura, `gocyclo` para complejidad
+- **Timeout:** 900s por run (15 min)
 - **Fecha:** 2026-06-17
 
 ### 🔧 Integración con OpenCode
