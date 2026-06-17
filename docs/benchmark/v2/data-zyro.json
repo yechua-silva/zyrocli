@@ -1,0 +1,128 @@
+[
+  {
+    "iteration": 1,
+    "session": 1,
+    "jaula": "zyro",
+    "tokens": {
+      "input": 11394,
+      "output": 1600
+    },
+    "cost": 0.0021,
+    "session_id": "ses_...RdOBnV3wOsB3",
+    "quality": {
+      "coverage": 82.0,
+      "complexity_avg": 0,
+      "vet_issues": 0,
+      "files": 2,
+      "lines": 815,
+      "tests_pass": true
+    },
+    "timestamp": "2026-06-17T02:09:37.374892",
+    "exit_code": 0
+  },
+  {
+    "iteration": 1,
+    "session": 2,
+    "jaula": "zyro",
+    "tokens": {
+      "input": 9652,
+      "output": 563
+    },
+    "cost": 0.0015,
+    "session_id": "ses_...eDklwLjS1Gjm",
+    "quality": {
+      "coverage": 74.7,
+      "complexity_avg": 0,
+      "vet_issues": 0,
+      "files": 2,
+      "lines": 815,
+      "tests_pass": true
+    },
+    "timestamp": "2026-06-17T02:09:37.374901",
+    "exit_code": 0
+  },
+  {
+    "iteration": 1,
+    "session": 3,
+    "jaula": "zyro",
+    "tokens": {
+      "input": 19676,
+      "output": 7515
+    },
+    "cost": 0.0052,
+    "session_id": "ses_...DHB21HqVUHwZ",
+    "quality": {
+      "coverage": 66.1,
+      "complexity_avg": 0,
+      "vet_issues": 0,
+      "files": 2,
+      "lines": 815,
+      "tests_pass": true
+    },
+    "timestamp": "2026-06-17T02:09:37.374903",
+    "exit_code": 0
+  },
+  {
+    "iteration": 2,
+    "session": 1,
+    "jaula": "zyro",
+    "tokens": {
+      "input": 9483,
+      "output": 660
+    },
+    "cost": 0.0017,
+    "session_id": "ses_...4fUjPWs8klRn",
+    "quality": {
+      "coverage": 0.0,
+      "complexity_avg": 0,
+      "vet_issues": 0,
+      "files": 1,
+      "lines": 370,
+      "tests_pass": true
+    },
+    "timestamp": "2026-06-17T02:09:37.374904",
+    "exit_code": 0
+  },
+  {
+    "iteration": 3,
+    "session": 1,
+    "jaula": "zyro",
+    "tokens": {
+      "input": 12460,
+      "output": 2685
+    },
+    "cost": 0.0028,
+    "session_id": "ses_...iter3_ses1",
+    "exit_code": 0,
+    "timestamp": "2026-06-17T02:09:37.374906",
+    "quality": {
+      "coverage": 0.0,
+      "complexity_avg": 0,
+      "vet_issues": 0,
+      "files": 3,
+      "lines": 326,
+      "tests_pass": true
+    }
+  },
+  {
+    "iteration": 3,
+    "session": 2,
+    "jaula": "zyro",
+    "tokens": {
+      "input": 9938,
+      "output": 169
+    },
+    "cost": 0.0015,
+    "session_id": "ses_...iter3_ses2",
+    "exit_code": 0,
+    "timestamp": "2026-06-17T02:09:37.374912",
+    "quality": {
+      "coverage": 0.0,
+      "complexity_avg": 0,
+      "vet_issues": 0,
+      "files": 3,
+      "lines": 326,
+      "tests_pass": true
+    }
+  }
+]

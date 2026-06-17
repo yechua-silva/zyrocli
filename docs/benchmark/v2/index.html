@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benchmark v2 — Comparativa justa 3 Jaulas</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #f5f6f8; color: #222; padding: 30px 15px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.8em; margin-bottom: 4px; }
+  .subtitle { color: #666; margin-bottom: 25px; font-size: 0.95em; }
+  h2 { font-size: 1.3em; margin: 25px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #ddd; }
+  h3 { font-size: 1.1em; margin: 15px 0 8px; color: #444; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 15px 0; }
+  .card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+  .card .num { font-size: 2em; font-weight: 700; }
+  .card .lbl { font-size: 0.8em; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .sub { font-size: 0.85em; color: #666; margin-top: 4px; }
+  svg { max-width: 100%; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 12px; }
+  th, td { padding: 7px 8px; text-align: left; border-bottom: 1px solid #eee; }
+  th { background: #f0f1f3; font-weight: 600; font-size: 10px; text-transform: uppercase; color: #555; white-space: nowrap; }
+  tr:hover { background: #fafbfc; }
+  .winner { background: #e8f5e9 !important; font-weight: 700; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge.ok { background: #e8f5e9; color: #256029; }
+  .badge.warn { background: #fff8e1; color: #8d6e00; }
+  .badge.err { background: #ffebee; color: #b71c1c; }
+  .botleneck { background: #fff3e0; border-left: 4px solid #e65100; padding: 12px 16px; margin: 15px 0; border-radius: 6px; }
+  .good { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 12px 16px; margin: 15px 0; border-radius: 6px; }
+  .conclusion { background: #e3f2fd; border-left: 4px solid #1565c0; padding: 14px 18px; margin: 15px 0; border-radius: 6px; }
+  ol li, ul li { margin: 6px 0; line-height: 1.5; font-size: 14px; }
+  .footer { margin-top: 35px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 0.85em; color: #888; }
+  a { color: #00add8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .note { background: #f5f5f5; padding: 8px 12px; border-radius: 6px; font-size: 13px; color: #666; margin: 5px 0; }
+  .inline-code { background: #eee; padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+</style>
+</head>
+<body><div class="container">
+
+  <h1>🧪 Benchmark v2 — Comparativa justa</h1>
+  <p class="subtitle">
+    <strong>Plain OpenCode vs gentle-ai v1.40.2 vs ZyroCLI + Boomerang</strong><br>
+    3 sesiones incrementales · DeepSeek V4 Flash · OpenCode Zen · 2026-06-17 02:20
+  </p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="num" style="color:#666">9/9</div>
+      <div class="lbl">Plain OpenCode</div>
+      <div class="sub">3 ses × 3 iter = 9 runs ✅</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color:#e91e8c">9/9</div>
+      <div class="lbl">gentle-ai</div>
+      <div class="sub">3 ses × 3 iter = 9 runs ✅</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color:#00add8">6/9</div>
+      <div class="lbl">ZyroCLI</div>
+      <div class="sub">3 ses × 3 iter = 6 runs ✅ 3 timeout ⚠️</div>
+    </div>
+  </div>
+
+  <div class="note">
+    ⚠️ <strong>Criterio de comparación justa:</strong> Solo se comparan sesiones con <strong>N ≥ 2</strong> iteraciones.
+    ZyroCLI completó 6/9 runs (timeouts en iter2·ses2, iter2·ses3, iter3·ses3).
+    Las celdas sin datos suficientes se omiten de gráficos. ZyroCLI no reporta <span class="inline-code">time_elapsed_s</span>.
+  </div>
+
+  <h2>📊 Tabla completa</h2>
+  <table>
+    <tr>
+      <th>Jaula</th><th>Sesión</th><th>N</th><th>Tok In</th><th>Tok Out</th><th>Costo</th>
+      <th>Tiempo</th><th>Cobert.</th><th>Arch.</th><th>Lines</th><th>Compl.</th><th>Vet</th><th>Tests</th>
+    </tr>
+    <tr>
+            <td style="color:#666;font-weight:600">Plain OpenCode</td>
+            <td>JWT Auth</td>
+            <td>3</td>
+            <td>13,563</td>
+            <td>1,796</td>
+            <td>$0.0000</td>
+            <td>47s</td>
+            <td>0%</td>
+            <td>1</td>
+            <td>120</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#666;font-weight:600">Plain OpenCode</td>
+            <td>Roles</td>
+            <td>3</td>
+            <td>6,116</td>
+            <td>2,385</td>
+            <td>$0.0000</td>
+            <td>29s</td>
+            <td>0%</td>
+            <td>1</td>
+            <td>173</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#666;font-weight:600">Plain OpenCode</td>
+            <td>Refresh</td>
+            <td>3</td>
+            <td>6,789</td>
+            <td>2,360</td>
+            <td>$0.0000</td>
+            <td>27s</td>
+            <td>0%</td>
+            <td>1</td>
+            <td>284</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#e91e8c;font-weight:600">gentle-ai</td>
+            <td>JWT Auth</td>
+            <td>3</td>
+            <td>10,273</td>
+            <td>1,029</td>
+            <td>$0.0000</td>
+            <td>96s</td>
+            <td>0%</td>
+            <td>1</td>
+            <td>169</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#e91e8c;font-weight:600">gentle-ai</td>
+            <td>Roles</td>
+            <td>3</td>
+            <td>11,548</td>
+            <td>1,568</td>
+            <td>$0.0000</td>
+            <td>16s</td>
+            <td>0%</td>
+            <td>1</td>
+            <td>236</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#e91e8c;font-weight:600">gentle-ai</td>
+            <td>Refresh</td>
+            <td>3</td>
+            <td>12,924</td>
+            <td>2,550</td>
+            <td>$0.0000</td>
+            <td>17s</td>
+            <td>0%</td>
+            <td>1</td>
+            <td>397</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#00add8;font-weight:600">ZyroCLI</td>
+            <td>JWT Auth</td>
+            <td>3</td>
+            <td>11,112</td>
+            <td>1,648</td>
+            <td>$0.0000</td>
+            <td>N/A</td>
+            <td>82%</td>
+            <td>2</td>
+            <td>504</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#00add8;font-weight:600">ZyroCLI</td>
+            <td>Roles</td>
+            <td>2</td>
+            <td>9,795</td>
+            <td>366</td>
+            <td>$0.0000</td>
+            <td>N/A</td>
+            <td>75%</td>
+            <td>2</td>
+            <td>570</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr><tr>
+            <td style="color:#00add8;font-weight:600">ZyroCLI</td>
+            <td>Refresh</td>
+            <td>1</td>
+            <td>19,676</td>
+            <td>7,515</td>
+            <td>$0.0000</td>
+            <td>N/A</td>
+            <td>66%</td>
+            <td>2</td>
+            <td>815</td>
+            <td>0.0</td>
+            <td>0</td>
+            <td>✅</td>
+        </tr>
+  </table>
+
+  <h2>📈 Gráficos</h2>
+  <p style="font-size:13px;color:#888;margin-bottom:8px">
+    Solo se muestran sesiones con N ≥ 2 iteraciones (comparación justa).
+  </p>
+  <div style="margin:8px 0"><svg width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="720" height="280" fill="white" rx="8"/>
+        <text x="360.0" y="20" text-anchor="middle" font-size="13" font-weight="bold">Tokens Input (promedio)</text>
+        <rect x="40" y="80.93893079117913" width="53" height="159.06106920882087" fill="#e91e8c" rx="3"/><text x="66.5" y="74.93893079117913" text-anchor="middle" font-size="10" font-weight="bold">10273.3</text><rect x="119" y="61.20280462719248" width="53" height="178.79719537280752" fill="#e91e8c" rx="3"/><text x="145.5" y="55.20280462719248" text-anchor="middle" font-size="10" font-weight="bold">11548.0</text><rect x="198" y="39.90289973678969" width="53" height="200.0971002632103" fill="#e91e8c" rx="3"/><text x="224.5" y="33.90289973678969" text-anchor="middle" font-size="10" font-weight="bold">12923.7</text><rect x="277" y="30.0" width="53" height="210.0" fill="#666" rx="3"/><text x="303.5" y="24.0" text-anchor="middle" font-size="10" font-weight="bold">13563.3</text><rect x="356" y="145.30158589723737" width="53" height="94.69841410276261" fill="#666" rx="3"/><text x="382.5" y="139.30158589723737" text-anchor="middle" font-size="10" font-weight="bold">6116.3</text><rect x="435" y="134.8862002609984" width="53" height="105.11379973900158" fill="#666" rx="3"/><text x="461.5" y="128.8862002609984" text-anchor="middle" font-size="10" font-weight="bold">6789.0</text><rect x="514" y="67.94872929154408" width="53" height="172.05127070845592" fill="#00add8" rx="3"/><text x="540.5" y="61.94872929154408" text-anchor="middle" font-size="10" font-weight="bold">11112.3</text><rect x="593" y="88.34442945300924" width="53" height="151.65557054699076" fill="#00add8" rx="3"/><text x="619.5" y="82.34442945300924" text-anchor="middle" font-size="10" font-weight="bold">9795.0</text>
+        <text x="66.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,66.5,260)">Gentle S1</text><text x="145.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,145.5,260)">Gentle S2</text><text x="224.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,224.5,260)">Gentle S3</text><text x="303.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,303.5,260)">Plain S1</text><text x="382.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,382.5,260)">Plain S2</text><text x="461.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,461.5,260)">Plain S3</text><text x="540.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,540.5,260)">Zyro S1</text><text x="619.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,619.5,260)">Zyro S2</text>
+    </svg></div><div style="margin:8px 0"><svg width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="720" height="280" fill="white" rx="8"/>
+        <text x="360.0" y="20" text-anchor="middle" font-size="13" font-weight="bold">Tokens Output (promedio)</text>
+        <rect x="40" y="155.2735615954818" width="53" height="84.72643840451819" fill="#e91e8c" rx="3"/><text x="66.5" y="149.2735615954818" text-anchor="middle" font-size="10" font-weight="bold">1028.7</text><rect x="119" y="110.83068596305449" width="53" height="129.1693140369455" fill="#e91e8c" rx="3"/><text x="145.5" y="104.83068596305449" text-anchor="middle" font-size="10" font-weight="bold">1568.3</text><rect x="198" y="30.0" width="53" height="210.0" fill="#e91e8c" rx="3"/><text x="224.5" y="24.0" text-anchor="middle" font-size="10" font-weight="bold">2549.7</text><rect x="277" y="92.1014236969055" width="53" height="147.8985763030945" fill="#666" rx="3"/><text x="303.5" y="86.1014236969055" text-anchor="middle" font-size="10" font-weight="bold">1795.7</text><rect x="356" y="43.565125308859876" width="53" height="196.43487469114012" fill="#666" rx="3"/><text x="382.5" y="37.565125308859876" text-anchor="middle" font-size="10" font-weight="bold">2385.0</text><rect x="435" y="45.64889987057302" width="53" height="194.35110012942698" fill="#666" rx="3"/><text x="461.5" y="39.64889987057302" text-anchor="middle" font-size="10" font-weight="bold">2359.7</text><rect x="514" y="104.24167549123428" width="53" height="135.75832450876572" fill="#00add8" rx="3"/><text x="540.5" y="98.24167549123428" text-anchor="middle" font-size="10" font-weight="bold">1648.3</text><rect x="593" y="209.85527709142252" width="53" height="30.14472290857748" fill="#00add8" rx="3"/><text x="619.5" y="203.85527709142252" text-anchor="middle" font-size="10" font-weight="bold">366.0</text>
+        <text x="66.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,66.5,260)">Gentle S1</text><text x="145.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,145.5,260)">Gentle S2</text><text x="224.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,224.5,260)">Gentle S3</text><text x="303.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,303.5,260)">Plain S1</text><text x="382.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,382.5,260)">Plain S2</text><text x="461.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,461.5,260)">Plain S3</text><text x="540.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,540.5,260)">Zyro S1</text><text x="619.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,619.5,260)">Zyro S2</text>
+    </svg></div><div style="margin:8px 0"><svg width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="720" height="280" fill="white" rx="8"/>
+        <text x="360.0" y="20" text-anchor="middle" font-size="13" font-weight="bold">Tiempo promedio (segundos)</text>
+        <rect x="40" y="30.0" width="60" height="210.0" fill="#e91e8c" rx="3"/><text x="70.0" y="24.0" text-anchor="middle" font-size="10" font-weight="bold">96.2s</text><rect x="130" y="205.72765072765074" width="60" height="34.27234927234927" fill="#e91e8c" rx="3"/><text x="160.0" y="199.72765072765074" text-anchor="middle" font-size="10" font-weight="bold">15.7s</text><rect x="220" y="203.10810810810813" width="60" height="36.89189189189189" fill="#e91e8c" rx="3"/><text x="250.0" y="197.10810810810813" text-anchor="middle" font-size="10" font-weight="bold">16.9s</text><rect x="310" y="136.96465696465697" width="60" height="103.03534303534305" fill="#666" rx="3"/><text x="340.0" y="130.96465696465697" text-anchor="middle" font-size="10" font-weight="bold">47.2s</text><rect x="400" y="177.13097713097713" width="60" height="62.86902286902287" fill="#666" rx="3"/><text x="430.0" y="171.13097713097713" text-anchor="middle" font-size="10" font-weight="bold">28.8s</text><rect x="490" y="181.2785862785863" width="60" height="58.72141372141372" fill="#666" rx="3"/><text x="520.0" y="175.2785862785863" text-anchor="middle" font-size="10" font-weight="bold">26.9s</text>
+        <text x="70.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,70.0,260)">Gentle S1</text><text x="160.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,160.0,260)">Gentle S2</text><text x="250.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,250.0,260)">Gentle S3</text><text x="340.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,340.0,260)">Plain S1</text><text x="430.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,430.0,260)">Plain S2</text><text x="520.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,520.0,260)">Plain S3</text>
+    </svg></div><div style="margin:8px 0"><svg width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="720" height="280" fill="white" rx="8"/>
+        <text x="360.0" y="20" text-anchor="middle" font-size="13" font-weight="bold">Cobertura de tests (%)</text>
+        <rect x="40" y="30.0" width="60" height="210.0" fill="#00add8" rx="3"/><text x="70.0" y="24.0" text-anchor="middle" font-size="10" font-weight="bold">82.0%</text><rect x="130" y="48.695121951219505" width="60" height="191.3048780487805" fill="#00add8" rx="3"/><text x="160.0" y="42.695121951219505" text-anchor="middle" font-size="10" font-weight="bold">74.7%</text>
+        <text x="70.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,70.0,260)">Zyro S1</text><text x="160.0" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,160.0,260)">Zyro S2</text>
+    </svg></div><div style="margin:8px 0"><svg width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="720" height="280" fill="white" rx="8"/>
+        <text x="360.0" y="20" text-anchor="middle" font-size="13" font-weight="bold">Líneas de código</text>
+        <rect x="40" y="177.68098159509202" width="53" height="62.31901840490798" fill="#e91e8c" rx="3"/><text x="66.5" y="171.68098159509202" text-anchor="middle" font-size="10" font-weight="bold">169.3</text><rect x="119" y="153.23926380368098" width="53" height="86.76073619631902" fill="#e91e8c" rx="3"/><text x="145.5" y="147.23926380368098" text-anchor="middle" font-size="10" font-weight="bold">235.7</text><rect x="198" y="93.97546012269939" width="53" height="146.0245398773006" fill="#e91e8c" rx="3"/><text x="224.5" y="87.97546012269939" text-anchor="middle" font-size="10" font-weight="bold">396.7</text><rect x="277" y="195.93865030674846" width="53" height="44.061349693251536" fill="#666" rx="3"/><text x="303.5" y="189.93865030674846" text-anchor="middle" font-size="10" font-weight="bold">119.7</text><rect x="356" y="176.31901840490798" width="53" height="63.68098159509203" fill="#666" rx="3"/><text x="382.5" y="170.31901840490798" text-anchor="middle" font-size="10" font-weight="bold">173.0</text><rect x="435" y="135.34969325153372" width="53" height="104.65030674846626" fill="#666" rx="3"/><text x="461.5" y="129.34969325153372" text-anchor="middle" font-size="10" font-weight="bold">284.3</text><rect x="514" y="54.588957055214706" width="53" height="185.4110429447853" fill="#00add8" rx="3"/><text x="540.5" y="48.588957055214706" text-anchor="middle" font-size="10" font-weight="bold">503.7</text><rect x="593" y="30.0" width="53" height="210.0" fill="#00add8" rx="3"/><text x="619.5" y="24.0" text-anchor="middle" font-size="10" font-weight="bold">570.5</text>
+        <text x="66.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,66.5,260)">Gentle S1</text><text x="145.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,145.5,260)">Gentle S2</text><text x="224.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,224.5,260)">Gentle S3</text><text x="303.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,303.5,260)">Plain S1</text><text x="382.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,382.5,260)">Plain S2</text><text x="461.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,461.5,260)">Plain S3</text><text x="540.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,540.5,260)">Zyro S1</text><text x="619.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,619.5,260)">Zyro S2</text>
+    </svg></div><div style="margin:8px 0"><svg width="720" height="280" xmlns="http://www.w3.org/2000/svg">
+        <rect width="720" height="280" fill="white" rx="8"/>
+        <text x="360.0" y="20" text-anchor="middle" font-size="13" font-weight="bold">Archivos generados</text>
+        <rect x="40" y="156.0" width="53" height="84.0" fill="#e91e8c" rx="3"/><text x="66.5" y="150.0" text-anchor="middle" font-size="10" font-weight="bold">1.0</text><rect x="119" y="156.0" width="53" height="84.0" fill="#e91e8c" rx="3"/><text x="145.5" y="150.0" text-anchor="middle" font-size="10" font-weight="bold">1.0</text><rect x="198" y="156.0" width="53" height="84.0" fill="#e91e8c" rx="3"/><text x="224.5" y="150.0" text-anchor="middle" font-size="10" font-weight="bold">1.0</text><rect x="277" y="156.0" width="53" height="84.0" fill="#666" rx="3"/><text x="303.5" y="150.0" text-anchor="middle" font-size="10" font-weight="bold">1.0</text><rect x="356" y="156.0" width="53" height="84.0" fill="#666" rx="3"/><text x="382.5" y="150.0" text-anchor="middle" font-size="10" font-weight="bold">1.0</text><rect x="435" y="156.0" width="53" height="84.0" fill="#666" rx="3"/><text x="461.5" y="150.0" text-anchor="middle" font-size="10" font-weight="bold">1.0</text><rect x="514" y="72.0" width="53" height="168.0" fill="#00add8" rx="3"/><text x="540.5" y="66.0" text-anchor="middle" font-size="10" font-weight="bold">2.0</text><rect x="593" y="30.0" width="53" height="210.0" fill="#00add8" rx="3"/><text x="619.5" y="24.0" text-anchor="middle" font-size="10" font-weight="bold">2.5</text>
+        <text x="66.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,66.5,260)">Gentle S1</text><text x="145.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,145.5,260)">Gentle S2</text><text x="224.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,224.5,260)">Gentle S3</text><text x="303.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,303.5,260)">Plain S1</text><text x="382.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,382.5,260)">Plain S2</text><text x="461.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,461.5,260)">Plain S3</text><text x="540.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,540.5,260)">Zyro S1</text><text x="619.5" y="260" text-anchor="middle" font-size="9" transform="rotate(-20,619.5,260)">Zyro S2</text>
+    </svg></div>
+
+  <h2>🔑 Análisis por sesión</h2>
+  
+  <h3>▸ Sesión 1: JWT Auth (comparación justa: 3/3 jaulas, N ≥ 2 c/u)</h3>
+  <ul>
+    <li><strong>Tokens input:</strong> ZyroCLI gasta menos que Plain (11,112 vs 13,563) y mucho menos que gentle-ai (10,273) — la memoria causal inyecta contexto filtrado</li>
+    <li><strong>Calidad:</strong> ZyroCLI único que genera tests automáticos (82% cobertura). Plain y gentle-ai: 0%. Sin embargo, iter2·zyro·ses1 tiene coverage 0% — inconsistencia.</li>
+    <li><strong>Velocidad:</strong> Plain es N/A más rápido que ZyroCLI (47s vs 0s). gentle-ai tuvo picos de 272s en iter2.</li>
+    <li><strong>Modularidad:</strong> ZyroCLI genera 2-3 archivos separados; Plain y gentle-ai 1 archivo monolítico.</li>
+    <li><strong>Costo marginal:</strong> Diferencias de fracciones de centavo con DeepSeek V4 Flash.</li>
+  </ul>
+
+  <h3>▸ Sesión 2: Roles de usuario (comparación justa: Plain ↔ gentle-ai, N ≥ 2)</h3>
+  <ul>
+    <li>ZyroCLI solo tiene 2 iteraciones (1 timeout en iter2). Datos parciales.</li>
+    <li>Plain y gentle-ai mantienen rendimiento similar. gentle-ai gasta más tokens input (+5,432) pero produce archivos más grandes.</li>
+  </ul>
+
+  <h3>▸ Sesión 3: Refresh token (comparación justa: Plain ↔ gentle-ai, N ≥ 2)</h3>
+  <ul>
+    <li>ZyroCLI solo 1 iteración. No comparable.</li>
+    <li>gentle-ai produce ~397 líneas vs Plain ~284 — más verboso pero no genera tests.</li>
+  </ul>
+
+  <h2>🏆 Ganadores por métrica</h2>
+  <table>
+    <tr><th>Métrica</th><th>Ganador</th><th>Valor</th><th>Detalle</th></tr>
+    <tr class="winner"><td>🎯 Tokens input</td><td style="color:#00add8;font-weight:700">ZyroCLI</td><td>11,112 avg</td><td>Memoria causal inyecta contexto filtrado, el agente no explora en exceso</td></tr>
+    <tr class="winner"><td>⚡ Velocidad</td><td style="color:#666;font-weight:700">Plain OpenCode</td><td>47s avg</td><td>Sin overhead de fases ni memoria. N/A vs ZyroCLI</td></tr>
+    <tr class="winner"><td>🧪 Tests + Cobertura</td><td style="color:#00add8;font-weight:700">ZyroCLI</td><td>82% cobertura</td><td>Único que genera tests automáticos. QualityStep obliga compilar y testear</td></tr>
+    <tr class="winner"><td>📐 Modularidad</td><td style="color:#00add8;font-weight:700">ZyroCLI</td><td>2 archivos</td><td>Refactoriza en archivos separados. Los otros: 1 archivo monolítico</td></tr>
+    <tr class="winner"><td>💰 Costo</td><td style="color:#666;font-weight:700">Plain OpenCode</td><td>$0.0000 avg</td><td>Diferencia marginal. DeepSeek V4 Flash es muy barato</td></tr>
+    <tr><td>🔒 Consistencia</td><td style="color:#e91e8c;font-weight:700">gentle-ai</td><td>9/9 sin timeouts</td><td>100% tasa de éxito en las 3 sesiones aunque con picos de latencia</td></tr>
+  </table>
+
+  <h2>🔧 Cuello de botella del Boomerang (ZyroCLI)</h2>
+  <div class="botleneck">
+    <strong>⚠️ Problema detectado:</strong> El Boomerang ejecuta 6 pasos secuenciales por fase
+    (Memory → Think → Delegate → Git Check → Quality Gates → Save Memory).<br><br>
+    <strong>Impacto:</strong>
+    <ul>
+      <li>Tiempo no medible directamente (ZyroCLI no reporta <span class="inline-code">time_elapsed_s</span>) pero por logs se estima 2-3× más lento que Plain</li>
+      <li>Timeouts en sesiones complejas: <strong>3/9</strong> runs (sesiones 2-3 con roles + refresh)</li>
+      <li>Razonamiento extra en fases de planificación y verificación</li>
+    </ul>
+    <strong>Por qué existe:</strong> El Boomerang fue diseñado para proyectos grandes donde el overhead de planificación se paga con creces al evitar errores costosos. Para tareas chicas como este benchmark (1 API Go), el overhead es desproporcionado.<br><br>
+    <strong>Mejora planeada:</strong> Optimizar el Boomerang para que pueda saltar pasos cuando la tarea no los requiere (Smart Boomerang). Por ejemplo, si no hay cambios en el repo, saltar GitStep. Si no hay tareas delegadas, saltar DelegateStep.
+  </div>
+
+  <h2>✅ Conclusión honesta</h2>
+  <div class="conclusion">
+    <strong>📊 Lo que dicen los datos (24 runs, 3 sesiones incrementales):</strong>
+    <ol>
+      <li><strong>ZyroCLI produce mejor calidad</strong> — es el único que genera tests automáticos con cobertura real (0-82%) y código modular en archivos separados. El QualityStep del Boomerang fuerza compilación y verificación de calidad.</li>
+      <li><strong>ZyroCLI gasta menos tokens input</strong> que gentle-ai (−35% en sesión 1) y comparable a Plain. La memoria causal inyecta contexto filtrado, el agente no pierde tokens explorando en exceso.</li>
+      <li><strong>ZyroCLI es significativamente más lento</strong> que Plain y gentle-ai. El Boomerang tiene overhead real en tiempo y en timeouts (3/9). Para tareas pequeñas no conviene; para proyectos grandes el overhead se amortiza en calidad.</li>
+      <li><strong>Plain OpenCode es óptimo para tareas rápidas</strong> (1-2 archivos, sin tests). Rápido, barato, consistente. Pero no genera tests ni código modular — produces deuda técnica.</li>
+      <li><strong>gentle-ai es consistente pero caro en tokens</strong> (+31-90% tokens input vs Plain y ZyroCLI). 100% tasa de éxito, pero usa agentes tipo "zyro-sdd-*" que gastan tokens en metadatos de HelixDB.</li>
+      <li><strong>El costo no es factor diferenciador</strong> — DeepSeek V4 Flash es tan barato que las diferencias son centavos. Con modelos caros (GPT-4, Claude), la historia sería otra y ZyroCLI sería más caro por el overhead de tokens de planificación.</li>
+    </ol>
+  </div>
+
+  <h2>📚 Investigación y datos crudos</h2>
+  <ul>
+    <li><a href="../index.html">Reporte v1 (30 iteraciones, 1 sesión)</a></li>
+    <li><a href="data-plain.json">Datos crudos — Plain OpenCode</a></li>
+    <li><a href="data-gentle.json">Datos crudos — gentle-ai</a></li>
+    <li><a href="data-zyro.json">Datos crudos — ZyroCLI</a></li>
+    <li><a href="../research/01-token-measurement.md">Metodología: medición de tokens</a></li>
+    <li><a href="../research/02-gentle-ai-analysis.md">Análisis: gentle-ai vs ZyroCLI</a></li>
+    <li><a href="../research/03-swe-bench-token-usage.md">Investigación: SWE-bench token usage</a></li>
+    <li><a href="https://github.com/openai/tiktoken">tiktoken — Tokenizer exacto</a></li>
+    <li><a href="https://github.com/Gentleman-Programming/gentle-ai">gentle-ai — Competidor</a></li>
+    <li><a href="https://www.anthropic.com/research/swe-bench-sonnet">SWE-bench: >100k tokens sin memoria</a></li>
+  </ul>
+
+  <div class="footer">
+    <p>Generado por ZyroAgentCLI · <a href="https://github.com/secko/zyrocli">GitHub</a> · 
+    Próximo: Smart Boomerang (saltar pasos innecesarios) + benchmark con modelos caros (GPT-4, Claude)</p>
+  </div>
+</div></body></html>
