@@ -1,0 +1,262 @@
+#!/usr/bin/env bash
+# ZyroAgentCLI — Entry point unificado
+# 
+# Uso:
+#   zyro install           → TUI de instalación completa
+#   zyro services start    → Inicia Ollama + HelixDB
+#   zyro services stop     → Detiene servicios
+#   zyro services restart  → Reinicia servicios
+#   zyro services status   → Estado de servicios
+#   zyro cli <args>        → Pasa args al binario zyrocli
+#
+# Integración con OpenCode:
+#   zyro opencode setup    → Configura OpenCode para usar las MCP tools
+#
+# El script detecta automáticamente dónde están los scripts Python
+# y el binario zyrocli, funcionando tanto en desarrollo como en npm.
+
+set -euo pipefail
+
+# ── Detectar directorio base ─────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Si estamos instalados via npm, buscar en node_modules
+if [ ! -f "$PROJECT_DIR/scripts/install_tui.py" ]; then
+    # Posiblemente en npm global
+    NPM_DIR="$(npm root -g 2>/dev/null)/zyro-agent-cli" || true
+    if [ -f "$NPM_DIR/scripts/install_tui.py" ]; then
+        PROJECT_DIR="$NPM_DIR"
+        SCRIPT_DIR="$NPM_DIR/scripts"
+    fi
+fi
+
+ZYROCLI_BIN="$(command -v zyrocli 2>/dev/null || echo "$PROJECT_DIR/zyrocli")"
+
+# ── Colores ──────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+info()  { echo -e "${CYAN}ℹ️${NC} $1"; }
+ok()    { echo -e "${GREEN}✅${NC} $1"; }
+warn()  { echo -e "${YELLOW}⚠️${NC} $1"; }
+error() { echo -e "${RED}❌${NC} $1"; }
+
+# ── Help ─────────────────────────────────────────────────────
+show_help() {
+    cat << 'HELP'
+ZyroAgentCLI — Entry point unificado
+
+USO:
+  zyro install              TUI de instalación y configuración
+  zyro services start       Inicia Ollama + HelixDB
+  zyro services stop        Detiene servicios
+  zyro services restart     Reinicia servicios
+  zyro services status      Muestra estado de servicios
+  zyro cli <args>           Ejecuta zyrocli con argumentos
+  zyro opencode setup       Configura OpenCode para MCP tools
+  zyro --help               Muestra esta ayuda
+
+FLUJO RECOMENDADO:
+  1. zyro install           Configura todo interactivamente
+  2. zyro services start    Inicia servicios
+  3. Usa OpenCode con las MCP tools integradas
+
+DOCS: https://helixdb.org/zyro
+HELP
+}
+
+# ── Services ─────────────────────────────────────────────────
+services_start() {
+    info "Iniciando servicios..."
+    
+    # Ollama
+    if command -v ollama &>/dev/null; then
+        if curl -s http://localhost:11434/api/tags &>/dev/null; then
+            ok "Ollama ya está corriendo en localhost:11434"
+        else
+            info "Iniciando Ollama..."
+            ollama serve &
+            sleep 2
+            if curl -s http://localhost:11434/api/tags &>/dev/null; then
+                ok "Ollama iniciado en localhost:11434"
+            else
+                warn "Ollama no responde. Prueba: ollama serve"
+            fi
+        fi
+    else
+        warn "Ollama no está instalado. Corre: zyro install"
+    fi
+    
+    # HelixDB (via zyrocli si existe)
+    if [ -x "$ZYROCLI_BIN" ]; then
+        if "$ZYROCLI_BIN" db status &>/dev/null; then
+            ok "HelixDB ya está corriendo"
+        else
+            info "Iniciando HelixDB..."
+            "$ZYROCLI_BIN" db start 2>/dev/null || warn "HelixDB no disponible. zyrocli db start"
+        fi
+    fi
+    
+    echo ""
+    services_status
+}
+
+services_stop() {
+    info "Deteniendo servicios..."
+    # Ollama
+    if pgrep -x ollama &>/dev/null; then
+        pkill -x ollama 2>/dev/null || true
+        ok "Ollama detenido"
+    else
+        info "Ollama no estaba corriendo"
+    fi
+    
+    # HelixDB container
+    if command -v docker &>/dev/null; then
+        docker stop helixdb 2>/dev/null && ok "HelixDB detenido" || true
+    fi
+}
+
+services_restart() {
+    services_stop
+    sleep 1
+    services_start
+}
+
+services_status() {
+    echo -e "${CYAN}═══════════════════════════════════════${NC}"
+    echo -e "${CYAN}  Estado de Servicios ZyroAgentCLI${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════${NC}"
+    
+    # Ollama
+    if command -v ollama &>/dev/null; then
+        local ollama_ver="$(ollama --version 2>/dev/null || echo '?')"
+        if curl -s http://localhost:11434/api/tags &>/dev/null; then
+            local models="$(curl -s http://localhost:11434/api/tags | grep -o '"name":"[^"]*"' | wc -l)"
+            ok "Ollama $ollama_ver — corriendo ($models modelos)"
+        else
+            warn "Ollama $ollama_ver — instalado pero no corriendo"
+        fi
+    else
+        error "Ollama — no instalado"
+    fi
+    
+    # HelixDB
+    if [ -x "$ZYROCLI_BIN" ]; then
+        if "$ZYROCLI_BIN" db status &>/dev/null; then
+            ok "HelixDB — disponible"
+        else
+            warn "HelixDB — no disponible (zyrocli db start)"
+        fi
+    fi
+    
+    # MCP tools (Python)
+    if [ -f "$PROJECT_DIR/mcp-tools/runner.py" ]; then
+        ok "MCP tools — disponibles en $PROJECT_DIR/mcp-tools/"
+    fi
+    
+    echo -e "${CYAN}───────────────────────────────────────${NC}"
+}
+
+# ── OpenCode setup ───────────────────────────────────────────
+opencode_setup() {
+    info "Configurando OpenCode..."
+    
+    local opencode_config="$HOME/.config/opencode/opencode.json"
+    local mcp_entry
+    mcp_entry=$(cat << 'MCP'
+{
+  "mcpTools": {
+    "helix-integration": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "__PATH__/mcp-tools",
+        "runner.py"
+      ]
+    },
+    "zyro-embeddings": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "__PATH__/mcp-tools",
+        "python",
+        "embedding_harness.py"
+      ]
+    }
+  }
+}
+MCP
+    )
+    mcp_entry="${mcp_entry//__PATH__/$PROJECT_DIR}"
+    
+    if [ -f "$opencode_config" ]; then
+        # Backup
+        cp "$opencode_config" "${opencode_config}.bak"
+        # Merge (simple - reemplaza mcpTools si existe)
+        python3 -c "
+import json
+with open('$opencode_config') as f:
+    cfg = json.load(f)
+cfg['mcpTools'] = json.loads('''$mcp_entry''')['mcpTools']
+with open('$opencode_config', 'w') as f:
+    json.dump(cfg, f, indent=2)
+print('OpenCode configurado correctamente')
+"
+        ok "OpenCode configurado en $opencode_config"
+        info "Reinicia OpenCode para que los cambios tomen efecto"
+    else
+        warn "No se encontró $opencode_config"
+        info "Crea el archivo manualmente con el contenido MCP adecuado"
+    fi
+}
+
+# ── Main ─────────────────────────────────────────────────────
+main() {
+    case "${1:-help}" in
+        install)
+            shift 2>/dev/null || true
+            python3 "$SCRIPT_DIR/install_tui.py" "$@"
+            ;;
+        services)
+            case "${2:-status}" in
+                start)   services_start ;;
+                stop)    services_stop ;;
+                restart) services_restart ;;
+                status)  services_status ;;
+                *)       echo "Uso: zyro services {start|stop|restart|status}" ;;
+            esac
+            ;;
+        cli)
+            shift
+            if [ -x "$ZYROCLI_BIN" ]; then
+                "$ZYROCLI_BIN" "$@"
+            else
+                error "zyrocli no encontrado en $ZYROCLI_BIN"
+                exit 1
+            fi
+            ;;
+        opencode)
+            case "${2:-setup}" in
+                setup) opencode_setup ;;
+                *)     echo "Uso: zyro opencode setup" ;;
+            esac
+            ;;
+        --help|-h|help)
+            show_help
+            ;;
+        *)
+            echo "Comando desconocido: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

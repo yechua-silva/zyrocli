@@ -1314,6 +1314,83 @@ def _ejecutar_prueba_rapida(config: dict[str, Any]) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════
+#  Detección de duplicados npm
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _detectar_paquetes_duplicados() -> None:
+    """Detecta si hay paquetes npm duplicados (zyro, zyrocli, zyro-agent-cli) y advierte."""
+    console.rule("[bold yellow]Verificación de paquetes npm[/bold yellow]")
+    console.print()
+
+    import subprocess, json
+
+    # Lista de paquetes que podrían colisionar
+    paquetes_sospechosos = ["zyro", "zyrocli", "zyro-agent-cli"]
+    instalados = []
+
+    try:
+        # npm list -g --json para ver paquetes globales
+        result = subprocess.run(
+            ["npm", "list", "-g", "--json", "--depth=0"],
+            capture_output=True, text=True, timeout=15
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            dependencies = data.get("dependencies", {})
+            for pkg_name in paquetes_sospechosos:
+                if pkg_name in dependencies:
+                    pkg_info = dependencies[pkg_name]
+                    instalados.append({
+                        "name": pkg_name,
+                        "version": pkg_info.get("version", "?"),
+                        "path": pkg_info.get("resolved", "?"),
+                    })
+    except (json.JSONDecodeError, subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # También verificar con which si hay binarios
+    for cmd in ["zyro", "zyrocli"]:
+        path = shutil.which(cmd)
+        if path:
+            console.print(f"  ℹ️  Binario '{cmd}' encontrado en: [dim]{path}[/dim]")
+
+    if len(instalados) > 1:
+        console.print(
+            Panel(
+                f"[yellow]⚠️  Se detectaron {len(instalados)} paquetes que pueden solaparse:[/yellow]\n\n"
+                + "\n".join(f"    • [bold]{p['name']}[/bold] v{p['version']}" for p in instalados)
+                + "\n\n"
+                "  [bold]Recomendación:[/bold] mantener solo [green]zyro-agent-cli[/green]\n"
+                "  Para limpiar duplicados manualmente:\n"
+                + "".join(f"    npm uninstall -g {p['name']}\n" for p in instalados if p['name'] != 'zyro-agent-cli')
+                + "\n  O puedes hacerlo ahora.\n",
+                title="Paquetes duplicados detectados",
+                border_style="yellow",
+            )
+        )
+
+        from rich.prompt import Confirm
+        if Confirm.ask("  ¿Limpiar paquetes duplicados?", default=True):
+            for p in instalados:
+                if p["name"] != "zyro-agent-cli":
+                    with console.status(f"Desinstalando {p['name']}..."):
+                        rc, out, err = _ejecutar(
+                            ["npm", "uninstall", "-g", p["name"]], timeout=30
+                        )
+                    if rc == 0:
+                        console.print(f"  [green]✅ {p['name']} desinstalado[/green]")
+                    else:
+                        console.print(f"  [red]❌ Error desinstalando {p['name']}: {err}[/red]")
+    elif len(instalados) == 1:
+        console.print(f"  [green]✅ Solo hay un paquete instalado: {instalados[0]['name']} v{instalados[0]['version']}[/green]")
+    else:
+        console.print("  ℹ️  No se detectaron paquetes npm de Zyro.")
+
+    console.print()
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  Main
 # ═══════════════════════════════════════════════════════════════════
 
@@ -1334,6 +1411,9 @@ def main() -> None:
 
     estados["python"] = True
     estados["python_version"] = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+    # ── Detectar duplicados npm ─────────────────────────────
+    _detectar_paquetes_duplicados()
 
     # ── Paso 2 ──────────────────────────────────────────────
     input("\n  Presiona Enter para continuar...")

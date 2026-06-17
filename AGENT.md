@@ -1,7 +1,8 @@
 # ZyroCLI — Orquestador Go para desarrollo asistido por IA
 
 ## ⚠️ Reglas del agente (LEER PRIMERO)
-- **NO hacer commit, push ni crear PRs** — salvo orden explícita del humano
+- **Trabajar SIEMPRE en rama `dev`** — nunca en `main`
+- **NO hacer push ni crear PRs** — solo commits locales en `dev`
 - **NO decidir por tu cuenta** — si algo no está especificado en el handoff.yaml o en las fases, PREGUNTAR al humano
 - **Solo orquestar** — tu trabajo es coordinar subagentes y fases, NO implementar código directamente
 - **Usar SDD** — tienes skills `zyro-sdd-apply`, `zyro-sdd-verify`, `zyro-sdd-explore`, `zyro-sdd-propose`, `zyro-sdd-spec`, `zyro-sdd-design`, `zyro-sdd-tasks`, `zyro-sdd-archive` para delegar. DELEGAR siempre que una tarea cruce los triggers (4+ archivos, multi-file write).

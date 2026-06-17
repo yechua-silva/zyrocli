@@ -12,4 +12,4 @@ dependencies = [
 dev = []
 
 [tool.setuptools]
-py-modules = ["helix_client", "task_context", "search_code", "search_skills", "runner"]
+py-modules = ["helix_client", "task_context", "search_code", "search_facts", "search_skills", "runner"]

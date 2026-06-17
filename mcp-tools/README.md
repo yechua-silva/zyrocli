@@ -1,11 +1,12 @@
 # Helix MCP Tools — Python MCP Server for HelixDB
 
-Exposes three MCP tools that query HelixDB from OpenCode or any MCP-compatible client:
+Exposes four MCP tools that query HelixDB from OpenCode or any MCP-compatible client:
 
 | Tool | Description |
 |------|-------------|
 | `task_context(id)` | Returns full context for a task: skills, code, docs, patterns, dependents, dependencies |
 | `search_code(query, limit)` | Text search over `CodeNode` entries |
+| `search_facts(query, limit)` | Text search over `Fact` entries |
 | `search_skills(query, limit)` | Text search over global `Skill` entries |
 
 ## Registration
@@ -23,7 +24,7 @@ Add the following entry to `~/.config/opencode/opencode.json` (replace `/path/to
 }
 ```
 
-After adding the entry, restart OpenCode. The three tools will be available as MCP tools.
+After adding the entry, restart OpenCode. The four tools will be available as MCP tools.
 
 ## Requirements
 

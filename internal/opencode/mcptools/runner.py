@@ -13,6 +13,7 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 from search_code import search_code_tool
+from search_facts import search_facts_tool
 from search_skills import search_skills_tool
 from task_context import task_context_tool
 from helix_write import save_to_helix_tool, link_to_project_tool, find_project_tool
@@ -21,6 +22,7 @@ server = FastMCP("helix-integration")
 
 server.add_tool(task_context_tool)
 server.add_tool(search_code_tool)
+server.add_tool(search_facts_tool)
 server.add_tool(search_skills_tool)
 server.add_tool(save_to_helix_tool)
 server.add_tool(link_to_project_tool)

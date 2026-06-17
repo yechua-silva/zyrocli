@@ -11,6 +11,7 @@
 
 - [✨ ¿Qué hace ZyroCLI?](#qué-hace-zyrocli)
 - [🧠 ¿Por qué existe?](#por-qué-existe)
+- [🔄 Dos Ciclos, Un Sistema: SDD + Boomerang](#dos-ciclos-un-sistema-sdd--boomerang)
 - [🏗️ Arquitectura](#arquitectura)
 - [🚀 Instalación](#instalación)
 - [⚡ Quick Start](#quick-start)
@@ -70,6 +71,101 @@ La memoria causal se consulta con **búsqueda híbrida** (vector ANN + BM25 + RR
 **Por qué:** La búsqueda semántica permite encontrar hechos conceptualmente similares aunque usen palabras diferentes. El modelo mxbai-embed-large es el mejor quality/speed para CPU según MTEB benchmark.
 
 [Investigación →](docs/explorations/investigacion-06-embedding-system.md)
+
+## 🔄 Dos Ciclos, Un Sistema: SDD + Boomerang
+
+ZyroAgentCLI opera con **dos ciclos anidados** que no debes confundir:
+
+### 🟦 SDD — Macro-ciclo de producto (F0→F4)
+
+El ciclo visible para el humano. Cada fase produce un artefacto:
+
+```
+F0: Investigación  →  Patrones, Librerías, Skills
+F1: Especificación →  Spec (arquitectura, módulos, REST)
+F2: Diseño + Tasks →  Design + Tareas atómicas
+F3: Implementación →  Código + Tests
+F4: Archive        →  Documentación final
+```
+
+**Cuándo usarlo:** cuando planificas un feature o fix completo.  
+**Quién lo gobierna:** el humano + el scheduler Go.
+
+### 🟠 Boomerang — Micro-ciclo de ejecución (dentro de cada fase)
+
+El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se repiten en F0, F1, F2, F3 y F4:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   BOOMERANG                          │
+│                                                      │
+│  1. MEMORY       ──  Recuperar hechos relevantes    │
+│                     de HelixDB (memoria causal)      │
+│                                                      │
+│  2. THINK        ──  Planificar acción específica    │
+│                     según el contexto recuperado     │
+│                                                      │
+│  3. DELEGATE     ──  Ejecutar agente(s) Python      │
+│                     con contexto + herramientas       │
+│                                                      │
+│  4. GIT CHECK    ──  Verificar estado del repo       │
+│                     (sin cambios conflictivos)       │
+│                                                      │
+│  5. QUALITY GATES──  Validación determinista         │
+│                     (tests, lint, tipos)             │
+│                                                      │
+│  6. SAVE MEMORY  ──  Extraer hechos nuevos y         │
+│                     guardar en HelixDB               │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+**Cuándo se usa:** en CADA fase del SDD. F0 ejecuta su Boomerang, F1 ejecuta su Boomerang, etc.  
+**Quién lo gobierna:** el orquestador Go — **nunca el agente Python**.
+
+### ¿Por qué dos ciclos?
+
+| SDD (macro) | Boomerang (micro) |
+|-------------|-------------------|
+| Responde al **qué** construir | Responde al **cómo** ejecutarlo |
+| Lo ves como plan de proyecto | Es invisible — pasa dentro de cada fase |
+| Avanza con aprobación humana | Es automático, no requiere aprobación |
+| 4-5 fases por feature | 6 pasos × N fases por feature |
+
+### 💰 Ahorro de Tokens — Datos Concretos
+
+El Boomerang **inyecta contexto preciso** en cada delegación, eliminando la necesidad de que el agente lea todo el codebase:
+
+| Escenario | Sin Boomerang | Con Boomerang | Ahorro |
+|-----------|--------------|---------------|--------|
+| Agente recibe contexto | 12k-20k tokens (codebase completo) | 2k-4k tokens (solo hechos relevantes) | **~80%** |
+| Búsqueda de decisiones previas | 8k-15k tokens (scanea todo) | 0.5k tokens (una query BM25) | **~95%** |
+| Carga mental del agente | Tiene que entender el proyecto solo | Recibe hechos ya filtrados | **Menos alucinaciones** |
+
+**Fuente:** [Memoria Causal reduce 80% tokens por sesión](docs/explorations/investigacion-04-engram-memoria-causal.md)
+
+### 🔧 Integración con OpenCode
+
+Las MCP tools de HelixDB (`search_code`, `search_skills`, `task_context`, `search_facts`, `embed`) son los **brazos del Boomerang**. El orquestador Go las usa en cada paso:
+
+```
+Paso 1 (Memory)   → search_facts + task_context
+Paso 2 (Think)    → search_code + search_skills
+Paso 3 (Delegate) → llama al agente Python con contexto inyectado
+Paso 5 (Quality)  → ejecuta tests vía CLI
+Paso 6 (Save)     → save_to_helix (nuevos Facts)
+```
+
+El resultado: **el agente Python nunca busca información por su cuenta**. Recibe solo lo que necesita, cuando lo necesita. Esto es lo que hace que ZyroAgentCLI sea 5-10x más eficiente en tokens que un agente sin orquestación.
+
+### 📚 Más información
+
+| Documento | Contenido |
+|-----------|----------|
+| [Arquitectura v2](docs/architecture-v2.md) | Diseño completo del sistema |
+| [HelixDB Schema](docs/helixdb-schema-hql.md) | Schema de nodos y edges en HelixDB |
+| [HelixDB Integración](docs/helixdb-integration.md) | Cómo se conectan los componentes |
+| [Especificación Técnica](docs/spec-zyrov2.md) | Spec completa C-I-O |
 
 ## 🏗️ Arquitectura
 
