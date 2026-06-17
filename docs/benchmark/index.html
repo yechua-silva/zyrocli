@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Benchmark: 3 Jaulas</title>
+<style>
+  body { font-family: -apple-system, sans-serif; background: #f8f9fa; color: #333; padding: 40px 20px; }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 2em; }
+  .subtitle { color: #666; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .charts { grid-template-columns: 1fr; } }
+  .full-width { grid-column: 1 / -1; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; }
+  th { background: #f1f3f5; font-weight: 600; }
+  .winner { color: #2e7d32; font-weight: 700; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.85em; color: #888; }
+  .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); text-align: center; }
+  .card .val { font-size: 2em; font-weight: 700; }
+  .card .label { font-size: 0.85em; color: #888; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🏋️ Benchmark: 3 Jaulas</h1>
+  <p class="subtitle">Plain OpenCode vs gentle-ai v1.40.2 vs ZyroCLI + Boomerang<br>
+  10 iteraciones por jaula · deepseek-v4-flash · JWT auth task</p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0;">
+    <div class="card"><div class="label">Plain</div><div class="val" style="color:#666">179,029</div><div class="label">tokens totales</div></div>
+    <div class="card"><div class="label">gentle-ai</div><div class="val" style="color:#e91e8c">242,325</div><div class="label">tokens totales</div></div>
+    <div class="card"><div class="label">ZyroCLI</div><div class="val" style="color:#00add8">180,935</div><div class="label">tokens totales</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="full-width"><svg width="600" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="300" fill="white" rx="8"/><text x="300.0" y="25" text-anchor="middle" font-size="16" font-weight="bold">Tokens Input (total)</text><rect x="60" y="94.0276555503153" width="120" height="155.9723444496847" fill="#666" rx="4"/><text x="120.0" y="270" text-anchor="middle" font-size="13">Plain OpenCode</text><text x="120.0" y="84.0276555503153" text-anchor="middle" font-size="14" font-weight="bold">145,815</text><rect x="220" y="30.0" width="120" height="220.0" fill="#e91e8c" rx="4"/><text x="280.0" y="270" text-anchor="middle" font-size="13">gentle-ai</text><text x="280.0" y="20.0" text-anchor="middle" font-size="14" font-weight="bold">205,673</text><rect x="380" y="97.3264842735799" width="120" height="152.6735157264201" fill="#00add8" rx="4"/><text x="440.0" y="270" text-anchor="middle" font-size="13">ZyroCLI</text><text x="440.0" y="87.3264842735799" text-anchor="middle" font-size="14" font-weight="bold">142,731</text></svg></div>
+    <div class="full-width"><svg width="600" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="300" fill="white" rx="8"/><text x="300.0" y="25" text-anchor="middle" font-size="16" font-weight="bold">Tokens Output (total)</text><rect x="60" y="58.73521097267303" width="120" height="191.26478902732697" fill="#666" rx="4"/><text x="120.0" y="270" text-anchor="middle" font-size="13">Plain OpenCode</text><text x="120.0" y="48.73521097267303" text-anchor="middle" font-size="14" font-weight="bold">33,214</text><rect x="220" y="38.93728405402575" width="120" height="211.06271594597425" fill="#e91e8c" rx="4"/><text x="280.0" y="270" text-anchor="middle" font-size="13">gentle-ai</text><text x="280.0" y="28.937284054025753" text-anchor="middle" font-size="14" font-weight="bold">36,652</text><rect x="380" y="30.0" width="120" height="220.0" fill="#00add8" rx="4"/><text x="440.0" y="270" text-anchor="middle" font-size="13">ZyroCLI</text><text x="440.0" y="20.0" text-anchor="middle" font-size="14" font-weight="bold">38,204</text></svg></div>
+    <div class="full-width"><svg width="600" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="300" fill="white" rx="8"/><text x="300.0" y="25" text-anchor="middle" font-size="16" font-weight="bold">Tiempo Promedio (segundos)</text><rect x="60" y="142.78273809523807" width="120" height="107.21726190476191" fill="#666" rx="4"/><text x="120.0" y="270" text-anchor="middle" font-size="13">Plain OpenCode</text><text x="120.0" y="132.78273809523807" text-anchor="middle" font-size="14" font-weight="bold">58.95s</text><rect x="220" y="135.30753968253967" width="120" height="114.69246031746033" fill="#e91e8c" rx="4"/><text x="280.0" y="270" text-anchor="middle" font-size="13">gentle-ai</text><text x="280.0" y="125.30753968253967" text-anchor="middle" font-size="14" font-weight="bold">63.06s</text><rect x="380" y="30.0" width="120" height="220.0" fill="#00add8" rx="4"/><text x="440.0" y="270" text-anchor="middle" font-size="13">ZyroCLI</text><text x="440.0" y="20.0" text-anchor="middle" font-size="14" font-weight="bold">120.96s</text></svg></div>
+    <div class="full-width"><svg width="600" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="300" fill="white" rx="8"/><text x="300.0" y="25" text-anchor="middle" font-size="16" font-weight="bold">Costo Total (USD)</text><rect x="60" y="74.00000000000003" width="120" height="175.99999999999997" fill="#666" rx="4"/><text x="120.0" y="270" text-anchor="middle" font-size="13">Plain OpenCode</text><text x="120.0" y="64.00000000000003" text-anchor="middle" font-size="14" font-weight="bold">0.04$</text><rect x="220" y="30.0" width="120" height="220.0" fill="#e91e8c" rx="4"/><text x="280.0" y="270" text-anchor="middle" font-size="13">gentle-ai</text><text x="280.0" y="20.0" text-anchor="middle" font-size="14" font-weight="bold">0.05$</text><rect x="380" y="74.00000000000003" width="120" height="175.99999999999997" fill="#00add8" rx="4"/><text x="440.0" y="270" text-anchor="middle" font-size="13">ZyroCLI</text><text x="440.0" y="64.00000000000003" text-anchor="middle" font-size="14" font-weight="bold">0.04$</text></svg></div>
+  </div>
+
+  <table>
+    <tr><th>Métrica</th><th>Plain OpenCode</th><th>gentle-ai</th><th>ZyroCLI</th><th>Ganador</th></tr>
+    <tr>
+      <td>Tokens input (total)</td>
+      <td>145,815</td>
+      <td style="color:#e74c3c">205,673 ⬆️ +41%</td>
+      <td style="color:#2e7d32">142,731 ✅ -2%</td>
+      <td class="winner">ZyroCLI</td>
+    </tr>
+    <tr>
+      <td>Tokens output (total)</td>
+      <td style="color:#2e7d32">33,214 ✅</td>
+      <td>36,652</td>
+      <td>38,204</td>
+      <td class="winner">Plain</td>
+    </tr>
+    <tr>
+      <td>Tiempo promedio</td>
+      <td style="color:#2e7d32">59s ✅</td>
+      <td>63s</td>
+      <td style="color:#e74c3c">121s ⬆️ +105%</td>
+      <td class="winner">Plain</td>
+    </tr>
+    <tr>
+      <td>Costo total</td>
+      <td style="color:#2e7d32">$0.0400 ✅</td>
+      <td>$0.0500</td>
+      <td style="color:#2e7d32">$0.0400 ✅</td>
+      <td class="winner">Plain / Zyro</td>
+    </tr>
+    <tr>
+      <td>Razonamiento (total)</td>
+      <td>20,788</td>
+      <td style="color:#2e7d32">19,744 ✅</td>
+      <td style="color:#e74c3c">32,456 ⬆️ +56%</td>
+      <td class="winner">gentle-ai</td>
+    </tr>
+    <tr>
+      <td>Éxito</td>
+      <td>10/10 ✅</td>
+      <td>10/10 ✅</td>
+      <td>10/10 ✅</td>
+      <td class="winner">Empate</td>
+    </tr>
+  </table>
+
+  <h2>🔬 Metodología</h2>
+  <ul>
+    <li><strong>30 iteraciones</strong> (10 por jaula) con la misma tarea JWT</li>
+    <li><strong>Modelo:</strong> deepseek-v4-flash vía opencode-go</li>
+    <li><strong>Medición exacta:</strong> <code>opencode export &lt;session_id&gt;</code> — tokens reales de la API</li>
+    <li><strong>Tarea:</strong> Agregar autenticación JWT a API Go (POST /login, JWT middleware, GET /profile)</li>
+    <li><strong>Criterio de éxito:</strong> go build ./... + go test ./... pasan ambos</li>
+  </ul>
+
+  <h2>📚 Investigación</h2>
+  <ul>
+    <li><a href="https://github.com/openai/tiktoken">tiktoken</a> — Tokenizer exacto (18.5k ⭐)</li>
+    <li><a href="https://github.com/Gentleman-Programming/gentle-ai">gentle-ai</a> — Competidor (4k ⭐, v1.40.2)</li>
+    <li><a href="https://www.anthropic.com/research/swe-bench-sonnet">SWE-bench Sonnet</a> — &gt;100k tokens sin memoria</li>
+    <li><a href="https://www.anthropic.com/research/building-effective-agents">Building Effective Agents</a></li>
+  </ul>
+
+  <div class="footer">
+    <p>Benchmark ejecutado el 2026-06-16T23:09:17 · <a href="https://github.com/secko/zyrocli">ZyroAgentCLI</a></p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,917 @@
+{
+  "model": "deepseek-v4-flash",
+  "provider": "opencode-go",
+  "iterations": 10,
+  "timestamp": "2026-06-16T23:09:17",
+  "task": "# Tarea: Agregar autenticaci\u00f3n JWT\n\nAgrega autenticaci\u00f3n JWT a esta API Go existente:\n\n1. POST /login - recibe {\"username\":\"admin\",\"password\":\"secret\"}, devuelve JWT token\n2. JWT middleware - valida el token en endpoints protegidos\n3. GET /profile - protegido, devuelve usuario del token\n4. Tests unitarios - go test ./... debe pasar\n\nUsa: github.com/golang-jwt/jwt/v5\nMant\u00e9n: los endpoints /ping y /status existentes\n",
+  "jaulas": {
+    "plain": {
+      "results": [
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 55.2,
+          "success": true,
+          "session_id": "ses_12c9da785ffeHZcOnjmgG9yKnx",
+          "tokens": {
+            "input": 13574,
+            "output": 3800,
+            "reasoning": 407,
+            "cache": {
+              "read": 189568,
+              "write": 0
+            }
+          },
+          "cost": 0.003609,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:22:33",
+          "iteration": 1,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 56.4,
+          "success": true,
+          "session_id": "ses_12c9cbec0ffe6dAOfLKDgVDjPc",
+          "tokens": {
+            "input": 14650,
+            "output": 3065,
+            "reasoning": 2619,
+            "cache": {
+              "read": 113920,
+              "write": 0
+            }
+          },
+          "cost": 0.003961,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:23:34",
+          "iteration": 2,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 63.2,
+          "success": true,
+          "session_id": "ses_12c9bd0c7ffeKY9Ttj4swkyn2q",
+          "tokens": {
+            "input": 15599,
+            "output": 3377,
+            "reasoning": 2627,
+            "cache": {
+              "read": 177152,
+              "write": 0
+            }
+          },
+          "cost": 0.004361,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:24:42",
+          "iteration": 3,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 76.6,
+          "success": true,
+          "session_id": "ses_12c9ac89cffeb8J38qkAXKPVTT",
+          "tokens": {
+            "input": 15279,
+            "output": 4489,
+            "reasoning": 574,
+            "cache": {
+              "read": 223104,
+              "write": 0
+            }
+          },
+          "cost": 0.004181,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:26:03",
+          "iteration": 4,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 84.1,
+          "success": true,
+          "session_id": "ses_12c998a74ffezxR7u9AP9Fq55S",
+          "tokens": {
+            "input": 17637,
+            "output": 3402,
+            "reasoning": 4722,
+            "cache": {
+              "read": 172672,
+              "write": 0
+            }
+          },
+          "cost": 0.005227,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:27:32",
+          "iteration": 5,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 47.9,
+          "success": true,
+          "session_id": "ses_12c98308bffeDRHnPxm8vRO7mA",
+          "tokens": {
+            "input": 14473,
+            "output": 2938,
+            "reasoning": 2206,
+            "cache": {
+              "read": 142336,
+              "write": 0
+            }
+          },
+          "cost": 0.003865,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:28:24",
+          "iteration": 6,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 54.6,
+          "success": true,
+          "session_id": "ses_12c9763caffe5dDEfB5EKofoFx",
+          "tokens": {
+            "input": 14825,
+            "output": 3297,
+            "reasoning": 2485,
+            "cache": {
+              "read": 162176,
+              "write": 0
+            }
+          },
+          "cost": 0.004149,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:29:23",
+          "iteration": 7,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 63.3,
+          "success": true,
+          "session_id": "ses_12c967c7affewEp4ez4QPrqmd7",
+          "tokens": {
+            "input": 15874,
+            "output": 3433,
+            "reasoning": 3459,
+            "cache": {
+              "read": 152448,
+              "write": 0
+            }
+          },
+          "cost": 0.004579,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:30:31",
+          "iteration": 8,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 57.0,
+          "success": true,
+          "session_id": "ses_12c957383ffeYIW6VUJHOThbWB",
+          "tokens": {
+            "input": 12284,
+            "output": 2867,
+            "reasoning": 1325,
+            "cache": {
+              "read": 98816,
+              "write": 0
+            }
+          },
+          "cost": 0.00317,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:31:32",
+          "iteration": 9,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 31.2,
+          "success": true,
+          "session_id": "ses_12c948462ffeqZD6bmbeYf8V0K",
+          "tokens": {
+            "input": 11620,
+            "output": 2546,
+            "reasoning": 364,
+            "cache": {
+              "read": 88448,
+              "write": 0
+            }
+          },
+          "cost": 0.002689,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:32:08",
+          "iteration": 10,
+          "jaula": "plain",
+          "stdout_truncated": ""
+        }
+      ],
+      "statistics": {
+        "tokens_input": {
+          "avg": 14581.5,
+          "min": 11620,
+          "max": 17637,
+          "total": 145815,
+          "n": 10
+        },
+        "tokens_output": {
+          "avg": 3321.4,
+          "min": 2546,
+          "max": 4489,
+          "total": 33214,
+          "n": 10
+        },
+        "tokens_reasoning": {
+          "avg": 2078.8,
+          "min": 364,
+          "max": 4722,
+          "total": 20788,
+          "n": 10
+        },
+        "cost_usd": {
+          "avg": 0.0,
+          "min": 0.0,
+          "max": 0.01,
+          "total": 0.04,
+          "n": 10
+        },
+        "time_seconds": {
+          "avg": 58.95,
+          "min": 31.2,
+          "max": 84.1,
+          "total": 589.5,
+          "n": 10
+        },
+        "success_count": 10,
+        "total_count": 10,
+        "success_rate": "10/10"
+      }
+    },
+    "gentle": {
+      "results": [
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 46.2,
+          "success": true,
+          "session_id": "ses_12c918b2bffeU2ghE1VVtYRqqw",
+          "tokens": {
+            "input": 20239,
+            "output": 3645,
+            "reasoning": 356,
+            "cache": {
+              "read": 226688,
+              "write": 0
+            }
+          },
+          "cost": 0.004588,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:35:38",
+          "iteration": 1,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 80.7,
+          "success": true,
+          "session_id": "ses_12c90c3b8ffekkobm8IJfzg3Y3",
+          "tokens": {
+            "input": 21165,
+            "output": 4228,
+            "reasoning": 1760,
+            "cache": {
+              "read": 337152,
+              "write": 0
+            }
+          },
+          "cost": 0.005584,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:37:03",
+          "iteration": 2,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 54.0,
+          "success": true,
+          "session_id": "ses_12c8f769affefLA0Gq5Fc25vkj",
+          "tokens": {
+            "input": 20775,
+            "output": 3143,
+            "reasoning": 2469,
+            "cache": {
+              "read": 222208,
+              "write": 0
+            }
+          },
+          "cost": 0.005102,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:38:02",
+          "iteration": 3,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 69.0,
+          "success": true,
+          "session_id": "ses_12c8e9278ffeYtz61TE1ltOMFY",
+          "tokens": {
+            "input": 21612,
+            "output": 3733,
+            "reasoning": 2591,
+            "cache": {
+              "read": 257408,
+              "write": 0
+            }
+          },
+          "cost": 0.005517,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:39:15",
+          "iteration": 4,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 70.4,
+          "success": true,
+          "session_id": "ses_12c8d73d5ffemwN509xWDKt8Q5",
+          "tokens": {
+            "input": 21688,
+            "output": 3653,
+            "reasoning": 2478,
+            "cache": {
+              "read": 237824,
+              "write": 0
+            }
+          },
+          "cost": 0.005419,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:40:30",
+          "iteration": 5,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 46.6,
+          "success": true,
+          "session_id": "ses_12c8c4fc4ffecF9FU32GVsYiZ5",
+          "tokens": {
+            "input": 20594,
+            "output": 3264,
+            "reasoning": 2265,
+            "cache": {
+              "read": 158720,
+              "write": 0
+            }
+          },
+          "cost": 0.004876,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:41:21",
+          "iteration": 6,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 64.4,
+          "success": true,
+          "session_id": "ses_12c8b87cfffepE7D0W5YbaRryf",
+          "tokens": {
+            "input": 18693,
+            "output": 3032,
+            "reasoning": 2741,
+            "cache": {
+              "read": 150528,
+              "write": 0
+            }
+          },
+          "cost": 0.004655,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:42:30",
+          "iteration": 7,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 79.0,
+          "success": true,
+          "session_id": "ses_12c8a7b2cffeNChf7JVCqVsdYu",
+          "tokens": {
+            "input": 21269,
+            "output": 4147,
+            "reasoning": 3019,
+            "cache": {
+              "read": 197376,
+              "write": 0
+            }
+          },
+          "cost": 0.005537,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:43:53",
+          "iteration": 8,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 71.0,
+          "success": true,
+          "session_id": "ses_12c893530ffe2hshEWCvSH1JlX",
+          "tokens": {
+            "input": 20181,
+            "output": 4430,
+            "reasoning": 784,
+            "cache": {
+              "read": 285184,
+              "write": 0
+            }
+          },
+          "cost": 0.005084,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:45:09",
+          "iteration": 9,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 49.3,
+          "success": true,
+          "session_id": "ses_12c880f3dffeJdrKgNtS9Avj0T",
+          "tokens": {
+            "input": 19457,
+            "output": 3377,
+            "reasoning": 1281,
+            "cache": {
+              "read": 212864,
+              "write": 0
+            }
+          },
+          "cost": 0.004624,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "build",
+          "timestamp": "2026-06-17T02:46:02",
+          "iteration": 10,
+          "jaula": "gentle",
+          "stdout_truncated": ""
+        }
+      ],
+      "statistics": {
+        "tokens_input": {
+          "avg": 20567.3,
+          "min": 18693,
+          "max": 21688,
+          "total": 205673,
+          "n": 10
+        },
+        "tokens_output": {
+          "avg": 3665.2,
+          "min": 3032,
+          "max": 4430,
+          "total": 36652,
+          "n": 10
+        },
+        "tokens_reasoning": {
+          "avg": 1974.4,
+          "min": 356,
+          "max": 3019,
+          "total": 19744,
+          "n": 10
+        },
+        "cost_usd": {
+          "avg": 0.01,
+          "min": 0.0,
+          "max": 0.01,
+          "total": 0.05,
+          "n": 10
+        },
+        "time_seconds": {
+          "avg": 63.06,
+          "min": 46.2,
+          "max": 80.7,
+          "total": 630.6,
+          "n": 10
+        },
+        "success_count": 10,
+        "total_count": 10,
+        "success_rate": "10/10"
+      }
+    },
+    "zyro": {
+      "results": [
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 98.7,
+          "success": true,
+          "session_id": "ses_12c871b1effehO7pIUQ2m6LTWU",
+          "tokens": {
+            "input": 13182,
+            "output": 4633,
+            "reasoning": 2397,
+            "cache": {
+              "read": 121472,
+              "write": 0
+            }
+          },
+          "cost": 0.004154,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T02:47:54",
+          "iteration": 1,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 138.2,
+          "success": true,
+          "session_id": "ses_12c8588bbffeEz0vNcIQCHXn2g",
+          "tokens": {
+            "input": 17073,
+            "output": 4794,
+            "reasoning": 9688,
+            "cache": {
+              "read": 95616,
+              "write": 0
+            }
+          },
+          "cost": 0.006713,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T02:50:17",
+          "iteration": 2,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 155.1,
+          "success": true,
+          "session_id": "ses_12c835b8cffefUk61quC26R3te",
+          "tokens": {
+            "input": 13130,
+            "output": 3578,
+            "reasoning": 3162,
+            "cache": {
+              "read": 142080,
+              "write": 0
+            }
+          },
+          "cost": 0.004123,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T02:52:56",
+          "iteration": 3,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 79.5,
+          "success": true,
+          "session_id": "ses_12c80ecb3ffej9iHC30oywMXjv",
+          "tokens": {
+            "input": 12347,
+            "output": 2347,
+            "reasoning": 815,
+            "cache": {
+              "read": 93184,
+              "write": 0
+            }
+          },
+          "cost": 0.002875,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T02:54:20",
+          "iteration": 4,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 127.5,
+          "success": true,
+          "session_id": "ses_12c7fa56fffeOCOOBaDPcAZuu1",
+          "tokens": {
+            "input": 15202,
+            "output": 3173,
+            "reasoning": 4189,
+            "cache": {
+              "read": 84352,
+              "write": 0
+            }
+          },
+          "cost": 0.004426,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T02:56:32",
+          "iteration": 5,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 98.8,
+          "success": true,
+          "session_id": "ses_12c7da184ffe9IK8xBiAL627Zd",
+          "tokens": {
+            "input": 9602,
+            "output": 5822,
+            "reasoning": 758,
+            "cache": {
+              "read": 115584,
+              "write": 0
+            }
+          },
+          "cost": 0.00351,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T02:58:15",
+          "iteration": 6,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 136.8,
+          "success": true,
+          "session_id": "ses_12c7c0d57ffeT3aQWfDW6B843Z",
+          "tokens": {
+            "input": 15967,
+            "output": 3488,
+            "reasoning": 3745,
+            "cache": {
+              "read": 131712,
+              "write": 0
+            }
+          },
+          "cost": 0.004629,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T03:00:37",
+          "iteration": 7,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 123.7,
+          "success": true,
+          "session_id": "ses_12c79e5bbffecxSEK2aJhG6PLm",
+          "tokens": {
+            "input": 14763,
+            "output": 3502,
+            "reasoning": 2709,
+            "cache": {
+              "read": 79104,
+              "write": 0
+            }
+          },
+          "cost": 0.004027,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T03:02:45",
+          "iteration": 8,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 127.4,
+          "success": true,
+          "session_id": "ses_12c77f0b0ffePYANoJ1bs3acd",
+          "tokens": {
+            "input": 15588,
+            "output": 3524,
+            "reasoning": 3742,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "cost": 0.004499,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "iteration": 9,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        },
+        {
+          "exit_code": 0,
+          "time_elapsed_s": 123.9,
+          "success": true,
+          "session_id": "ses_12c75ed96ffe8lBA252V750hig",
+          "tokens": {
+            "input": 15877,
+            "output": 3343,
+            "reasoning": 1251,
+            "cache": {
+              "read": 78592,
+              "write": 0
+            }
+          },
+          "cost": 0.003729,
+          "model": {
+            "id": "deepseek-v4-flash",
+            "providerID": "opencode-go"
+          },
+          "agent": "zyro-orchestrator",
+          "timestamp": "2026-06-17T03:07:05",
+          "iteration": 10,
+          "jaula": "zyro",
+          "stdout_truncated": ""
+        }
+      ],
+      "statistics": {
+        "tokens_input": {
+          "avg": 14273.1,
+          "min": 9602,
+          "max": 17073,
+          "total": 142731,
+          "n": 10
+        },
+        "tokens_output": {
+          "avg": 3820.4,
+          "min": 2347,
+          "max": 5822,
+          "total": 38204,
+          "n": 10
+        },
+        "tokens_reasoning": {
+          "avg": 3245.6,
+          "min": 758,
+          "max": 9688,
+          "total": 32456,
+          "n": 10
+        },
+        "cost_usd": {
+          "avg": 0.0,
+          "min": 0.0,
+          "max": 0.01,
+          "total": 0.04,
+          "n": 10
+        },
+        "time_seconds": {
+          "avg": 120.96,
+          "min": 79.5,
+          "max": 155.1,
+          "total": 1209.6,
+          "n": 10
+        },
+        "success_count": 10,
+        "total_count": 10,
+        "success_rate": "10/10"
+      }
+    }
+  },
+  "plain": {
+    "summary": {
+      "total_tokens": 199817,
+      "input_tokens": 145815,
+      "output_tokens": 33214,
+      "turns": 10,
+      "method": "api"
+    }
+  },
+  "gentle": {
+    "summary": {
+      "total_tokens": 262069,
+      "input_tokens": 205673,
+      "output_tokens": 36652,
+      "turns": 10,
+      "method": "api"
+    }
+  },
+  "zyro": {
+    "summary": {
+      "total_tokens": 213391,
+      "input_tokens": 142731,
+      "output_tokens": 38204,
+      "turns": 10,
+      "method": "api"
+    }
+  }
+}

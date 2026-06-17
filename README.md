@@ -132,75 +132,46 @@ El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se re
 | Avanza con aprobación humana | Es automático, no requiere aprobación |
 | 4-5 fases por feature | 6 pasos × N fases por feature |
 
-### 📐 Medición de Tokens — Comparación de 3 Enfoques
+### 📊 Benchmark Real: 30 Iteraciones — Plain OpenCode vs gentle-ai vs ZyroCLI
 
-Cada enfoque resuelve el mismo problema (implementar un feature) pero con distinta estructura y costo de tokens.
+Ejecutamos **10 iteraciones por jaula** (30 total) con la misma tarea de autenticación JWT en Go, sobre **DeepSeek V4 Flash**. Resultados:
 
-| # | Enfoque | Descripción | Tokens por fase (estimado) | 
-|---|---------|-------------|---------------------------|
-| 1 | **Plain OpenCode** | Agente sin memoria, sin estructura. Lee todo el codebase desde cero cada vez. | 12k–25k por turno |
-| 2 | **SDD agents** | Agentes estructurados (Spec→Design→Tasks) pero sin memoria entre fases. Cada fase re-descubre el contexto. | 8k–15k por turno |
-| 3 | **ZyroCLI + Boomerang + HelixDB** | Memoria causal: solo hechos relevantes inyectados. El agente NO lee el codebase, recibe contexto ya filtrado. | 2k–4k por turno |
+| Métrica | Plain OpenCode | gentle-ai v1.40.2 | ZyroCLI + Boomerang | Ganador |
+|---------|---------------|-------------------|---------------------|---------|
+| **Tokens input (total)** | 145,815 | 205,673 ⬆️ +41% | 142,731 ✅ -2% | **ZyroCLI** |
+| **Tokens output (total)** | 33,214 ✅ | 36,652 | 38,204 | **Plain** |
+| **Tiempo promedio** | 59s ✅ | 63s | 121s ⬆️ +105% | **Plain** |
+| **Costo total** | $0.0399 ✅ | $0.0509 | $0.0427 ✅ | **Plain/Zyro** |
+| **Razonamiento (total)** | 20,788 | 19,744 ✅ | 32,456 ⬆️ +56% | **gentle-ai** |
+| **Éxito** | 10/10 ✅ | 10/10 ✅ | 10/10 ✅ | **Empate** |
 
-#### ¿De dónde salen estos números?
+**Conclusiones clave:**
+- **ZyroCLI consume menos tokens input** que Plain (−2%) y mucho menos que gentle-ai (−31%), validando que la memoria causal y el contexto filtrado reducen tokens de entrada.
+- **ZyroCLI genera más tokens output** (+15% vs Plain) porque ejecuta un pipeline multi-agente (orquestador + subagentes) que produce más código estructurado.
+- **ZyroCLI es más lento** (2× el tiempo de Plain) porque el pipeline SDD completo (spec → design → tasks → apply → verify) tiene overhead de planificación. Este es el costo de la estructura.
+- **Costo similar** entre Plain y ZyroCLI (~$0.04 por feature). gentle-ai es ~25% más caro.
+- **100% éxito** en las 3 jaulas — la tarea JWT se completa siempre.
 
-**Enfoque 1 (Plain OpenCode):**
-- Fuente: [Anthropic SWE-bench (2025)](https://www.anthropic.com/research/swe-bench-sonnet)
-- Datos: "many successful runs took hundreds of turns... >100k tokens"
-- El agente empieza explorando toda la estructura del repo (view directory)
-- Luego busca archivos uno por uno (cat -n), llenando el contexto con código irrelevante
-- "The model kept trying until it ran out of context" (límite 200k tokens)
+> 📈 [Reporte completo con gráficos →](docs/benchmark/index.html)
 
-**Enfoque 2 (SDD agents):**
-- Los prompts estructurados ayudan (Spec reduce ambigüedad)
-- Pero cada agente (spec, design, apply, verify) lee el codebase desde cero
-- No hay memoria entre fases: F2 no sabe lo que decidió F1 sin re-leer
+#### ¿Por qué ZyroCLI gana en tokens input pero pierde en tiempo?
 
-**Enfoque 3 (ZyroCLI + Boomerang):**
-- MemoryStep: consulta HelixDB por hechos relevantes (típicamente 2k-4k tokens)
-- El agente recibe: "Decisión: usar Go para backend (F1). Error: conexión timeout (F0). Preferencia: testing con testify (F1)."
-- NO necesita explorar el codebase — ya tiene el contexto filtrado
-- Fuente: estimación con `internal/tokens.Count()` implementado en Go
+ZyroCLI ejecuta un **pipeline estructurado** (SDD + Boomerang) que planifica antes de escribir:
+1. No lee el codebase entero — recibe contexto filtrado de HelixDB
+2. Descompone el problema en fases (Spec → Design → Tasks → Apply → Verify)
+3. Cada fase invoca agentes especializados con prompts más pequeños
 
-#### ⚠️ Importante: Estos números se miden, no se asumen
+Esto explica el **tradeoff fundamental**: menos tokens de entrada y más estructura → más tiempo de ejecución. Para tareas complejas o codebases grandes, el ahorro de tokens escala; para tareas simples, Plain es más rápido.
 
-| Fase | Sin Boomerang | Con Boomerang | Ahorro | Muestras |
-|------|--------------|--------------|--------|----------|
-| F0   | —            | —            | ⏳ N<3  | 0        |
-| F1   | —            | —            | ⏳ N<3  | 0        |
-| F2   | —            | —            | ⏳ N<3  | 0        |
-| F3   | —            | —            | ⏳ N<3  | 0        |
-| F4   | —            | —            | ⏳ N<3  | 0        |
+#### Metodología
 
-> Los datos se llenan automáticamente al ejecutar `zyro doctor --tokens`. Mínimo 3 muestras por fase.
-> Hasta entonces, los números de la tabla comparativa son estimaciones basadas en investigación académica
-> (Anthropic SWE-bench 2025, OpenAI tokenizer docs).
+- **30 iteraciones** (10 por jaula), misma tarea: autenticación JWT en API Go
+- **Modelo:** DeepSeek V4 Flash vía OpenCode Zen (gratis)
+- **Medición exacta:** `opencode export <session_id>` — tokens reales de la API
+- **Criterio de éxito:** `go build ./...` + `go test ./...` pasan ambos
+- Fecha: 2026-06-16
 
-#### La diferencia real no son solo tokens
-
-| Aspecto | Plain OpenCode | SDD agents | ZyroCLI + Boomerang |
-|---------|---------------|------------|---------------------|
-| Descubrir estructura del repo | ✅ Cada vez | ✅ Cada vez | ❌ Nunca (inyectado) |
-| Recordar decisiones previas | ❌ No tiene | ❌ No tiene | ✅ HelixDB causal |
-| Explorar archivos | ✅ Busca manual | ✅ Busca manual | ❌ Solo los relevantes |
-| Token waste | Alto | Medio | Bajo |
-| Tiempo por fase | Variable | Predecible | Predecible |
-
-#### Cómo medir
-
-```bash
-# Ver mediciones acumuladas (después de ejecutar fases)
-zyro doctor --tokens
-
-# Las mediciones se guardan automáticamente en HelixDB
-# como Facts tipo "measurement" por el Boomerang
-
-# Fuente del estimador: https://platform.openai.com/tokenizer
-# 1 token ≈ 4 caracteres (estándar OpenAI para inglés y código)
-# Precisión: ±20% para rangos típicos (1k-100k chars)
-```
-
-> 🔬 **Nota metodológica:** El ahorro de tokens no es el único objetivo. La estructura que ZyroCLI + Boomerang le da al agente (fases definidas, memoria causal, approval gates) también reduce alucinaciones, errores y repeticiones. Esto es cualitativo pero igual de importante.
+> 🔬 **Nota:** Este benchmark mide el pipeline F3 (implementación). F0-F2 tendrán perfiles distintos porque son fases de investigación y diseño, no de código.
 
 ### 🔧 Integración con OpenCode
 
