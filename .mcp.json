@@ -25,6 +25,16 @@
         "--toolsets",
         "repos,issues,pull_requests"
       ]
+    },
+    "zyro-embeddings": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/home/secko/Projects/ZyroAgentCLI/mcp-tools",
+        "python",
+        "embedding_harness.py"
+      ]
     }
   }
 }

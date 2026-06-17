@@ -1,7 +1,7 @@
 """Zyro Embedding Harness — MCP server para generar embeddings.
 
 Pipeline de prioridad:
-1. Ollama + mxbai-embed-large (local, CPU/GPU, 768 dims)
+1. Ollama + mxbai-embed-large (local, CPU/GPU, 1024 dims)
 2. Scaleway qwen3-embedding-8b (free API, 1M tokens)
 3. GitHub Models / Cohere (fallback terciario)
 4. BM25 puro (degradación graceful)
@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import sqlite3
+import sys
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
@@ -50,9 +52,9 @@ def _get_cached(hash: str) -> list[float] | None:
         conn.close()
         if row:
             return json.loads(row[0])
-    except Exception:
-        pass
-    return None
+    except Exception as e:
+        print(f"[embedding_harness] _get_cached error: {e}", file=sys.stderr)
+        return None
 
 
 def _set_cache(hash: str, vector: list[float], model: str):
@@ -64,8 +66,53 @@ def _set_cache(hash: str, vector: list[float], model: str):
         )
         conn.commit()
         conn.close()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[embedding_harness] _set_cache error: {e}", file=sys.stderr)
+
+
+def _bm25_fallback(text: str) -> list[float]:
+    """BM25-like pseudo-embedding usando feature hashing de 1024 dims.
+
+    Último recurso cuando todos los proveedores fallan.
+    Solo usa la librería estándar de Python (sin dependencias externas).
+    """
+    # 1. Tokenización: split por whitespace + lowercase
+    tokens = text.lower().split()
+    if not tokens:
+        return [0.0] * 1024
+
+    # 2. Frecuencias de tokens
+    freq: dict[str, int] = {}
+    for t in tokens:
+        freq[t] = freq.get(t, 0) + 1
+
+    # 3. Pseudo-IDF: log(1 + avg_len / len(tokens))
+    avg_len = 100.0  # longitud promedio asumida del "corpus"
+    doc_len = len(tokens)
+    idf = math.log(1.0 + avg_len / doc_len)
+
+    # 4. Feature hashing a 1024 dimensiones (hashing trick)
+    dim = 1024
+    vector = [0.0] * dim
+
+    for token, count in freq.items():
+        # BM25-like term frequency saturation (k1 = 1.5)
+        tf = count / (count + 1.5)
+        weight = tf * idf
+
+        # Hash determinista a índice + signo
+        h = hashlib.md5(token.encode()).hexdigest()
+        idx = int(h[:8], 16) % dim
+        sign = 1 if int(h[8:16], 16) % 2 == 0 else -1
+
+        vector[idx] += sign * weight
+
+    # 5. Normalizar a unit norm
+    norm = math.sqrt(sum(v * v for v in vector))
+    if norm > 0:
+        vector = [v / norm for v in vector]
+
+    return vector
 
 
 def _get_embedding(text: str) -> list[float]:
@@ -93,8 +140,8 @@ def _get_embedding(text: str) -> list[float]:
             data = resp.json()
             vector = data.get("embedding", [])
             model = "mxbai-embed-large"
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[embedding_harness] Ollama error: {e}", file=sys.stderr)
 
     # 3. Fallback: Scaleway / GitHub Models / Cohere
     if not vector:
@@ -104,7 +151,8 @@ def _get_embedding(text: str) -> list[float]:
                 if vector:
                     model = config.get("model", provider)
                     break
-            except Exception:
+            except Exception as e:
+                print(f"[embedding_harness] Provider '{provider}' error: {e}", file=sys.stderr)
                 continue
 
     # 4. Cache y retorno
@@ -112,7 +160,11 @@ def _get_embedding(text: str) -> list[float]:
         _set_cache(cache_key, vector, model)
         return vector
 
-    return []
+    # 5. BM25 fallback (degradación graceful)
+    vector = _bm25_fallback(text)
+    model = "bm25-fallback"
+    _set_cache(cache_key, vector, model)
+    return vector
 
 
 def _get_providers() -> dict:
@@ -127,7 +179,8 @@ def _get_providers() -> dict:
         with open(config_path) as f:
             config = yaml.safe_load(f)
         return config.get("embeddings", {}).get("providers", {})
-    except Exception:
+    except Exception as e:
+        print(f"[embedding_harness] _get_providers error: {e}", file=sys.stderr)
         return {}
 
 
@@ -163,19 +216,19 @@ def _call_provider(provider: str, config: dict, text: str) -> list[float]:
     return []
 
 
-@server.tool
+@server.tool()
 async def embed(text: str) -> list[float]:
     """Genera embedding para un texto."""
     return _get_embedding(text)
 
 
-@server.tool
+@server.tool()
 async def embed_batch(texts: list[str]) -> list[list[float]]:
     """Genera embeddings para múltiples textos."""
     return [_get_embedding(t) for t in texts]
 
 
-@server.tool
+@server.tool()
 async def status() -> dict:
     """Estado del sistema de embeddings."""
     # Probar qué proveedor está disponible
@@ -192,8 +245,8 @@ async def status() -> dict:
         if resp.status_code == 200:
             provider = "ollama"
             model = "mxbai-embed-large"
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[embedding_harness] status Ollama test error: {e}", file=sys.stderr)
 
     # Contar cache
     cache_count = 0
@@ -201,8 +254,8 @@ async def status() -> dict:
         conn = sqlite3.connect(str(CACHE_DB))
         cache_count = conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0]
         conn.close()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[embedding_harness] status cache count error: {e}", file=sys.stderr)
 
     return {
         "provider": provider,

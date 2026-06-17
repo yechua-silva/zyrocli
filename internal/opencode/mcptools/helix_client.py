@@ -140,6 +140,47 @@ class HelixClient:
         ids = self._get_ids(result, "n")
         return {"id": ids[0]} if ids else {}
 
+    async def create_edge(self, from_id: int, to_id: int, label: str, properties: dict | None = None) -> dict:
+        """Create a directed edge from from_id → to_id with label and properties.
+
+        Uses the v3 AddE step: N(source) → AddE(label, target, props) → Project($id).
+
+        Response v3 format: {name: {"properties": [{"id": <edge_id>}]}}
+        """
+        if properties is None:
+            properties = {}
+
+        payload = self._v3_envelope(
+            [
+                {
+                    "name": "e",
+                    "steps": [
+                        {
+                            "N": {
+                                "Ids": [from_id],
+                            }
+                        },
+                        {
+                            "AddE": {
+                                "label": label,
+                                "to": {"Ids": [to_id]},
+                                "properties": self._props(properties),
+                            }
+                        },
+                        {
+                            "Project": [
+                                {"source": "$id", "alias": "id"},
+                            ]
+                        },
+                    ],
+                }
+            ],
+            request_type="write",
+        )
+        result = await self.query(payload)
+        ids = self._get_ids(result, "e")
+        return {"id": ids[0]} if ids else {}
+
     async def get_node(self, label: str, id: int) -> dict | None:
         """Fetch a single node by label and id.
 
