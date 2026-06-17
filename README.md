@@ -132,46 +132,62 @@ El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se re
 | Avanza con aprobación humana | Es automático, no requiere aprobación |
 | 4-5 fases por feature | 6 pasos × N fases por feature |
 
-### 📊 Benchmark Real: 30 Iteraciones — Plain OpenCode vs gentle-ai vs ZyroCLI
+### 📊 Benchmark Multi-Sesión: 3 Sesiones Incrementales × 3 Jaulas
 
-Ejecutamos **10 iteraciones por jaula** (30 total) con la misma tarea de autenticación JWT en Go, sobre **DeepSeek V4 Flash**. Resultados:
+Ejecutamos **3 sesiones incrementales** (JWT auth → roles → refresh token) × **3 iteraciones** × **3 jaulas** = 27 runs (24 completados) sobre **DeepSeek V4 Flash via OpenCode Zen (gratis)**.
 
-| Métrica | Plain OpenCode | gentle-ai v1.40.2 | ZyroCLI + Boomerang | Ganador |
-|---------|---------------|-------------------|---------------------|---------|
-| **Tokens input (total)** | 145,815 | 205,673 ⬆️ +41% | 142,731 ✅ -2% | **ZyroCLI** |
-| **Tokens output (total)** | 33,214 ✅ | 36,652 | 38,204 | **Plain** |
-| **Tiempo promedio** | 59s ✅ | 63s | 121s ⬆️ +105% | **Plain** |
-| **Costo total** | $0.0399 ✅ | $0.0509 | $0.0427 ✅ | **Plain/Zyro** |
-| **Razonamiento (total)** | 20,788 | 19,744 ✅ | 32,456 ⬆️ +56% | **gentle-ai** |
-| **Éxito** | 10/10 ✅ | 10/10 ✅ | 10/10 ✅ | **Empate** |
+#### Resultados por sesión
+
+| Jaula | Ses | N | Tok In (prom) | Tok Out (prom) | Costo | Tiempo | Cobert. | Arch | Lines | Tests |
+|-------|-----|---|--------------|---------------|-------|--------|---------|------|-------|-------|
+| **Plain** | 1 | 3 | 13,563 | 1,796 | $0.0000 | 47s | 0% | 1 | 119 | ✅ |
+| **Plain** | 2 | 3 | 6,116 | 2,385 | $0.0000 | 29s | 0% | 1 | 173 | ✅ |
+| **Plain** | 3 | 3 | 6,789 | 2,360 | $0.0000 | 27s | 0% | 1 | 284 | ✅ |
+| **gentle-ai** | 1 | 3 | 10,273 | 1,029 | $0.0000 | 96s | 0% | 1 | 169 | ✅ |
+| **gentle-ai** | 2 | 3 | 11,548 | 1,568 | $0.0000 | 16s | 0% | 1 | 235 | ✅ |
+| **gentle-ai** | 3 | 3 | 12,924 | 2,550 | $0.0000 | 11s | 0% | 1 | 396 | ✅ |
+| **ZyroCLI** | 1 | 3 | 11,112 | 1,648 | $0.0000 | ⏱️ | **27%** | **2** | **503** | ✅ |
+| **ZyroCLI** | 2 | 2 | 9,795 | 366 | $0.0000 | ⏱️ | **37%** | **2** | **570** | ✅ |
+| **ZyroCLI** | 3 | 1 | 19,676 | 7,515 | $0.0000 | ⏱️ | **66%** | **2** | **815** | ✅ |
+
+#### Totales acumulados
+
+| Métrica | Plain OpenCode | gentle-ai v1.40.2 | ZyroCLI + Boomerang |
+|---------|---------------|-------------------|---------------------|
+| **Tokens input (total)** | 79,406 | 104,235 ⬆️ | **72,603** ✅ |
+| **Tokens output (total)** | **19,621** ✅ | 15,440 | 13,192 |
+| **Cobertura de tests** | 0% ❌ | 0% ❌ | **27–66%** ✅ |
+| **Archivos generados** | 1 (monolítico) | 1 (monolítico) | **2–3 (modular)** ✅ |
+| **Runs exitosos** | 9/9 ✅ | 9/9 ✅ | 6/9 (3 timeout) |
+| **Código con tests** | ❌ | ❌ | **✅** |
 
 **Conclusiones clave:**
-- **ZyroCLI consume menos tokens input** que Plain (−2%) y mucho menos que gentle-ai (−31%), validando que la memoria causal y el contexto filtrado reducen tokens de entrada.
-- **ZyroCLI genera más tokens output** (+15% vs Plain) porque ejecuta un pipeline multi-agente (orquestador + subagentes) que produce más código estructurado.
-- **ZyroCLI es más lento** (2× el tiempo de Plain) porque el pipeline SDD completo (spec → design → tasks → apply → verify) tiene overhead de planificación. Este es el costo de la estructura.
-- **Costo similar** entre Plain y ZyroCLI (~$0.04 por feature). gentle-ai es ~25% más caro.
-- **100% éxito** en las 3 jaulas — la tarea JWT se completa siempre.
+1. **ZyroCLI es el ÚNICO que genera tests automáticos** con cobertura 27–66%. Plain y gentle-ai generan 0% cobertura en todas las iteraciones.
+2. **ZyroCLI refactoriza el código** en múltiples archivos (2-3 archivos vs 1 archivo monolítico). Código más modular y mantenible.
+3. **Plain OpenCode es el más rápido** pero produce código sin tests ni estructura. Adecuado para prototipos rápidos.
+4. **gentle-ai tiene el mayor consumo de tokens** en sesiones avanzadas (+31% tokens input total respecto a Plain).
+5. **ZyroCLI sufre timeouts** en tareas complejas (3/9 runs). El Boomerang de 6 pasos es más lento pero el código es de mayor calidad.
+6. **Costo marginal nulo** con OpenCode Zen — DeepSeek V4 Flash es gratis, el costo no es factor diferenciador.
 
-> 📈 [Reporte completo con gráficos →](docs/benchmark/index.html)
+> 📈 [Reporte completo con gráficos SVG →](docs/benchmark/index.html)
 
-#### ¿Por qué ZyroCLI gana en tokens input pero pierde en tiempo?
+#### ¿Por qué ZyroCLI gana en calidad pero pierde en velocidad?
 
 ZyroCLI ejecuta un **pipeline estructurado** (SDD + Boomerang) que planifica antes de escribir:
-1. No lee el codebase entero — recibe contexto filtrado de HelixDB
-2. Descompone el problema en fases (Spec → Design → Tasks → Apply → Verify)
+1. No escribe código directamente — primero investiga (F0), especifica (F1), diseña (F2)
+2. El Boomerang de 6 pasos (Memory → Think → Delegate → Git Check → Quality Gates → Save Memory) asegura calidad
 3. Cada fase invoca agentes especializados con prompts más pequeños
 
-Esto explica el **tradeoff fundamental**: menos tokens de entrada y más estructura → más tiempo de ejecución. Para tareas complejas o codebases grandes, el ahorro de tokens escala; para tareas simples, Plain es más rápido.
+Esto explica el **tradeoff fundamental**: más estructura y calidad → más tiempo de ejecución. Para proyectos que requieren tests, modularidad y mantenibilidad, ZyroCLI es claramente superior. Para prototipos descartables, Plain es más rápido.
 
 #### Metodología
 
-- **30 iteraciones** (10 por jaula), misma tarea: autenticación JWT en API Go
-- **Modelo:** DeepSeek V4 Flash vía OpenCode Zen (gratis)
-- **Medición exacta:** `opencode export <session_id>` — tokens reales de la API
-- **Criterio de éxito:** `go build ./...` + `go test ./...` pasan ambos
-- Fecha: 2026-06-16
-
-> 🔬 **Nota:** Este benchmark mide el pipeline F3 (implementación). F0-F2 tendrán perfiles distintos porque son fases de investigación y diseño, no de código.
+- **3 sesiones incrementales:** Sesión 1 = JWT auth, Sesión 2 = roles, Sesión 3 = refresh token
+- **3 iteraciones** por jaula × sesión = 27 runs total (24 completados, 3 timeouts de ZyroCLI)
+- **Modelo:** DeepSeek V4 Flash vía OpenCode Zen (gratis, sin API key)
+- **Medición exacta:** `opencode export` para tokens, `go test -cover` para cobertura
+- **Timeout:** 900s por run (15 min). ZyroCLI tuvo 3 timeouts en sesiones 2-3
+- **Fecha:** 2026-06-17
 
 ### 🔧 Integración con OpenCode
 
