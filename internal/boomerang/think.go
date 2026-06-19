@@ -10,6 +10,8 @@ import (
 // maximiza el paralelismo posible.
 func (o *BoomerangOrchestrator) ThinkStep(ctx context.Context, phase, memoryContext string) (*TaskDAG, error) {
 	switch phase {
+	case "PRE-F0":
+		return generateDAGForPreF0(), nil
 	case "F0":
 		return generateDAGForPhase0(), nil
 	case "F1":
@@ -23,6 +25,15 @@ func (o *BoomerangOrchestrator) ThinkStep(ctx context.Context, phase, memoryCont
 	default:
 		return nil, fmt.Errorf("boomerang: unknown phase %s", phase)
 	}
+}
+
+// generateDAGForPreF0 retorna el DAG de PRE-F0: alineación de dominio.
+func generateDAGForPreF0() *TaskDAG {
+	dag := &TaskDAG{}
+	dag.Tasks = []TaskSpec{
+		{ID: 1, Name: "domain-alignment", Description: "Alinear dominio y contexto", Agent: "zyro-pre-f0", Tags: []string{"alignment"}},
+	}
+	return dag
 }
 
 // generateDAGForPhase0 retorna el DAG de F0: 3 tareas de investigación en paralelo.

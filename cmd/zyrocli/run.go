@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/secko/zyrocli/internal/apply"
+	"github.com/secko/zyrocli/internal/boomerang"
 	"github.com/secko/zyrocli/internal/handoff"
 	"github.com/secko/zyrocli/internal/scaffold"
 	"github.com/secko/zyrocli/internal/scheduler"
@@ -54,8 +56,12 @@ Flags:
 			return fmt.Errorf("run: handoff.yaml not found in current directory\nRun 'zyrocli init <file>' first")
 		}
 
+		// Create TaskManager with apply.Runner for real task execution
+		applyRunner := apply.NewRunner(apply.DefaultPoolConfig())
+		tm := boomerang.NewTaskManagerWithRunner(5, applyRunner)
+
 		// Load config with Boomerang initialized, merge from handoff.yaml
-		cfg := scheduler.NewDefaultConfig(projectDir)
+		cfg := scheduler.NewDefaultConfig(projectDir, tm)
 		if _, err := os.Stat("handoff.yaml"); err == nil {
 			if hfCfg, err := scheduler.LoadConfig("handoff.yaml"); err == nil {
 				// Merge: handoff sobrescribe defaults
@@ -73,6 +79,7 @@ Flags:
 
 		// Build phase runners in order (F0→F4)
 		runners := []scheduler.PhaseRunner{
+			&scheduler.PREF0Runner{},
 			&scheduler.F0Runner{},
 			&scheduler.F1Runner{},
 			&scheduler.F2Runner{},
@@ -96,7 +103,7 @@ Flags:
 				}
 			}
 			if !valid {
-				return fmt.Errorf("run: invalid phase %q, must be one of: F0, F1, F2, F3, F4", runPhase)
+				return fmt.Errorf("run: invalid phase %q, must be one of: PRE-F0, F0, F1, F2, F3, F4", runPhase)
 			}
 
 			cmd.Printf("▶ Running phase %s...\n", phase)

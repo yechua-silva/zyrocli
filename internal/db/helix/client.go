@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"time"
 
 	helixsdk "github.com/helixdb/helix-db/sdks/go"
+	"github.com/secko/zyrocli/internal/setup"
 )
 
 // Client wraps helixsdk.Client with project-level isolation.
@@ -46,7 +50,7 @@ type Node struct {
 // is reachable; callers should check Ping separately for readiness.
 func NewClient(ctx context.Context, opts ...Option) (*Client, error) {
 	options := &Options{
-		BaseURL: "http://localhost:6969",
+		BaseURL: setup.GetHelixDBURL(),
 	}
 	for _, o := range opts {
 		o(options)
@@ -114,12 +118,68 @@ func (c *Client) InjectProject(props map[string]interface{}) map[string]interfac
 }
 
 // EnsureStarted checks that the HelixDB server is reachable by performing a ping.
-// Returns an error if the server cannot be reached after the default ping timeout.
+// If the server is not reachable, it attempts to start the Docker container
+// automatically via startHelixContainer.
 func (c *Client) EnsureStarted(ctx context.Context) error {
-	if !c.Ping(ctx) {
-		return fmt.Errorf("%w: server not reachable", ErrConnection)
+	if c.Ping(ctx) {
+		return nil
 	}
-	return nil
+
+	// Server not reachable — try to start it
+	if err := startHelixContainer(ctx); err != nil {
+		return fmt.Errorf("%w: %v", ErrConnection, err)
+	}
+
+	// Wait for it to be ready (up to 15s)
+	for i := 0; i < 5; i++ {
+		time.Sleep(2 * time.Second)
+		if c.Ping(ctx) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w: server not reachable after start attempt", ErrConnection)
+}
+
+// startHelixContainer attempts to start the HelixDB Docker container.
+// It tries the helix CLI first, then falls back to docker compose.
+func startHelixContainer(ctx context.Context) error {
+	// Method 1: helix CLI (helix up)
+	if helixPath, err := exec.LookPath("helix"); err == nil {
+		cmd := exec.CommandContext(ctx, helixPath, "up")
+		if output, err := cmd.CombinedOutput(); err == nil {
+			return nil
+		} else {
+			_ = output // ignore error, try docker
+		}
+	}
+
+	// Method 2: docker compose with helix.toml config
+	// The helix.toml defines the project's container setup
+	cwd, _ := os.Getwd()
+	composeFiles := []string{}
+	if cwd != "" {
+		composeFiles = append(composeFiles, filepath.Join(cwd, "docker-compose.yml"))
+	}
+	// Also check home config
+	home, _ := os.UserHomeDir()
+	if home != "" {
+		composeFiles = append(composeFiles,
+			filepath.Join(home, ".config", "zyrocli", "docker-compose.yml"),
+		)
+	}
+
+	for _, path := range composeFiles {
+		if _, err := os.Stat(path); err == nil {
+			cmd := exec.CommandContext(ctx, "docker", "compose",
+				"-f", path, "up", "-d")
+			if err := cmd.Run(); err == nil {
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("no helix container config found — install HelixDB first or start it manually")
 }
 
 // Exec executes a raw HelixDB query against the underlying SDK client.

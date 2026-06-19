@@ -92,22 +92,16 @@ func (s *HelixEngramStore) ResolveContradiction(ctx context.Context, pair Contra
 	}
 }
 
-// deactivateFact marca un fact como inactivo
+// deactivateFact marca un fact como inactivo en HelixDB
 func (s *HelixEngramStore) deactivateFact(ctx context.Context, factID int64, reason string) error {
-	fact, err := s.GetFactByID(ctx, factID)
-	if err != nil {
-		return err
+	if err := s.client.UpdateNode(ctx, factID, map[string]interface{}{
+		"is_active":           false,
+		"is_stale":            true,
+		"deactivated_at":      time.Now().Format(time.RFC3339),
+		"deactivation_reason": reason,
+	}); err != nil {
+		return fmt.Errorf("memory: deactivate fact %d: %w", factID, err)
 	}
-
-	fact.IsActive = false
-	if fact.Metadata == nil {
-		fact.Metadata = make(map[string]any)
-	}
-	fact.Metadata["deactivated_at"] = time.Now().Format(time.RFC3339)
-	fact.Metadata["deactivation_reason"] = reason
-
-	// TODO: actualizar en HelixDB
-	_ = fact
 	return nil
 }
 

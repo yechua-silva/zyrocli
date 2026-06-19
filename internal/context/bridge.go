@@ -2,7 +2,7 @@ package context
 
 import (
 	"bufio"
-	"context"
+	stdctx "context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,7 +57,7 @@ func NewBridge() *Bridge {
 
 // Start launches the MCP server process via exec.Command.
 // The binary used is "context" with arguments "serve --libs".
-func (b *Bridge) Start(ctx context.Context) error {
+func (b *Bridge) Start(ctx stdctx.Context) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -155,7 +155,7 @@ func (b *Bridge) IsRunning() bool {
 
 // QueryDocs sends a JSON-RPC query to the MCP server and returns the documentation result.
 // The libraryID is the canonical library ID (e.g. "/vercel/next.js").
-func (b *Bridge) QueryDocs(ctx context.Context, libraryID, query string) ([]byte, error) {
+func (b *Bridge) QueryDocs(ctx stdctx.Context, libraryID, query string) ([]byte, error) {
 	b.mu.Lock()
 	if !b.running {
 		b.mu.Unlock()
@@ -175,7 +175,7 @@ func (b *Bridge) QueryDocs(ctx context.Context, libraryID, query string) ([]byte
 
 // ResolveLibraryID resolves a package name to a canonical library ID via the Context MCP.
 // Returns the ID string in format "/org/project" or "/org/project/version".
-func (b *Bridge) ResolveLibraryID(ctx context.Context, packageName string) (string, error) {
+func (b *Bridge) ResolveLibraryID(ctx stdctx.Context, packageName string) (string, error) {
 	b.mu.Lock()
 	if !b.running {
 		b.mu.Unlock()
@@ -207,8 +207,8 @@ func (b *Bridge) ResolveLibraryID(ctx context.Context, packageName string) (stri
 }
 
 // sendRequest sends a JSON-RPC request and returns the response result.
-func (b *Bridge) sendRequest(ctx context.Context, stdin io.Writer, stdout io.Reader, id int, method string, paramsMap map[string]string) ([]byte, error) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, b.queryTimeout)
+func (b *Bridge) sendRequest(ctx stdctx.Context, stdin io.Writer, stdout io.Reader, id int, method string, paramsMap map[string]string) ([]byte, error) {
+	timeoutCtx, cancel := stdctx.WithTimeout(ctx, b.queryTimeout)
 	defer cancel()
 
 	paramsRaw, err := json.Marshal(paramsMap)

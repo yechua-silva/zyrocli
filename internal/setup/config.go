@@ -14,6 +14,7 @@ type Config struct {
 	Project     ProjectConfig     `yaml:"project"`
 	Paths       PathsConfig       `yaml:"paths"`
 	Preferences PreferencesConfig `yaml:"preferences"`
+	Services    ServicesConfig    `yaml:"services"`
 }
 
 // ProjectConfig contiene la configuración del proyecto.
@@ -36,6 +37,12 @@ type PathsConfig struct {
 type PreferencesConfig struct {
 	Verbose bool `yaml:"verbose"`
 	DryRun  bool `yaml:"dry_run"`
+}
+
+// ServicesConfig contiene las URLs de servicios externos.
+type ServicesConfig struct {
+	OllamaURL string `yaml:"ollama_url"`
+	HelixDBURL string `yaml:"helixdb_url"`
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -132,4 +139,34 @@ func SaveConfig(cfg *Config) error {
 	}
 
 	return os.WriteFile(ConfigPath(), data, 0644)
+}
+
+// ── Service URL helpers ────────────────────────────────────────────────────
+
+// GetOllamaURL retorna la URL de Ollama con orden de precedencia:
+//  1. Variable de entorno OLLAMA_HOST
+//  2. Config persistente (Services.OllamaURL)
+//  3. Default: http://localhost:11434
+func GetOllamaURL() string {
+	if env := os.Getenv("OLLAMA_HOST"); env != "" {
+		return env
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.OllamaURL != "" {
+		return cfg.Services.OllamaURL
+	}
+	return "http://localhost:11434"
+}
+
+// GetHelixDBURL retorna la URL de HelixDB con orden de precedencia:
+//  1. Variable de entorno HELIXDB_URL
+//  2. Config persistente (Services.HelixDBURL)
+//  3. Default: http://localhost:6969
+func GetHelixDBURL() string {
+	if env := os.Getenv("HELIXDB_URL"); env != "" {
+		return env
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.HelixDBURL != "" {
+		return cfg.Services.HelixDBURL
+	}
+	return "http://localhost:6969"
 }

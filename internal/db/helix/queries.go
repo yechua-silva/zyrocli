@@ -112,7 +112,10 @@ func CreateFact(label string, props map[string]interface{}, embedding []float32)
 		pairs = append(pairs, helixsdk.Prop(k, v))
 	}
 	q := helixsdk.WriteQuery("create_fact").
-		VarAs("fact", helixsdk.G().AddN(label, pairs))
+		VarAs("fact",
+			helixsdk.G().AddN(label, pairs).
+				Project(helixsdk.ProjectPropAs("$id", "id")),
+		)
 	if embedding != nil {
 		q = q.VarAs("fact_with_embedding",
 			helixsdk.G().N(helixsdk.NodeVar("fact")).

@@ -255,15 +255,16 @@ var newHTTPClientFn = func() httpGetter {
 	return &http.Client{Timeout: 3 * time.Second}
 }
 
-// checkHelixHealth verifica que HelixDB responde en localhost:6969/health.
+// checkHelixHealth verifica que HelixDB responde en /health.
 func checkHelixHealth() DoctorResult {
+	url := GetHelixDBURL()
 	client := newHTTPClientFn()
-	resp, err := client.Get("http://localhost:6969/health")
+	resp, err := client.Get(url + "/health")
 	if err != nil {
 		return DoctorResult{
 			Check:   "helix_health",
 			Status:  "error",
-			Message: fmt.Sprintf("No responde en localhost:6969 — %v", err),
+			Message: fmt.Sprintf("No responde en %s — %v", url, err),
 		}
 	}
 	defer resp.Body.Close()
@@ -272,7 +273,7 @@ func checkHelixHealth() DoctorResult {
 		return DoctorResult{
 			Check:   "helix_health",
 			Status:  "ok",
-			Message: "HelixDB responde correctamente en localhost:6969",
+			Message: fmt.Sprintf("HelixDB responde correctamente en %s", url),
 		}
 	}
 	return DoctorResult{

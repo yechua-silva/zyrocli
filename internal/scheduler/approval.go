@@ -86,7 +86,7 @@ func (g *GuidedApproval) PromptApproval() (bool, error) {
 // showDetails prints the full agent output for the phase.
 func (g *GuidedApproval) showDetails() {
 	if g.FullOutput == "" {
-		fmt.Println("\n(No hay detalle adicional disponible)")
+		fmt.Printf("\n  Detalle: %s\n\n", g.Summary)
 		return
 	}
 	fmt.Printf("\n─── Detalle de %s ───\n%s\n\n", g.Phase, g.FullOutput)

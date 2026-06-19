@@ -46,9 +46,10 @@ func LoadConfig(path string) (*Config, error) {
 }
 
 // NewDefaultConfig crea una Config con Boomerang inicializado.
+// Recibe un TaskManager opcional (si es nil, crea uno sin runner).
 // Si no puede inicializar el store de memoria, retorna una config
 // sin Boomerang (fallback modo legacy).
-func NewDefaultConfig(projectDir string) *Config {
+func NewDefaultConfig(projectDir string, tm *boomerang.TaskManager) *Config {
 	cfg := &Config{
 		Mode:         "interactive",
 		MaxLoops:     5,
@@ -64,10 +65,20 @@ func NewDefaultConfig(projectDir string) *Config {
 		return cfg
 	}
 
-	store := memory.NewHelixEngramStore(helixClient, nil)
+	// Crear servicio de embeddings (Ollama local — nomic-embed-text con 768d)
+	embeddingSvc := helix.NewEmbeddingService(helix.EmbeddingConfig{
+		Provider:  helix.ProviderOllama,
+		Model:     "nomic-embed-text",
+		Dims:      768,
+		BatchSize: 10,
+		Timeout:   30 * time.Second,
+	})
+	store := memory.NewHelixEngramStore(helixClient, embeddingSvc)
 
-	// Inicializar TaskManager para subagentes
-	tm := boomerang.NewTaskManager(5)
+	// Si no recibimos un TaskManager, crear uno sin runner (fallback)
+	if tm == nil {
+		tm = boomerang.NewTaskManager(5)
+	}
 
 	// Inicializar BoomerangOrchestrator con callback de medición
 	boomer := boomerang.NewBoomerangOrchestrator(

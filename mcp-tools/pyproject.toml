@@ -1,7 +1,7 @@
 [project]
 name = "helix-mcp-tools"
 version = "0.2.0"
-description = "Zyro Agent Python — Agent-as-Validator"
+description = "Python MCP tools for HelixDB integration — task context, code search, skills search"
 requires-python = ">=3.10"
 dependencies = [
     "pydantic-ai>=1.95",
@@ -16,8 +16,4 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = [
-    "helix_client", "task_context", "search_code", "search_skills",
-    "models", "capabilities", "agent", "approval", "runner",
-    "embedding_harness",
-]
+py-modules = ["helix_client", "task_context", "search_code", "search_facts", "search_skills", "runner"]

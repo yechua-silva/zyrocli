@@ -661,6 +661,116 @@ def paso4_chat() -> str | None:
     return modelo
 
 
+# ── Auto-configuración GPU post-instalación ───────────────────────────────
+
+
+def _auto_configure_rocm() -> tuple[bool, str]:
+    """Ejecuta post-instalación ROCm automáticamente.
+    
+    Retorna (éxito, mensaje).
+    """
+    import time
+    import httpx
+    
+    # 1. Cargar módulo amdkfd si no está
+    if not _check_amdkfd_module():
+        console.print("  [yellow]Cargando módulo amdkfd...[/yellow]")
+        subprocess.run(["sudo", "modprobe", "amdkfd"], capture_output=True)
+        subprocess.run(
+            ["sudo", "tee", "/etc/modules-load.d/amdkfd.conf"],
+            input=b"amdkfd\n", capture_output=True,
+        )
+        time.sleep(1)
+        if _check_amdkfd_module():
+            console.print("  [green]✅ amdkfd cargado y persistido[/green]")
+        else:
+            console.print("  [yellow]⚠️  No se pudo cargar amdkfd (puede requerir reinicio)[/yellow]")
+    
+    # 2. Matar ollama si está corriendo
+    subprocess.run(["pkill", "ollama"], capture_output=True)
+    time.sleep(1)
+    
+    # 3. Preparar entorno y arrancar ollama con ROCm
+    console.print("  [yellow]Iniciando ollama con backend ROCm...[/yellow]")
+    env = os.environ.copy()
+    env["HSA_OVERRIDE_GFX_VERSION"] = "8.0.3"
+    env["OLLAMA_GPU_DRIVER"] = "rocm"
+    
+    proc = subprocess.Popen(
+        ["ollama", "serve"],
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    
+    # 4. Esperar a que responda (max 20s)
+    for i in range(10):
+        time.sleep(2)
+        try:
+            httpx.get("http://localhost:11434/api/tags", timeout=3)
+            break
+        except Exception:
+            continue
+    else:
+        return False, "Ollama no respondió después de 20s"
+    
+    # 5. Verificar backend
+    backend = _check_ollama_backend()
+    if backend == "rocm":
+        # Persistir variables de entorno al perfil del usuario
+        shell_rc = os.path.expanduser("~/.bashrc")
+        try:
+            with open(shell_rc, "a") as f:
+                f.write("\n# ROCm for Ollama (ZyroCLI)\n")
+                f.write('export HSA_OVERRIDE_GFX_VERSION=8.0.3\n')
+                f.write('export OLLAMA_GPU_DRIVER=rocm\n')
+            console.print(f"  [green]✅ Variables guardadas en {shell_rc}[/green]")
+        except Exception as e:
+            console.print(f"  [yellow]⚠️  No se pudo persistir env vars: {e}[/yellow]")
+        
+        return True, "ROCm configurado y funcionando"
+    
+    return False, f"Backend detectado: {backend}, se esperaba ROCm. Prueba reiniciar la terminal y ejecutar 'ollama serve'"
+
+
+def _auto_configure_vulkan() -> tuple[bool, str]:
+    """Configura Vulkan post-instalación (más simple, sin módulos kernel).
+    
+    Retorna (éxito, mensaje).
+    """
+    import time
+    import httpx
+    
+    # 1. Matar ollama
+    subprocess.run(["pkill", "ollama"], capture_output=True)
+    time.sleep(1)
+    
+    # 2. Iniciar ollama (Vulkan se activa automáticamente)
+    console.print("  [yellow]Iniciando ollama con backend Vulkan...[/yellow]")
+    proc = subprocess.Popen(
+        ["ollama", "serve"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    
+    # 3. Esperar a que responda
+    for i in range(10):
+        time.sleep(2)
+        try:
+            httpx.get("http://localhost:11434/api/tags", timeout=3)
+            break
+        except Exception:
+            continue
+    else:
+        return False, "Ollama no respondió después de 20s"
+    
+    # 4. Verificar backend
+    backend = _check_ollama_backend()
+    if backend in ("vulkan", "rocm", "cuda"):
+        return True, f"GPU activa: {backend}"
+    return False, f"Backend: {backend} (se esperaba GPU)"
+
+
 # ═══════════════════════════════════════════════════════════════════
 #  Paso 5 — Detectar GPU
 # ═══════════════════════════════════════════════════════════════════
@@ -830,16 +940,24 @@ def paso5_gpu() -> dict[str, Any]:
                         info["recomendacion"] = "Reinicia ollama serve para usar la GPU"
                         
                         if instalar == "2":  # ROCm
-                            console.print("\n  [yellow]⚠️  Para ROCm necesitas configurar:[/yellow]")
-                            console.print("    export HSA_OVERRIDE_GFX_VERSION=8.0.3")
-                            if not amdkfd_ok:
-                                console.print("    sudo modprobe amdkfd")
-                                console.print("    echo amdkfd | sudo tee /etc/modules-load.d/amdkfd.conf")
-                            console.print("    export OLLAMA_GPU_DRIVER=rocm")
-                            console.print("    ollama serve")
+                            console.print()
+                            console.print("  [bold]Configuración automática ROCm...[/bold]")
+                            ok, msg = _auto_configure_rocm()
+                            if ok:
+                                console.print(f"  [green]✅ {msg}[/green]")
+                                info["backend_verificado"] = "rocm"
+                            else:
+                                console.print(f"  [yellow]⚠️  {msg}[/yellow]")
+                                console.print("  [dim]Puedes configurarlo manualmente siguiendo la documentación de ROCm.[/dim]")
                         else:  # Vulkan
-                            console.print("\n  [green]✅ Arranca con: ollama serve[/green]")
-                            console.print("  [dim]Vulkan se activará automáticamente.[/dim]")
+                            console.print()
+                            console.print("  [bold]Configuración automática Vulkan...[/bold]")
+                            ok, msg = _auto_configure_vulkan()
+                            if ok:
+                                console.print(f"  [green]✅ {msg}[/green]")
+                                info["backend_verificado"] = "vulkan"
+                            else:
+                                console.print(f"  [yellow]⚠️  {msg}[/yellow]")
                     else:
                         console.print(f"  [red]❌ Error instalando {pkg}: {err}[/red]")
                         console.print("  [yellow]Instalación manual:[/yellow]")
@@ -853,16 +971,8 @@ def paso5_gpu() -> dict[str, Any]:
                         console.print(f"    3. cd {pkg} && makepkg -si")
                     console.print(f"\n     O descarga desde: https://aur.archlinux.org/packages/{pkg}")
             
-            # Verificación post-instalación
-            if instalar in ("1", "2") and info.get("backend_instalado"):
-                console.print("\n  [bold]Verificando instalación...[/bold]")
-                nuevo_backend = _check_ollama_backend()
-                if nuevo_backend not in ("cpu", "unknown"):
-                    console.print(f"  [green]✅ Ahora Ollama usa: {nuevo_backend}[/green]")
-                    info["backend_verificado"] = nuevo_backend
-                else:
-                    console.print("  [yellow]⚠️  Backend sigue siendo CPU.[/yellow]")
-                    console.print("  [dim]Asegúrate de reiniciar 'ollama serve' después de instalar.[/dim]")
+            # La verificación ya se hizo dentro de _auto_configure_rocm/vulkan
+            # No es necesario repetirla aquí
         
         elif gpu_type == "nvidia":
             console.print("  [green]✅ GPU NVIDIA detectada — CUDA debería funcionar[/green]")

@@ -1,3 +1,7 @@
+---
+name: zyro-phase-0-patterns
+description: "Fase 0: busca patrones similares en internet y guarda en HelixDB"
+---
 # F0: Patrones de Referencia
 
 ## ⚠️ REGLAS
@@ -21,3 +25,12 @@
 
 ## OUTPUT
 Lista de IDs de patrones creados en HelixDB. Mínimo 1.
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-phase-0-patterns",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
+})`

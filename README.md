@@ -25,14 +25,17 @@ ZyroCLI es un orquestador que ejecuta un **pipeline de desarrollo de software** 
 
 | Comando | Qué hace |
 |---------|----------|
-| `zyro setup` | Instala todo el ecosistema (Go, Python, HelixDB, Ollama) automáticamente |
-| `zyro init` | Crea un proyecto desde un handoff.yaml |
-| `zyro run --phase F0` | **Investigación**: busca patrones, librerías y skills en paralelo |
-| `zyro run --phase F1` | **Especificación**: genera spec técnica C-I-O |
-| `zyro run --phase F2` | **Diseño**: desglose en componentes y tareas atómicas |
-| `zyro run --phase F3` | **Implementación**: apply + verify (loop hasta pasar) |
-| `zyro run --phase F4` | **Cierre**: archive, lint, build final |
-| `zyro doctor --fix` | Diagnostica y repara la configuración |
+| `zyrocli install` | Instala skills, MCP tools y configura OpenCode globalmente |
+| `zyrocli init` | Crea un proyecto desde un handoff.yaml |
+| `zyrocli run --phase PRE-F0` | **Alineación**: grill-me, domain-model, triage y mejora arquitectónica |
+| `zyrocli run --phase F0` | **Investigación**: busca patrones, librerías y skills en paralelo |
+| `zyrocli run --phase F1` | **Especificación**: genera spec técnica C-I-O |
+| `zyrocli run --phase F2` | **Diseño**: desglose en componentes y tareas atómicas |
+| `zyrocli run --phase F3` | **Implementación**: apply + verify (loop hasta pasar) |
+| `zyrocli run --phase F4` | **Cierre**: archive, lint, build final |
+| `zyrocli install` | Instala skills, MCP tools, y configura OpenCode globalmente |
+| `zyrocli doctor` | Diagnostica HelixDB, Ollama, GPU y dependencias |
+| `zyrocli` (sin args) | Menú interactivo TUI con acceso a todas las funciones |
 
 ## 🧠 ¿Por qué existe?
 
@@ -81,11 +84,12 @@ ZyroAgentCLI opera con **dos ciclos anidados** que no debes confundir:
 El ciclo visible para el humano. Cada fase produce un artefacto:
 
 ```
+PRE-F0: Alineación →  Alignment + Domain Model (grill-me, triage, improve-arch)
 F0: Investigación  →  Patrones, Librerías, Skills
-F1: Especificación →  Spec (arquitectura, módulos, REST)
+F1: Especificación →  PRD con deep modules (to-prd)
 F2: Diseño + Tasks →  Design + Tareas atómicas
 F3: Implementación →  Código + Tests
-F4: Archive        →  Documentación final
+F4: Archive        →  Documentación final + Handoff
 ```
 
 **Cuándo usarlo:** cuando planificas un feature o fix completo.  
@@ -204,20 +208,6 @@ Si no hay tareas delegadas → saltar DelegateStep. Objetivo: reducir overhead d
 - **Timeout:** 900s por run (15 min)
 - **Fecha:** 2026-06-17
 
-### 🔧 Integración con OpenCode
-
-Las MCP tools de HelixDB (`search_code`, `search_skills`, `task_context`, `search_facts`, `embed`) son los **brazos del Boomerang**. El orquestador Go las usa en cada paso:
-
-```
-Paso 1 (Memory)   → search_facts + task_context
-Paso 2 (Think)    → search_code + search_skills
-Paso 3 (Delegate) → llama al agente Python con contexto inyectado
-Paso 5 (Quality)  → ejecuta tests vía CLI
-Paso 6 (Save)     → save_to_helix (nuevos Facts)
-```
-
-El resultado: **el agente Python nunca busca información por su cuenta**. Recibe solo lo que necesita, cuando lo necesita. Esto es lo que hace que ZyroAgentCLI sea 5-10x más eficiente en tokens que un agente sin orquestación.
-
 ### 📚 Más información
 
 | Documento | Contenido |
@@ -240,28 +230,28 @@ Humano ──→ ZyroCLI (Go) ──→ OpenCode (Agentes IA)
 ## 🚀 Instalación
 
 ```bash
-# Opción 1: npm ([zyrocli](https://www.npmjs.com/package/zyrocli)) (recomendado)
-npx zyrocli setup
-
-# Opción 2: npm global
-npm install -g zyrocli
-zyrocli setup
-
-# Opción 3: go install (requiere Go)
+# Opción 1: Go install (requiere Go 1.26+)
 go install github.com/secko/zyrocli@latest
-zyrocli setup
+zyrocli install
 
-# Opción 4: binary directo
+# Opción 2: binary directo (recomendado)
 curl -sSL https://github.com/secko/zyrocli/releases/latest/download/install.sh | bash
+zyrocli install
+
+# Opción 3: compilar desde fuente
+git clone https://github.com/secko/zyrocli
+cd zyrocli
+make build
+sudo cp ./zyrocli /usr/local/bin/
 ```
 
-> `zyro setup` detecta tu sistema operativo, instala dependencias (Go, uv, HelixDB, Ollama opcional), configura MCP servers y te deja listo para usar en segundos.
+> `zyrocli install` configura skills, MCP tools y OpenCode globalmente. Después corré `zyrocli doctor` para verificar que todo funcione.
 
 ## ⚡ Quick Start
 
 ```bash
 # 1. Instalar
-npx zyrocli setup
+zyrocli install
 
 # 2. Crear un handoff con la descripción de tu proyecto
 cat > handoff.yaml << 'EOF'
@@ -275,7 +265,7 @@ project:
 EOF
 
 # 3. Inicializar el proyecto
-zyro init handoff.yaml
+zyrocli init handoff.yaml
 ```
 
 ## 📚 Documentación
@@ -308,10 +298,37 @@ F4 (Cierre) → solo lectura, archive con approval
 
 - **Pipeline F0-F4**: Completo e integrado con Boomerang
 - **Memoria Causal**: 6 tipos de Facts, 7 aristas causales, curva de Ebbinghaus
-- **Embeddings**: Ollama + mxbai-embed-large + fallback Scaleway/BM25
+- **Embeddings**: Ollama + nomic-embed-text (768d, GPU vía Vulkan) + fallback BM25
 - **Seguridad**: Boundari con políticas YAML por fase
 - **Tests**: 383 tests, 100% passing
 - **Distribución**: npm, GitHub Releases, Homebrew, go install
+
+## 🙏 Créditos y Agradecimientos
+
+ZyroCLI no sería posible sin el trabajo de la comunidad open-source. Gracias especiales a:
+
+### Skills y Metodología
+
+- **[Matt Pocock](https://github.com/mattpocock/skills)** — Creador de las skills `grill-with-docs`, `to-prd`, `grill-me`, `domain-model`, `triage`, `improve-codebase-architecture`, `to-issues` y `/handoff`. Su framework de skills para desarrollo asistido por IA es la base metodológica de nuestro pipeline SDD v2. [mattpocock/skills](https://github.com/mattpocock/skills) (135K ⭐)
+- **[samber/cc-skills-golang](https://github.com/samber/cc-skills-golang)** — Skills de documentación y testing Go que usamos para mantener la calidad del código de ZyroCLI.
+- **[obra/superpowers](https://github.com/obra/superpowers)** — Framework de Subagent-Driven Development que inspiró nuestro modelo de agentes especializados. (232K ⭐)
+- **[github/awesome-copilot](https://github.com/github/awesome-copilot)** — Skills complementarias de PRD y especificación técnica.
+
+### MCP Tools y Ecosistema
+
+- **[HelixDB](https://github.com/helixdb/helix-db)** — Base de datos de grafos + vectores que usamos como memoria causal. Motor de persistencia de todo el pipeline.
+- **[Neuledge Context](https://github.com/neuledge/context)** — Paquete de documentación offline para librerías, integrado en nuestras herramientas MCP.
+- **[OpenCode](https://opencode.ai)** — Runtime de agentes que ejecuta nuestros 16 skills especializados.
+- **[Boundari](https://boundari.dev)** — Seguridad por fase con políticas de mínimo privilegio.
+- **[Bubble Tea](https://github.com/charmbracelet/bubbletea)** — Framework TUI que usamos para la interfaz interactiva de ZyroCLI.
+
+### Lenguajes y Herramientas
+
+- **Go** — Lenguaje principal del orquestador.
+- **Python (PydanticAI)** — Lenguaje de los agentes MCP con validación tipada.
+- **Ollama + mxbai-embed-large** — Embeddings locales para búsqueda semántica.
+
+Gracias a todos por construir las herramientas que hacen esto posible. 🙌
 
 ## Licencia
 

@@ -1,3 +1,7 @@
+---
+name: zyro-sdd-verify
+description: "Verifica implementación contra specs, design y tasks"
+---
 # F3: Verificación de Contratos
 
 ## ⚠️ REGLAS
@@ -22,3 +26,12 @@
 })`
 
 Si status = "fail", el orquestador puede reintentar la task.
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-sdd-verify",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
+})`

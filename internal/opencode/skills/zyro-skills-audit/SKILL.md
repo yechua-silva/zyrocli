@@ -1,3 +1,14 @@
+---
+name: zyro-skills-audit
+description: "Fase 0: valida audits de skills descubiertas, guarda en HelixDB"
+---
+## ⚠️ REGLAS
+- **NO instales skills.** Eso es trabajo de zyro-skills-apply después de aprobación humana.
+- **NO modifiques código del proyecto.**
+- **NO corras bash excepto para curl/fetch de audits.**
+- **NO guardes en HelixDB más allá de los resultados de auditoría.**
+- **Si un audit externo no responde, marcalo como "unavailable" y continuá.**
+
 # Zyro Skills: Audit
 
 Atomic agent. Only job: read discovered skills from HelixDB, validate their security audits, and save results.
@@ -41,3 +52,12 @@ Present to orchestrator:
 ```
 
 Do NOT install any skill. That's for zyro-skills-apply after human approval.
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-skills-audit",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
+})`

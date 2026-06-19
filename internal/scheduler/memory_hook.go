@@ -68,6 +68,7 @@ func (h *MemoryHooks) PostPhase(ctx context.Context, phase Phase, conversationLo
 	}
 
 	// Fallback: extracción simple integrada
+	log.Printf("[memory] PostPhase: usando extractor simple (factExtractorPath vacío)")
 	return h.extractSimpleFacts(ctx, conversationLog, string(phase))
 }
 
@@ -135,19 +136,48 @@ func (h *MemoryHooks) runFactExtractor(ctx context.Context, logText string, phas
 func (h *MemoryHooks) extractSimpleFacts(ctx context.Context, logText string, phase string) error {
 	logLower := strings.ToLower(logText)
 	keywords := map[string]string{
-		"decidimos":  "decision",
-		"elegimos":   "decision",
-		"error":      "error",
-		"bug":        "error",
-		"prefiero":   "preference",
-		"observo":    "observation",
-		"noto":       "observation",
-		"dependemos": "dependency",
-		"requiere":   "dependency",
+		// Spanish
+		"decidimos":    "decision",
+		"elegimos":     "decision",
+		"prefiero":     "preference",
+		"observo":      "observation",
+		"noto":         "observation",
+		"dependemos":   "dependency",
+		"requiere":     "dependency",
+		"acordamos":    "decision",
+		"cambiamos":    "change",
+		"bloquea":      "blocker",
+		"arquitectura": "architecture",
+		"rendimiento":  "performance",
+		"seguridad":    "security",
+		"deprecado":    "deprecation",
+		// English
+		"decision":     "decision",
+		"error":        "error",
+		"bug":          "error",
+		"pattern":      "pattern",
+		"dependency":   "dependency",
+		"observation":  "observation",
+		"fix":          "fix",
+		"implement":    "implementation",
+		"refactor":     "refactoring",
+		"deprecated":   "deprecation",
+		"breaking":     "breaking_change",
+		"architecture": "architecture",
+		"performance":  "performance",
+		"security":     "security",
+		"todo":         "todo",
+		"note":         "note",
+		"warning":      "warning",
+		"critical":     "critical",
+		"resolved":     "resolved",
+		"blocked":      "blocker",
 	}
 
+	hitCount := 0
 	for keyword, factType := range keywords {
 		if strings.Contains(logLower, keyword) {
+			hitCount++
 			// Extraer contexto alrededor de la palabra clave
 			idx := strings.Index(logLower, keyword)
 			start := idx - 50
@@ -176,6 +206,12 @@ func (h *MemoryHooks) extractSimpleFacts(ctx context.Context, logText string, ph
 				log.Printf("[memory] error saving simple fact: %v", err)
 			}
 		}
+	}
+
+	if hitCount > 0 {
+		log.Printf("[memory] PostPhase simple: %d keyword(s) found, facts saved for phase %s", hitCount, phase)
+	} else {
+		log.Printf("[memory] PostPhase simple: no keywords found in phase %s log", phase)
 	}
 
 	return nil

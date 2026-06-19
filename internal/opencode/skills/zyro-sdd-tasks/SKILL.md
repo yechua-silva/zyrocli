@@ -1,3 +1,7 @@
+---
+name: zyro-sdd-tasks
+description: "F2: Divide el diseño en tareas atómicas — crea nodos Task en HelixDB"
+---
 # F2: Planificación de Tareas
 
 ## ⚠️ REGLAS
@@ -23,4 +27,13 @@ Crear N nodos Task en HelixDB (mínimo 1).
   acceptance_criteria: string,
   status: "pending",
   phase: "F2"
+})`
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-sdd-tasks",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
 })`

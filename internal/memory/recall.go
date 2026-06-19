@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	helixsdk "github.com/helixdb/helix-db/sdks/go"
 	dbhelix "github.com/secko/zyrocli/internal/db/helix"
 )
 
@@ -189,16 +190,57 @@ func formatMemoryForPrompt(results []*MemoryResult) string {
 	return sb.String()
 }
 
-// GetFactByID obtiene un fact por su ID (versión mejorada)
-// Reemplaza la versión básica en store.go
+// GetFactByID obtiene un fact por su ID (lectura directa sin traversal)
+// Reemplaza la versión básica en store.go y la que usaba GetCausalChain (M1)
 func (s *HelixEngramStore) GetFactByID(ctx context.Context, factID int64) (*Fact, error) {
-	// Usar el traversal para obtener el fact con sus relaciones
-	facts, err := s.GetCausalChain(ctx, factID, 1)
-	if err != nil {
-		return nil, err
+	// Lectura directa por ID sin traversal — reemplaza GetCausalChain (M1)
+	q := helixsdk.ReadQuery("get_fact").
+		VarAs("fact",
+			helixsdk.G().N(helixsdk.NodeID(uint64(factID))).ValueMap(),
+		).
+		Returning("fact")
+
+	var raw map[string]interface{}
+	if err := s.client.Exec(ctx, q, &raw); err != nil {
+		return nil, fmt.Errorf("memory: get fact %d: %w", factID, err)
 	}
-	if len(facts) == 0 {
+
+	facts, ok := raw["fact"].([]interface{})
+	if !ok || len(facts) == 0 {
 		return nil, fmt.Errorf("memory: fact %d not found", factID)
 	}
-	return facts[0], nil
+
+	m, ok := facts[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("memory: fact %d: invalid response", factID)
+	}
+
+	return parseFactRowToFact(m), nil
+}
+
+// parseFactRowToFact convierte un map de ValueMap a *Fact
+func parseFactRowToFact(m map[string]interface{}) *Fact {
+	f := &Fact{}
+	if id, ok := m["$id"].(float64); ok {
+		f.ID = int64(id)
+	}
+	if typ, ok := m["fact_type"].(string); ok {
+		f.Type = FactType(typ)
+	}
+	if content, ok := m["content"].(string); ok {
+		f.Content = content
+	}
+	if salience, ok := m["salience"].(float64); ok {
+		f.Salience = salience
+	}
+	if confidence, ok := m["confidence"].(float64); ok {
+		f.Confidence = confidence
+	}
+	if phase, ok := m["phase"].(string); ok {
+		f.Phase = phase
+	}
+	if active, ok := m["is_active"].(bool); ok {
+		f.IsActive = active
+	}
+	return f
 }

@@ -11,6 +11,76 @@ import (
 	"github.com/secko/zyrocli/internal/handoff"
 )
 
+// PREF0Runner implements PhaseRunner for PRE-F0: Domain alignment.
+// Opens OpenCode and runs zyro-pre-f0 skill for grill-me and domain-model.
+type PREF0Runner struct{}
+
+func (r *PREF0Runner) Run(ctx context.Context, cfg *Config) (*Result, error) {
+	select {
+	case <-ctx.Done():
+		return &Result{Phase: PhasePREF0, Status: StatusFail, Summary: "tiempo agotado"}, ctx.Err()
+	default:
+	}
+
+	payload, err := handoff.Parse("handoff.yaml")
+	if err != nil {
+		return &Result{Phase: PhasePREF0, Status: StatusFail, Summary: "No se pudo leer handoff.yaml"}, nil
+	}
+
+	projectDir := payload.Project.Name
+	if projectDir == "" {
+		projectDir = "."
+	}
+
+	// Escribir .zyro/task.yaml con contexto para PRE-F0
+	taskDir := filepath.Join(projectDir, ".zyro")
+	os.MkdirAll(taskDir, 0755)
+	taskYAML := `phase: "PRE-F0"
+agent: "zyro-pre-f0"
+required_output:
+  alignment: true
+  domain_model: true
+  handoff: true
+`
+	os.WriteFile(filepath.Join(taskDir, "task.yaml"), []byte(taskYAML), 0644)
+
+	fmt.Printf("\n  ▶ Fase PRE-F0: Alineación de dominio\n")
+	fmt.Printf("  El agente zyro-pre-f0 va a realizar grill-me y domain-model.\n")
+	fmt.Printf("  Cuando termines de alinear, cerrá el editor para continuar.\n\n")
+
+	if os.Getenv("ZYRO_TEST") == "" {
+		if _, err := exec.LookPath("opencode"); err == nil {
+			openCmd := exec.CommandContext(ctx, "opencode", projectDir)
+			openCmd.Stdin = os.Stdin
+			openCmd.Stdout = os.Stdout
+			openCmd.Stderr = os.Stderr
+			_ = openCmd.Run()
+		} else {
+			fmt.Println("  ⚠ opencode no encontrado. Abrí manualmente:", projectDir)
+		}
+	} else {
+		fmt.Println("  [ZYRO_TEST] saltando apertura de OpenCode")
+	}
+
+	// Verificar post-condiciones: alignment.md debe existir
+	fmt.Print("  Verificando alineación...")
+	alignmentPath := filepath.Join(projectDir, "openspec", "alignment.md")
+	if _, err := os.Stat(alignmentPath); os.IsNotExist(err) {
+		fmt.Println()
+		return &Result{Phase: PhasePREF0, Status: StatusFail,
+			Summary: "No se encontró openspec/alignment.md. La alineación no se completó."}, nil
+	}
+	fmt.Println(" OK")
+
+	return &Result{
+		Phase:   PhasePREF0,
+		Status:  StatusSuccess,
+		Summary: "PRE-F0 completada: alignment.md generado, dominio alineado",
+	}, nil
+}
+
+func (r *PREF0Runner) Name() Phase { return PhasePREF0 }
+
 // F1Runner implements PhaseRunner for F1: Planificación con state-gating.
 type F1Runner struct{}
 

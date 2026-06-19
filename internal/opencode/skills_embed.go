@@ -26,35 +26,21 @@ import (
 //go:embed skills/zyro-sdd-design/SKILL.md
 //go:embed skills/zyro-sdd-tasks/SKILL.md
 //go:embed skills/zyro-sdd-archive/SKILL.md
+//go:embed skills/zyro-pre-f0/SKILL.md
+//go:embed skills/to-issues/SKILL.md
 var skillsFS embed.FS
 
 // SkillsDir is the global skills directory.
 var SkillsDir = "~/.config/opencode/skills"
 
-// deprecatedSkillDirs lists old skill directory names to remove on write.
-var deprecatedSkillDirs = []string{
-	"phase0-patterns", "phase0-libraries", "phase0-skills",
-	"zyro-phase-0-skills",
-	"sdd-apply", "sdd-verify", "sdd-explore", "sdd-propose",
-	"sdd-spec", "sdd-design", "sdd-tasks", "sdd-archive",
-}
 
 // WriteAllSkills writes all embedded skills to the global skills directory.
-// Also removes any deprecated skill directories left from previous versions.
 // The directory structure is: skills/<skill-name>/SKILL.md
 // Returns the number of skills written and any error.
 func WriteAllSkills() (int, error) {
 	baseDir := expandHome(SkillsDir)
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		return 0, fmt.Errorf("opencode: create skills dir %s: %w", baseDir, err)
-	}
-
-	// Clean up deprecated skill directories
-	for _, old := range deprecatedSkillDirs {
-		oldPath := filepath.Join(baseDir, old)
-		if _, err := os.Stat(oldPath); err == nil {
-			os.RemoveAll(oldPath)
-		}
 	}
 
 	var count int

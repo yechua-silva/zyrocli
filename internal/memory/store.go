@@ -65,18 +65,20 @@ func (s *HelixEngramStore) SaveFact(ctx context.Context, fact *Fact) (int64, err
 
 	// Crear nodo en HelixDB
 	q := dbhelix.CreateFact("Fact", props, fact.Embedding)
-	var result map[string]interface{}
+	var result struct {
+		Fact struct {
+			ID int64 `json:"id"`
+		} `json:"fact"`
+	}
 	if err := s.client.Exec(ctx, q, &result); err != nil {
 		return 0, fmt.Errorf("memory: save fact: %w", err)
 	}
 
-	// Extraer ID del resultado
-	id := extractID(result)
-	if id == 0 {
-		return 0, fmt.Errorf("memory: could not extract fact ID from response")
+	if result.Fact.ID == 0 {
+		return 0, fmt.Errorf("memory: save fact: empty response")
 	}
 
-	return id, nil
+	return result.Fact.ID, nil
 }
 
 // SaveFactsBatch guarda múltiples hechos en batch.
@@ -177,23 +179,4 @@ func (s *HelixEngramStore) ReinforceSalience(ctx context.Context, factIDs []int6
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-// extractID extrae el ID del resultado de una query HelixDB.
-// Soporta múltiples formatos de respuesta del SDK.
-func extractID(result map[string]interface{}) int64 {
-	if result == nil {
-		return 0
-	}
 
-	// Formato: {"fact": {"ids": [1]}} o {"fact": {"ids": [1], "properties": [...]}}
-	for _, v := range result {
-		if m, ok := v.(map[string]interface{}); ok {
-			if ids, ok := m["ids"].([]interface{}); ok && len(ids) > 0 {
-				if id, ok := ids[0].(float64); ok {
-					return int64(id)
-				}
-			}
-		}
-	}
-
-	return 0
-}

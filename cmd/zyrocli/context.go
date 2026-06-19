@@ -30,6 +30,11 @@ Output formats:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		query := args[0]
 
+		// Validate that the argument is a numeric ID, not a file path
+		if _, err := strconv.Atoi(args[0]); err != nil {
+			return fmt.Errorf("context: %q is not a valid node ID. Use 'zyrocli context <numeric-id>'", args[0])
+		}
+
 		helixURL := os.Getenv("HELIX_URL")
 		if helixURL == "" {
 			helixURL = "http://localhost:6969"

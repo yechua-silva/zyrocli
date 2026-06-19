@@ -1,3 +1,7 @@
+---
+name: zyro-sdd-archive
+description: "Archiva cambios completados y cierra el ciclo del proyecto"
+---
 # F4: Cierre y Archive
 
 ## ⚠️ REGLAS
@@ -17,4 +21,13 @@
   tasks_completed: int,
   summary: string,
   status: "archived"
+})`
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-sdd-archive",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
 })`

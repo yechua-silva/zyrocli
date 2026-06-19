@@ -36,13 +36,21 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 		phaseCtx, cancel := context.WithTimeout(ctx, s.config.PhaseTimeout)
 
 		// MEMORIA CAUSAL: inyectar contexto antes de ejecutar la fase
-		// BUG #5: en modo Boomerang, PrePhase se salta porque Boomerang.RunPhase
-		// arranca con MemoryStep() que ya hace recall — de lo contrario hay doble recall.
+		// En modo Boomerang, PrePhase se omite porque Boomerang.RunPhase
+		// arranca con MemoryStep() que internamente hace recall — evitaría doble recall.
+		// En modo single-phase, PrePhase inyecta el contexto en cfg.MemoryContext.
 		memoryContext := ""
-		if s.config.MemoryHooks != nil && s.config.Boomerang == nil {
-			mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase.Name(), s.config.Module)
-			if err == nil && mc != "" {
-				memoryContext = mc
+		if s.config.MemoryHooks != nil {
+			if s.config.Boomerang == nil {
+				mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase.Name(), s.config.Module)
+				if err == nil && mc != "" {
+					memoryContext = mc
+					s.config.MemoryContext = mc
+				}
+			} else {
+				// En modo Boomerang, MemoryStep() interno hace recall.
+				// Extraer contexto del resultado si está disponible.
+				memoryContext = "Boomerang gestiona memoria internamente vía MemoryStep()"
 			}
 		}
 
@@ -96,6 +104,12 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 		result.MemoryContext = memoryContext
 		results = append(results, result)
 
+		// Handoff: write phase completion artifact
+		nextPhase := validator.NextPhase()
+		if hfErr := writeHandoff(string(phaseName), result, nextPhase); hfErr != nil {
+			fmt.Printf("  ⚠ handoff: %v\n", hfErr)
+		}
+
 		// If the phase itself reported failure or abort, stop execution
 		if result.Status == StatusFail || result.Status == StatusAbort {
 			return results, fmt.Errorf("scheduler: phase %s ended with status %s", phaseName, result.Status)
@@ -137,8 +151,7 @@ func (s *Scheduler) RunPhase(ctx context.Context, phase Phase) (*Result, error) 
 			if s.config.MemoryHooks != nil {
 				mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase, s.config.Module)
 				if err == nil && mc != "" {
-					// TODO: inyectar mc en config o contexto para que phase.Run la use
-					_ = mc
+					s.config.MemoryContext = mc
 				}
 			}
 
@@ -164,13 +177,9 @@ func NewHarnessValidator(phases []Phase) *HarnessValidator {
 }
 
 // ValidateTransition checks that moving from `from` to `to` is valid:
-//   - `approved` MUST be true (human validation is required)
-//   - The transition MUST follow the sequential DAG order
+//   - The transition MUST follow the sequential DAG order (F0→F1, not F0→F2)
+//   - Approval is enforced by the caller (scheduler.Run / MacroPhaseRunner)
 func (h *HarnessValidator) ValidateTransition(from Phase, to Phase, approved bool) error {
-	if !approved {
-		return fmt.Errorf("harness: transition %s→%s blocked: human approval required", from, to)
-	}
-
 	fromIdx := -1
 	toIdx := -1
 	for i, p := range h.allPhases {
