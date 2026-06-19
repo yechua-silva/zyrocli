@@ -141,6 +141,37 @@ func parseSearchResults(raw map[string]interface{}, source string, minScore floa
 				if score, ok := m["score"].(float64); ok {
 					r.Score = score
 				}
+				// Extraer campos adicionales del ValueMap
+				if salience, ok := m["salience"].(float64); ok {
+					r.Salience = salience
+				}
+				if confidence, ok := m["confidence"].(float64); ok {
+					r.Confidence = confidence
+				}
+				if phase, ok := m["phase"].(string); ok {
+					r.Phase = phase
+				}
+				if projectID, ok := m["project_id"].(string); ok {
+					r.ProjectID = projectID
+				}
+				if isActive, ok := m["is_active"].(bool); ok {
+					r.IsActive = isActive
+				}
+				if isStale, ok := m["is_stale"].(bool); ok {
+					r.IsStale = isStale
+				}
+				if accessCount, ok := m["access_count"].(float64); ok {
+					r.AccessCount = int64(accessCount)
+				}
+				if decayRate, ok := m["decay_rate"].(float64); ok {
+					r.DecayRate = decayRate
+				}
+				if createdAt, ok := m["created_at"].(string); ok {
+					r.CreatedAt = createdAt
+				}
+				if lastAccessedAt, ok := m["last_accessed_at"].(string); ok {
+					r.LastAccessedAt = lastAccessedAt
+				}
 				if r.Score >= minScore {
 					results = append(results, r)
 				}

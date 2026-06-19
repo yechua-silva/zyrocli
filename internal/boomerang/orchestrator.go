@@ -89,6 +89,7 @@ type Measurement struct {
 type BoomerangOrchestrator struct {
 	memoryStore         memory.EngramStore
 	boundariLoader      func(string) (*boundari.Policy, error)
+	taskManager         *TaskManager
 	maxIterations       int
 	measurementCallback MeasurementCallback
 }
@@ -97,83 +98,123 @@ type BoomerangOrchestrator struct {
 func NewBoomerangOrchestrator(
 	store memory.EngramStore,
 	bl func(string) (*boundari.Policy, error),
+	tm *TaskManager,
 	callback MeasurementCallback,
 ) *BoomerangOrchestrator {
 	return &BoomerangOrchestrator{
 		memoryStore:         store,
 		boundariLoader:      bl,
+		taskManager:         tm,
 		maxIterations:       3,
 		measurementCallback: callback,
 	}
 }
 
-// RunPhase ejecuta el ciclo completo de 6 pasos Boomerang
+// RunPhase ejecuta el ciclo de pasos Boomerang.
+// Es un wrapper que convierte PhaseConfig → PhaseConfigV2 por backward compatibility.
 func (o *BoomerangOrchestrator) RunPhase(ctx context.Context, config PhaseConfig) (*PhaseResult, error) {
+	return o.runPhaseV2(ctx, config.ToV2())
+}
+
+// runPhaseV2 ejecuta el ciclo de pasos Boomerang según la configuración PhaseConfigV2.
+// Soporta skip matrix, failure policy y modo async (a implementar en fases futuras).
+func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConfigV2) (*PhaseResult, error) {
 	start := time.Now()
 	result := &PhaseResult{Phase: config.Phase}
 
-	// Paso 1: MEMORY — consultar memoria causal
-	// (implementado en memory.go)
-	memoryCtx, err := o.MemoryStep(ctx, config.Phase, config.TaskDesc)
-	if err != nil {
-		return nil, err
+	// Determinar matriz y steps a ejecutar
+	matrix := config.SkipMatrix
+	if matrix == nil {
+		matrix = DefaultPhaseMatrix()
 	}
-	result.MemoryUsed = len(memoryCtx)
+	steps := config.Steps
+	if steps == nil {
+		steps = matrix.ActiveSteps(config.Phase)
+	}
 
-	// Estimar tokens "sin Boomerang" (prompt base + codebase completo)
-	// Asumimos ~3000 chars de prompt + taskDesc como baseline
+	// Variables compartidas entre steps
+	var memoryCtx string
+	var dag *TaskDAG
+	var delegateResult *DelegateResult
+	var gitStatus string
+	var qualityOK bool
+	var saveResult *SaveResult
+	var qualityRan bool
+
+	// Ejecutar steps en orden
+	for _, step := range steps {
+		switch step {
+		case StepMemory:
+			mc, err := o.MemoryStep(ctx, config.Phase, config.TaskDesc)
+			if err != nil {
+				return nil, err
+			}
+			memoryCtx = mc
+			result.MemoryUsed = len(memoryCtx)
+
+		case StepThink:
+			d, err := o.ThinkStep(ctx, config.Phase, memoryCtx)
+			if err != nil {
+				return nil, err
+			}
+			dag = d
+			result.TasksPlanned = len(dag.Tasks)
+
+		case StepDelegate:
+			if dag == nil {
+				continue
+			}
+			dr, err := o.DelegateStep(ctx, dag, config.Phase)
+			if err != nil {
+				result.Error = err.Error()
+				result.Duration = time.Since(start)
+				return result, nil
+			}
+			delegateResult = dr
+			result.NodesCreated = delegateResult.NodesCreated
+
+		case StepGit:
+			gs, err := o.GitStep(ctx)
+			if err != nil {
+				result.Error = err.Error()
+				result.Duration = time.Since(start)
+				return result, nil
+			}
+			gitStatus = gs
+			result.GitStatus = gitStatus
+
+		case StepQuality:
+			qualityRan = true
+			for i := 0; i < o.maxIterations; i++ {
+				qok, err := o.QualityStep(ctx, config.Phase, dag, delegateResult)
+				if err == nil && qok {
+					qualityOK = true
+					result.QualityOK = true
+					result.Iterations = i + 1
+					break
+				}
+				if i < o.maxIterations-1 {
+					if delegateResult != nil && dag != nil {
+						delegateResult, _ = o.DelegateStep(ctx, dag, config.Phase)
+					}
+				}
+			}
+
+		case StepSave:
+			if delegateResult == nil {
+				delegateResult = &DelegateResult{TaskResults: map[string]TaskResult{}}
+			}
+			sr, err := o.SaveStep(ctx, config.Phase, delegateResult, nil)
+			if err == nil {
+				saveResult = sr
+				result.FactsSaved = saveResult.FactsSaved
+			}
+		}
+	}
+
+	// Estimar tokens (legacy measurement)
 	withoutTokens := tokens.Count("Execute phase " + config.Phase + ": " + config.TaskDesc + ". Codebase context: ~3000 chars baseline.")
 	withTokens := tokens.Count(memoryCtx)
-
-	// Paso 2: THINK — planificar DAG de tareas
-	// (implementado en think.go)
-	dag, err := o.ThinkStep(ctx, config.Phase, memoryCtx)
-	if err != nil {
-		return nil, err
-	}
-	result.TasksPlanned = len(dag.Tasks)
-
-	// Paso 3: DELEGATE — repartir tareas a subagentes
-	// (implementado en delegate.go)
-	delegateResult, err := o.DelegateStep(ctx, dag, config.Phase)
-	if err != nil {
-		result.Error = err.Error()
-		result.Duration = time.Since(start)
-		return result, nil
-	}
-	result.NodesCreated = delegateResult.NodesCreated
-
-	// Paso 4: GIT — verificar estado del repo
-	// (implementado en git.go)
-	gitStatus, err := o.GitStep(ctx)
-	if err != nil {
-		result.Error = err.Error()
-		result.Duration = time.Since(start)
-		return result, nil
-	}
-	result.GitStatus = gitStatus
-
-	// Paso 5: QUALITY — validar resultados (loop de retry)
-	// (implementado en quality.go)
-	for i := 0; i < o.maxIterations; i++ {
-		qualityOK, err := o.QualityStep(ctx, config.Phase, dag, delegateResult)
-		if err == nil && qualityOK {
-			result.QualityOK = true
-			result.Iterations = i + 1
-			break
-		}
-		if i < o.maxIterations-1 {
-			// Redelegar tareas fallidas
-			delegateResult, _ = o.DelegateStep(ctx, dag, config.Phase)
-		}
-	}
-
-	// Paso 6: SAVE — guardar decisiones en memoria causal
-	// (implementado en save.go)
-	saveResult, err := o.SaveStep(ctx, config.Phase, delegateResult, nil)
-	if err == nil {
-		result.FactsSaved = saveResult.FactsSaved
-	}
 
 	// Guardar medición si hay callback
 	if o.measurementCallback != nil {
@@ -182,12 +223,17 @@ func (o *BoomerangOrchestrator) RunPhase(ctx context.Context, config PhaseConfig
 			TaskDescription:  config.TaskDesc,
 			WithoutBoomerang: withoutTokens,
 			WithBoomerang:    withTokens,
-			OutputTokens:     0, // se llena después si tenemos acceso
+			OutputTokens:     0,
 			CreatedAt:        time.Now().UTC().Format(time.RFC3339),
 		})
 	}
 
-	result.Success = result.QualityOK
+	// Success: si Quality se ejecutó, usar su resultado; si no, la fase es exitosa
+	if qualityRan {
+		result.Success = qualityOK
+	} else {
+		result.Success = true
+	}
 	result.Duration = time.Since(start)
 
 	return result, nil

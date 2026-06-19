@@ -11,6 +11,7 @@ import (
 	"github.com/secko/zyrocli/internal/db/helix"
 	"github.com/secko/zyrocli/internal/handoff"
 	"github.com/secko/zyrocli/internal/memory"
+	"github.com/secko/zyrocli/internal/setup"
 )
 
 // LoadConfig reads handoff.yaml and extracts scheduler configuration.
@@ -56,7 +57,7 @@ func NewDefaultConfig(projectDir string) *Config {
 
 	// Inicializar store de memoria (HelixDB)
 	helixClient, err := helix.NewClient(context.Background(),
-		helix.WithBaseURL("http://localhost:6969"),
+		helix.WithBaseURL(setup.GetHelixDBURL()),
 	)
 	if err != nil {
 		log.Printf("[scheduler] No se pudo conectar a HelixDB: %v (modo legacy)", err)
@@ -65,12 +66,16 @@ func NewDefaultConfig(projectDir string) *Config {
 
 	store := memory.NewHelixEngramStore(helixClient, nil)
 
+	// Inicializar TaskManager para subagentes
+	tm := boomerang.NewTaskManager(5)
+
 	// Inicializar BoomerangOrchestrator con callback de medición
 	boomer := boomerang.NewBoomerangOrchestrator(
 		store,
 		func(phase string) (*boundari.Policy, error) {
 			return boundari.LoadPolicy(phase, []string{projectDir})
 		},
+		tm,
 		func(m boomerang.Measurement) {
 			// Guardar medición como Fact en HelixDB
 			fact := &memory.Fact{

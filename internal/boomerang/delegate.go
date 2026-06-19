@@ -3,71 +3,35 @@ package boomerang
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"sync"
+	"time"
 )
 
-// DelegateStep reparte tareas del DAG a subagentes OpenCode.
-// Las tareas dentro de un ParallelGroup se ejecutan concurrentemente;
-// los grupos se ejecutan en secuencia.
+// DelegateStep reparte tareas del DAG a subagentes usando TaskManager.DispatchTask().
+// Cada tarea se despacha de forma asíncrona y se espera su resultado con timeout de 30s.
 func (o *BoomerangOrchestrator) DelegateStep(ctx context.Context, dag *TaskDAG, phase string) (*DelegateResult, error) {
 	result := &DelegateResult{
 		TaskResults: make(map[string]TaskResult),
 	}
 
-	// Ejecutar grupos paralelos secuencialmente
-	for _, group := range dag.ParallelGroups {
-		var wg sync.WaitGroup
-		var mu sync.Mutex
+	for _, task := range dag.Tasks {
+		taskID := o.taskManager.DispatchTask(ctx, task.Name, task.Agent, phase, nil)
 
-		for _, taskIdx := range group {
-			if taskIdx >= len(dag.Tasks) {
-				continue
-			}
-			task := dag.Tasks[taskIdx]
+		waitCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		completedTask, err := o.taskManager.WaitTask(waitCtx, taskID)
+		cancel()
 
-			wg.Add(1)
-			go func(t TaskSpec) {
-				defer wg.Done()
-
-				tr := TaskResult{
-					TaskName: t.Name,
-					Success:  true,
-				}
-
-				// Ejecutar subagente OpenCode
-				cmd := exec.CommandContext(ctx, "opencode",
-					"subagent", t.Agent,
-					"--param", fmt.Sprintf("task=%s", t.Name),
-					"--param", fmt.Sprintf("phase=%s", phase),
-				)
-
-				output, err := cmd.Output()
-				if err != nil {
-					tr.Success = false
-					tr.Output = fmt.Sprintf("error: %v", err)
-				} else {
-					tr.Output = string(output)
-					tr.Nodes = 1
-				}
-
-				mu.Lock()
-				result.TaskResults[t.Name] = tr
-				if tr.Success {
-					result.NodesCreated += tr.Nodes
-				}
-				mu.Unlock()
-			}(task)
+		tr := TaskResult{
+			TaskName: task.Name,
+			Success:  err == nil && completedTask.Status == TaskDone,
 		}
-
-		wg.Wait()
+		if err != nil {
+			tr.Output = fmt.Sprintf("Error: %v", err)
+		} else {
+			tr.Output = completedTask.Output
+		}
+		result.TaskResults[task.Name] = tr
+		result.NodesCreated++
 	}
 
 	return result, nil
-}
-
-// opencodeExists verifica si OpenCode está disponible en el PATH.
-func opencodeExists() bool {
-	_, err := exec.LookPath("opencode")
-	return err == nil
 }

@@ -166,8 +166,9 @@ func (s *HelixEngramStore) ReinforceSalience(ctx context.Context, factIDs []int6
 			"last_accessed_at": fact.LastAccessedAt.Format(time.RFC3339),
 		}
 
-		// TODO: update query en HelixDB
-		_ = props
+		if err := s.client.UpdateNode(ctx, id, props); err != nil {
+			return fmt.Errorf("memory: reinforce salience for fact %d: %w", id, err)
+		}
 	}
 	return nil
 }

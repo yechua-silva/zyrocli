@@ -36,8 +36,10 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 		phaseCtx, cancel := context.WithTimeout(ctx, s.config.PhaseTimeout)
 
 		// MEMORIA CAUSAL: inyectar contexto antes de ejecutar la fase
+		// BUG #5: en modo Boomerang, PrePhase se salta porque Boomerang.RunPhase
+		// arranca con MemoryStep() que ya hace recall — de lo contrario hay doble recall.
 		memoryContext := ""
-		if s.config.MemoryHooks != nil {
+		if s.config.MemoryHooks != nil && s.config.Boomerang == nil {
 			mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase.Name(), s.config.Module)
 			if err == nil && mc != "" {
 				memoryContext = mc

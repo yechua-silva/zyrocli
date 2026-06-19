@@ -13,9 +13,24 @@ func (s *HelixEngramStore) DecayAndRefresh(ctx context.Context, projectID string
 		return fmt.Errorf("memory: project_id is required")
 	}
 
-	// TODO: cargar todos los Facts activos del proyecto desde HelixDB
-	// Por ahora, la implementación asume que se pasan facts externamente
-	// o se integra con un listado de facts
+	nodes, err := s.client.FindNodes(ctx, "Fact", map[string]interface{}{
+		"is_active": true,
+	})
+	if err != nil {
+		return fmt.Errorf("memory: find active facts: %w", err)
+	}
+
+	config := DefaultDecayConfig()
+
+	for _, node := range nodes {
+		fact, err := s.GetFactByID(ctx, node.ID)
+		if err != nil {
+			continue // si falla, sigue con el siguiente
+		}
+		if err := s.applyDecayToFact(ctx, fact, config); err != nil {
+			return fmt.Errorf("memory: decay fact %d: %w", node.ID, err)
+		}
+	}
 
 	return nil
 }
@@ -31,6 +46,13 @@ func calculateEbbinghausDecay(salience, decayRate float64, daysSinceAccess float
 
 // applyDecayToFact aplica decaimiento a un fact individual
 func (s *HelixEngramStore) applyDecayToFact(ctx context.Context, fact *Fact, config DecayConfig) error {
+	// BUG #7.5: LastAccessedAt zero value causa time.Since ~1.7e17 horas → decaimiento instantáneo
+	if fact.LastAccessedAt.IsZero() {
+		fact.LastAccessedAt = fact.CreatedAt
+		if fact.LastAccessedAt.IsZero() {
+			fact.LastAccessedAt = time.Now()
+		}
+	}
 	daysSinceAccess := time.Since(fact.LastAccessedAt).Hours() / 24.0
 
 	if daysSinceAccess <= 0 {
@@ -52,8 +74,14 @@ func (s *HelixEngramStore) applyDecayToFact(ctx context.Context, fact *Fact, con
 
 	fact.Salience = newSalience
 
-	// TODO: actualizar en HelixDB
-	_ = ctx
+	props := map[string]interface{}{
+		"salience":  fact.Salience,
+		"is_stale":  fact.IsStale,
+		"is_active": fact.IsActive,
+	}
+	if err := s.client.UpdateNode(ctx, fact.ID, props); err != nil {
+		return fmt.Errorf("memory: apply decay to fact %d: %w", fact.ID, err)
+	}
 	return nil
 }
 

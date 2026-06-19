@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	dbhelix "github.com/secko/zyrocli/internal/db/helix"
 )
@@ -46,10 +47,30 @@ func (s *HelixEngramStore) RecallMemories(ctx context.Context, opts RecallOpts) 
 	memResults := make([]*MemoryResult, 0, len(results))
 	for _, r := range results {
 		fact := &Fact{
-			Content: r.Content,
+			ID:          int64(r.ID),
+			Content:     r.Content,
+			Salience:    r.Salience,
+			Confidence:  r.Confidence,
+			Phase:       r.Phase,
+			ProjectID:   r.ProjectID,
+			IsActive:    r.IsActive,
+			IsStale:     r.IsStale,
+			AccessCount: r.AccessCount,
+			DecayRate:   r.DecayRate,
 		}
 		if r.Label != "" {
 			fact.Type = FactType(r.Label)
+		}
+		// Parsear fechas si no están vacías
+		if r.CreatedAt != "" {
+			if t, err := time.Parse(time.RFC3339, r.CreatedAt); err == nil {
+				fact.CreatedAt = t
+			}
+		}
+		if r.LastAccessedAt != "" {
+			if t, err := time.Parse(time.RFC3339, r.LastAccessedAt); err == nil {
+				fact.LastAccessedAt = t
+			}
 		}
 
 		memResults = append(memResults, &MemoryResult{

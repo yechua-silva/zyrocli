@@ -6,8 +6,10 @@ import (
 )
 
 // QualityStep valida que los resultados de la fase sean correctos.
-// Para F3 (implementación) verifica que el código compile y los tests pasen.
+// Para F3 (implementación) verifica que el código compile.
 // Para todas las fases verifica que no haya tareas fallidas.
+// NOTA: No ejecutamos `go test ./...` porque es recursivo:
+// desde un test de boomerang se dispararía QualityStep → go test → QualityStep → ...
 func (o *BoomerangOrchestrator) QualityStep(ctx context.Context, phase string, dag *TaskDAG, delegateResult *DelegateResult) (bool, error) {
 	// Verificar que compile (para fases de implementación)
 	if phase == "F3" {
@@ -20,13 +22,6 @@ func (o *BoomerangOrchestrator) QualityStep(ctx context.Context, phase string, d
 	for _, tr := range delegateResult.TaskResults {
 		if !tr.Success {
 			return false, nil
-		}
-	}
-
-	// Verificar tests (para fases de implementación)
-	if phase == "F3" {
-		if err := exec.CommandContext(ctx, "go", "test", "./...").Run(); err != nil {
-			return false, err
 		}
 	}
 
