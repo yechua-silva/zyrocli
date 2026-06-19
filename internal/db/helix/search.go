@@ -71,7 +71,10 @@ func HybridSearch(ctx context.Context, client *Client, query string, embedding [
 	}
 
 	// Fusionar con RRF
-	return fuseRRF(vResult.results, tResult.results, hybridDefaultK, opts.MaxResults), nil
+	results := fuseRRF(vResult.results, tResult.results, hybridDefaultK, opts.MaxResults)
+
+	// Enriquecer con propiedades completas de los nodos (salience, confidence, phase, etc.)
+	return enrichWithNodeProperties(ctx, client, results)
 }
 
 // vectorSearch ejecuta búsqueda vectorial contra HelixDB.
@@ -179,6 +182,104 @@ func parseSearchResults(raw map[string]interface{}, source string, minScore floa
 		}
 	}
 	return results
+}
+
+// enrichWithNodeProperties fetches full node properties for search result rows
+// via a second HelixDB query, filling in fields not returned by TextSearchNodes
+// or VectorSearchNodes (salience, confidence, phase, project_id, is_active, etc.).
+// If the second query fails, returns the original results unchanged (partial results).
+func enrichWithNodeProperties(ctx context.Context, client *Client, results []SearchResultRow) ([]SearchResultRow, error) {
+	if len(results) == 0 {
+		return results, nil
+	}
+
+	// Build slice of uint64 IDs for the HelixDB query
+	ids := make([]uint64, len(results))
+	idSet := make(map[uint64]int, len(results)) // maps ID to index in results
+	for i, r := range results {
+		uid := uint64(r.ID)
+		ids[i] = uid
+		idSet[uid] = i
+	}
+
+	q := helixsdk.ReadQuery("enrich_nodes").
+		VarAs("nodes",
+			helixsdk.G().N(helixsdk.NodeIDs(ids...)).ValueMap(
+				"$id", "$label", "content",
+				"salience", "confidence", "phase",
+				"project_id", "is_active", "is_stale",
+				"access_count", "decay_rate",
+				"created_at", "last_accessed_at",
+			),
+		).
+		Returning("nodes")
+
+	var raw map[string]interface{}
+	if err := client.Exec(ctx, q, &raw); err != nil {
+		// Second query failed — return partial results (only ID + score + source)
+		return results, nil
+	}
+
+	nodesData, ok := raw["nodes"].([]interface{})
+	if !ok || len(nodesData) == 0 {
+		return results, nil
+	}
+
+	// Merge fetched properties into the corresponding result rows
+	for _, item := range nodesData {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		idFloat, ok := m["$id"].(float64)
+		if !ok {
+			continue
+		}
+		uid := uint64(idFloat)
+		idx, found := idSet[uid]
+		if !found {
+			continue
+		}
+
+		if label, ok := m["$label"].(string); ok {
+			results[idx].Label = label
+		}
+		if content, ok := m["content"].(string); ok {
+			results[idx].Content = content
+		}
+		if salience, ok := m["salience"].(float64); ok {
+			results[idx].Salience = salience
+		}
+		if confidence, ok := m["confidence"].(float64); ok {
+			results[idx].Confidence = confidence
+		}
+		if phase, ok := m["phase"].(string); ok {
+			results[idx].Phase = phase
+		}
+		if projectID, ok := m["project_id"].(string); ok {
+			results[idx].ProjectID = projectID
+		}
+		if isActive, ok := m["is_active"].(bool); ok {
+			results[idx].IsActive = isActive
+		}
+		if isStale, ok := m["is_stale"].(bool); ok {
+			results[idx].IsStale = isStale
+		}
+		if accessCount, ok := m["access_count"].(float64); ok {
+			results[idx].AccessCount = int64(accessCount)
+		}
+		if decayRate, ok := m["decay_rate"].(float64); ok {
+			results[idx].DecayRate = decayRate
+		}
+		if createdAt, ok := m["created_at"].(string); ok {
+			results[idx].CreatedAt = createdAt
+		}
+		if lastAccessedAt, ok := m["last_accessed_at"].(string); ok {
+			results[idx].LastAccessedAt = lastAccessedAt
+		}
+	}
+
+	return results, nil
 }
 
 // ---------------------------------------------------------------------------
