@@ -65,7 +65,15 @@ func KnownProviders() []Provider {
 		},
 		{
 			ID: "nvidia", Name: "NVIDIA",
-			Models: []Model{},
+			Models: []Model{
+				{ID: "meta/llama-3.1-8b-instruct", Name: "Llama 3.1 8B Instruct"},
+				{ID: "meta/llama-3.1-70b-instruct", Name: "Llama 3.1 70B Instruct"},
+				{ID: "mistralai/mistral-7b-instruct-v0.3", Name: "Mistral 7B v0.3"},
+				{ID: "google/gemma-2-27b-it", Name: "Gemma 2 27B IT"},
+				{ID: "microsoft/phi-3-mini-128k-instruct", Name: "Phi-3 Mini 128K"},
+				{ID: "nvidia/llama-3.1-nemotron-70b-instruct", Name: "Nemotron 70B"},
+				{ID: "nvidia/llama-3.1-nemotron-mini-4b-instruct", Name: "Nemotron Mini 4B"},
+			},
 		},
 		{
 			ID: "anthropic", Name: "Anthropic",

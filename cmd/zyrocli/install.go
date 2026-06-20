@@ -24,7 +24,7 @@ var installCmd = &cobra.Command{
   1. Extracts embedded MCP Python tools to ~/.config/zyrocli/mcp-tools/
   2. Installs all embedded skills to ~/.config/opencode/skills/
   3. Verifies dependencies (uv, npm) and installs @neuledge/context
-  4. Writes opencode.jsonc with global agents (SDD + Phase 0), MCP, and commands
+  4. Writes opencode.json with global agents (SDD + Phase 0), MCP, and commands
   5. Configures OpenCode MCP integration
 
 Run this once after installing zyrocli. No flags needed — the binary is self-contained.`,

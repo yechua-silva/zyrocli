@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -27,7 +26,7 @@ var profileListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Show current model assignments for all agents",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		configPath := filepath.Join(os.Getenv("HOME"), ".config", "opencode", "opencode.jsonc")
+		configPath := opencode.GetEffectiveConfigPath()
 		data, err := os.ReadFile(configPath)
 		if err != nil {
 			return fmt.Errorf("profile: read config: %w", err)
@@ -68,7 +67,7 @@ var profileSetCmd = &cobra.Command{
 		agentName := args[0]
 		modelName := args[1]
 
-		configPath := filepath.Join(os.Getenv("HOME"), ".config", "opencode", "opencode.jsonc")
+		configPath := opencode.GetEffectiveConfigPath()
 		data, err := os.ReadFile(configPath)
 		if err != nil {
 			return fmt.Errorf("profile: read config: %w", err)
@@ -85,7 +84,17 @@ var profileSetCmd = &cobra.Command{
 
 		agent, exists := cfg.Agent[agentName]
 		if !exists {
-			return fmt.Errorf("profile: agent %q not found", agentName)
+			// Agent not found in config — create it
+			agent = opencode.Agent{
+				Mode: "subagent",
+			}
+			// Try to find the canonical mode from profile_agents.go
+			for _, a := range zyroAgents {
+				if a.Name == agentName {
+					agent.Mode = a.DefaultMode
+					break
+				}
+			}
 		}
 
 		if err := validateModel(modelName); err != nil {
@@ -112,70 +121,10 @@ var profileSetCmd = &cobra.Command{
 
 var profileTUICmd = &cobra.Command{
 	Use:   "tui",
-	Short: "Interactive model selector (text-based)",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		configPath := filepath.Join(os.Getenv("HOME"), ".config", "opencode", "opencode.jsonc")
-		data, err := os.ReadFile(configPath)
-		if err != nil {
-			return fmt.Errorf("profile: read config: %w", err)
-		}
-
-		var cfg opencode.Config
-		if err := json.Unmarshal(data, &cfg); err != nil {
-			return fmt.Errorf("profile: parse config: %w", err)
-		}
-
-		if cfg.Agent == nil {
-			cfg.Agent = make(map[string]opencode.Agent)
-		}
-
-		// Sort agent names
-		names := make([]string, 0, len(cfg.Agent))
-		for name := range cfg.Agent {
-			names = append(names, name)
-		}
-		sort.Strings(names)
-
-		fmt.Println("ZyroCLI Model Selector")
-		fmt.Println(strings.Repeat("=", 50))
-		fmt.Println("Select an agent to assign a model. Enter empty to skip.")
-		fmt.Println()
-
-		for _, name := range names {
-			agent := cfg.Agent[name]
-			current := agent.Model
-			if current == "" {
-				current = "default"
-			}
-
-			fmt.Printf("[%s]\n", name)
-			fmt.Printf("  Current: %s\n", current)
-			fmt.Print("  Model (or press Enter to skip): ")
-
-			var input string
-			fmt.Scanln(&input)
-			input = strings.TrimSpace(input)
-
-			if input != "" {
-				agent.Model = input
-				cfg.Agent[name] = agent
-				fmt.Printf("  ✓ Set to %s\n", input)
-			}
-			fmt.Println()
-		}
-
-		out, err := json.MarshalIndent(cfg, "", "  ")
-		if err != nil {
-			return fmt.Errorf("profile: marshal: %w", err)
-		}
-
-		if err := os.WriteFile(configPath, out, 0644); err != nil {
-			return fmt.Errorf("profile: write: %w", err)
-		}
-
-		fmt.Println("✓ Model assignments saved.")
-		return nil
-	},
+	Short: "Interactive model selector",
+	Long:  `Interactive TUI to assign AI models to each ZyroCLI agent.
+Uses the same visual style as the installer.`,
+	RunE: runProfileTUI,
 }
 
 // validateModel checks that the model string has the format "provider/model"

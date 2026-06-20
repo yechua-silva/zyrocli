@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// Config represents the opencode.jsonc configuration structure.
+// Config represents the opencode.json configuration structure.
 type Config struct {
 	Schema        string              `json:"$schema,omitempty"`
 	DefaultAgent  string              `json:"default_agent,omitempty"`
@@ -55,7 +55,7 @@ type Command struct {
 }
 
 // OpenCodeConfigPath is the default global config path.
-var OpenCodeConfigPath = "~/.config/opencode/opencode.jsonc"
+var OpenCodeConfigPath = "~/.config/opencode/opencode.json"
 
 // expandHome replaces "~" with the user's home directory.
 func expandHome(path string) string {
@@ -66,7 +66,7 @@ func expandHome(path string) string {
 	return path
 }
 
-// WriteGlobalConfig writes the opencode.jsonc config to the standard location.
+// WriteGlobalConfig writes the opencode.json config to the standard location.
 // Creates parent directories if needed. MERGES with existing config if present,
 // so user's manually added MCP servers and agents are preserved.
 // Returns the path written.

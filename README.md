@@ -303,9 +303,7 @@ F4 (Cierre) → solo lectura, archive con approval
 - **Tests**: 383 tests, 100% passing
 - **Distribución**: npm, GitHub Releases, Homebrew, go install
 
-## 🙏 Créditos y Agradecimientos
-
-ZyroCLI no sería posible sin el trabajo de la comunidad open-source. Gracias especiales a:
+## Créditos
 
 ### Skills y Metodología
 

@@ -3,6 +3,7 @@ package opencode
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -38,6 +39,24 @@ func GetDefaultPath() string {
 		return ".config/opencode/opencode.json"
 	}
 	return filepath.Join(home, ".config", "opencode", "opencode.json")
+}
+
+// GetEffectiveConfigPath returns the path to the most relevant opencode.json.
+// If a project-level config exists in the current working directory, OpenCode
+// reads it with precedence over the global config. This function mirrors that
+// logic so "profile set" and "profile list" write to the file that OpenCode
+// actually uses.
+func GetEffectiveConfigPath() string {
+	// Check for project-level config in CWD
+	cwd, err := os.Getwd()
+	if err == nil {
+		projectConfig := filepath.Join(cwd, ".config", "opencode", "opencode.json")
+		if _, err := os.Stat(projectConfig); err == nil {
+			return projectConfig
+		}
+	}
+	// Fall back to global config
+	return GetDefaultPath()
 }
 
 // ReadProviders reads providers from opencode.json and merges them with
@@ -198,4 +217,109 @@ func mergeProviders(base, overrides []Provider) []Provider {
 	}
 
 	return result
+}
+
+// FetchOpenCodeProviders connects to the OpenCode SDK API (localhost:4096)
+// to get the actual providers the user has configured.
+// Returns nil if OpenCode is not running or can't be reached.
+func FetchOpenCodeProviders() []Provider {
+	// Try to fetch from OpenCode SDK API
+	providers, _ := fetchOCProviders()
+	return providers
+}
+
+// ocProviderResponse mirrors the OpenCode API response for GET /provider.
+type ocProviderResponse struct {
+	All       []Provider        `json:"all,omitempty"`
+	Default   map[string]string `json:"default,omitempty"`
+	Connected []string          `json:"connected,omitempty"`
+}
+
+func fetchOCProviders() ([]Provider, error) {
+	// OpenCode SDK server runs on localhost:4096
+	resp, err := http.Get("http://localhost:4096/provider")
+	if err != nil {
+		return nil, fmt.Errorf("opencode sdk: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("opencode sdk: status %d", resp.StatusCode)
+	}
+
+	var result ocProviderResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("opencode sdk: decode: %w", err)
+	}
+
+	// If OpenCode tells us which providers are connected, filter to those
+	if len(result.Connected) > 0 {
+		connected := make(map[string]bool, len(result.Connected))
+		for _, id := range result.Connected {
+			connected[id] = true
+		}
+		var active []Provider
+		for _, p := range result.All {
+			if connected[p.ID] {
+				active = append(active, p)
+			}
+		}
+		return active, nil
+	}
+
+	// Otherwise return all providers
+	return result.All, nil
+}
+
+// RegisterPlugin adds a plugin path to the opencode.json config file.
+// It reads the existing config, adds the plugin to the plugin array if not already present,
+// and writes the config back.
+func RegisterPlugin(configPath, pluginPath string) error {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		// If file doesn't exist, create minimal config
+		if os.IsNotExist(err) {
+			cfg := map[string]any{
+				"$schema": "https://opencode.ai/config.json",
+				"plugin":  []string{pluginPath},
+			}
+			out, _ := json.MarshalIndent(cfg, "", "  ")
+			return os.WriteFile(configPath, out, 0644)
+		}
+		return fmt.Errorf("register plugin: read: %w", err)
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("register plugin: parse: %w", err)
+	}
+
+	// Get or create plugin array
+	var plugins []string
+	if p, ok := raw["plugin"]; ok {
+		if arr, ok := p.([]any); ok {
+			for _, item := range arr {
+				if s, ok := item.(string); ok {
+					plugins = append(plugins, s)
+				}
+			}
+		}
+	}
+
+	// Check if already registered
+	for _, p := range plugins {
+		if p == pluginPath {
+			return nil // already registered
+		}
+	}
+
+	plugins = append(plugins, pluginPath)
+	raw["plugin"] = plugins
+
+	out, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		return fmt.Errorf("register plugin: marshal: %w", err)
+	}
+
+	return os.WriteFile(configPath, out, 0644)
 }

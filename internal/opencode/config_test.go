@@ -8,7 +8,7 @@ import (
 func TestWriteGlobalConfig_createsValidFile(t *testing.T) {
 	// Use a temp dir so we don't pollute real config
 	orig := OpenCodeConfigPath
-	OpenCodeConfigPath = "~/.config/opencode-test/opencode.jsonc"
+	OpenCodeConfigPath = "~/.config/opencode-test/opencode.json"
 	t.Cleanup(func() {
 		OpenCodeConfigPath = orig
 		os.RemoveAll(expandHome("~/.config/opencode-test"))
@@ -48,7 +48,7 @@ func TestIsInstalled_detectsMissing(t *testing.T) {
 	// Temporarily point to a non-existent path
 	origConfig := OpenCodeConfigPath
 	origSkills := SkillsDir
-	OpenCodeConfigPath = "~/.config/opencode-missing/opencode.jsonc"
+	OpenCodeConfigPath = "~/.config/opencode-missing/opencode.json"
 	SkillsDir = "~/.config/opencode-missing/skills"
 	t.Cleanup(func() {
 		OpenCodeConfigPath = origConfig
