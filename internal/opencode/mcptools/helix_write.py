@@ -16,8 +16,11 @@ REQUIRED_FIELDS = {
     "Decision": ["title", "context", "decision"],
     "Design": ["project_id", "components", "data_flow", "status"],
     "Task": ["project_id", "name", "description", "status"],
-    "CodeModule": ["path", "language", "summary"],
+    "CodeNode": ["path", "language", "summary"],
     "Review": ["status", "findings"],
+    "Fact": ["content", "source", "confidence", "category"],
+    "Project": ["name", "description", "path"],
+    "Document": ["title", "url", "summary"],
 }
 
 

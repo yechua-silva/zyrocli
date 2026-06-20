@@ -54,8 +54,11 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 			}
 		}
 
-		var result *Result
+			var result *Result
 		var err error
+
+		// Criteria summary para approval y handoff
+		var criteriaSummary *boomerang.CriteriaSummary
 
 		// Si hay Boomerang, usarlo (ciclo completo de 6 pasos)
 		if s.config.Boomerang != nil {
@@ -70,11 +73,13 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 				cancel()
 				return results, fmt.Errorf("boomerang phase %s: %w", phase.Name(), boomerErr)
 			}
+			criteriaSummary = boomerangResult.CriteriaSummary
 			result = &Result{
-				Phase:   Phase(boomerangResult.Phase),
-				Status:  StatusSuccess,
-				Summary: fmt.Sprintf("Boomerang: %d tasks, quality=%v, facts=%d",
+				Phase:           Phase(boomerangResult.Phase),
+				Status:          StatusSuccess,
+				Summary:         fmt.Sprintf("Boomerang: %d tasks, quality=%v, facts=%d",
 					boomerangResult.TasksPlanned, boomerangResult.QualityOK, boomerangResult.FactsSaved),
+				CriteriaSummary: criteriaSummary,
 			}
 		} else {
 			result, err = phase.Run(phaseCtx, s.config)
@@ -106,7 +111,7 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 
 		// Handoff: write phase completion artifact
 		nextPhase := validator.NextPhase()
-		if hfErr := writeHandoff(string(phaseName), result, nextPhase); hfErr != nil {
+		if hfErr := writeHandoff(string(phaseName), result, nextPhase, result.CriteriaSummary); hfErr != nil {
 			fmt.Printf("  ⚠ handoff: %v\n", hfErr)
 		}
 
@@ -116,7 +121,7 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 		}
 
 		// Mandatory approval gate
-		approved, err := ApprovalGate(result.Phase, result.Summary)
+		approved, err := ApprovalGate(result.Phase, result.Summary, result.CriteriaSummary)
 		if err != nil {
 			return results, fmt.Errorf("scheduler: approval error: %w", err)
 		}

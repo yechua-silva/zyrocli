@@ -2,6 +2,9 @@ package boomerang
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/secko/zyrocli/internal/boundari"
@@ -21,17 +24,19 @@ type PhaseConfig struct {
 
 // PhaseResult resultado completo de una fase Boomerang
 type PhaseResult struct {
-	Phase        string        `json:"phase"`
-	Success      bool          `json:"success"`
-	Iterations   int           `json:"iterations"`
-	MemoryUsed   int           `json:"memory_used"`
-	TasksPlanned int           `json:"tasks_planned"`
-	NodesCreated int           `json:"nodes_created"`
-	GitStatus    string        `json:"git_status"`
-	QualityOK    bool          `json:"quality_ok"`
-	FactsSaved   int           `json:"facts_saved"`
-	Duration     time.Duration `json:"duration_ms"`
-	Error        string        `json:"error,omitempty"`
+	Phase              string               `json:"phase"`
+	Success            bool                 `json:"success"`
+	Iterations         int                  `json:"iterations"`
+	MemoryUsed         int                  `json:"memory_used"`
+	TasksPlanned       int                  `json:"tasks_planned"`
+	NodesCreated       int                  `json:"nodes_created"`
+	GitStatus          string               `json:"git_status"`
+	QualityOK          bool                 `json:"quality_ok"`
+	FactsSaved         int                  `json:"facts_saved"`
+	Duration           time.Duration        `json:"duration_ms"`
+	Error              string               `json:"error,omitempty"`
+	AcceptanceCriteria []AcceptanceCriteria `json:"acceptance_criteria,omitempty"`
+	CriteriaSummary    *CriteriaSummary     `json:"criteria_summary,omitempty"`
 }
 
 // DelegateResult resultado de delegar tareas a subagentes
@@ -57,12 +62,13 @@ type TaskDAG struct {
 
 // TaskSpec especificación de una tarea individual
 type TaskSpec struct {
-	ID          int      `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Agent       string   `json:"agent"`
-	Tags        []string `json:"tags,omitempty"`
-	DependsOn   []int    `json:"depends_on,omitempty"`
+	ID                 int                  `json:"id"`
+	Name               string               `json:"name"`
+	Description        string               `json:"description"`
+	Agent              string               `json:"agent"`
+	Tags               []string             `json:"tags,omitempty"`
+	DependsOn          []int                `json:"depends_on,omitempty"`
+	AcceptanceCriteria []AcceptanceCriteria `json:"acceptance_criteria,omitempty"`
 }
 
 // SaveResult resultado de guardar decisiones en memoria causal
@@ -122,6 +128,14 @@ func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConf
 	start := time.Now()
 	result := &PhaseResult{Phase: config.Phase}
 
+	// ── Enforcer lifecycle: cargar política y crear enforcer ──────────────
+	policy, err := o.boundariLoader(config.Phase)
+	if err != nil {
+		policy = boundari.LoadDefaultPolicy(config.Phase)
+	}
+	enforcer := boundari.NewEnforcer(policy)
+	boundari.ClearAuditLog()
+
 	// Determinar matriz y steps a ejecutar
 	matrix := config.SkipMatrix
 	if matrix == nil {
@@ -143,6 +157,11 @@ func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConf
 
 	// Ejecutar steps en orden
 	for _, step := range steps {
+		// Budget check antes de cada step
+		if enforcer.IsBudgetExceeded() {
+			return nil, fmt.Errorf("boundari: budget exceeded for phase %s", config.Phase)
+		}
+
 		switch step {
 		case StepMemory:
 			mc, err := o.MemoryStep(ctx, config.Phase, config.TaskDesc)
@@ -153,7 +172,7 @@ func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConf
 			result.MemoryUsed = len(memoryCtx)
 
 		case StepThink:
-			d, err := o.ThinkStep(ctx, config.Phase, memoryCtx)
+			d, err := o.ThinkStep(ctx, config.Phase, memoryCtx, config.AcceptanceCriteria)
 			if err != nil {
 				return nil, err
 			}
@@ -164,7 +183,7 @@ func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConf
 			if dag == nil {
 				continue
 			}
-			dr, err := o.DelegateStep(ctx, dag, config.Phase)
+			dr, err := o.DelegateStep(ctx, dag, config.Phase, enforcer)
 			if err != nil {
 				result.Error = err.Error()
 				result.Duration = time.Since(start)
@@ -195,7 +214,7 @@ func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConf
 				}
 				if i < o.maxIterations-1 {
 					if delegateResult != nil && dag != nil {
-						delegateResult, _ = o.DelegateStep(ctx, dag, config.Phase)
+						delegateResult, _ = o.DelegateStep(ctx, dag, config.Phase, enforcer)
 					}
 				}
 			}
@@ -204,12 +223,33 @@ func (o *BoomerangOrchestrator) runPhaseV2(ctx context.Context, config PhaseConf
 			if delegateResult == nil {
 				delegateResult = &DelegateResult{TaskResults: map[string]TaskResult{}}
 			}
-			sr, err := o.SaveStep(ctx, config.Phase, delegateResult, nil)
+			// Extraer criteria del DAG para persistirlos en SaveStep
+			var saveCriteria []AcceptanceCriteria
+			if dag != nil {
+				saveCriteria = ExtractCriteriaFromDAG(dag)
+			}
+			sr, err := o.SaveStep(ctx, config.Phase, delegateResult, nil, enforcer, saveCriteria)
 			if err == nil {
 				saveResult = sr
 				result.FactsSaved = saveResult.FactsSaved
 			}
 		}
+	}
+
+	// ── Extraer acceptance criteria del DAG al PhaseResult ──────────────
+	if dag != nil {
+		criteria := ExtractCriteriaFromDAG(dag)
+		result.AcceptanceCriteria = criteria
+		result.CriteriaSummary = NewCriteriaSummary(criteria)
+	}
+
+	// ── Persistir audit log al finalizar la fase ─────────────────────────
+	auditDir := "audit"
+	auditFile := fmt.Sprintf("boomerang-%s-%d.jsonl", config.Phase, time.Now().Unix())
+	auditPath := filepath.Join(auditDir, auditFile)
+	if err := boundari.SaveAuditLog(auditPath); err != nil {
+		// warning no bloqueante — la fase ya terminó
+		fmt.Fprintf(os.Stderr, "⚠ boundari: error saving audit log: %v\n", err)
 	}
 
 	// Estimar tokens (legacy measurement)

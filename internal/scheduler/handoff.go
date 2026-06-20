@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/secko/zyrocli/internal/boomerang"
 )
 
 // recentArtifacts walks openspec/ and .zyro/handoffs/ looking for files modified
@@ -46,7 +48,8 @@ func recentArtifacts(cwd string) []string {
 
 // writeHandoff creates .zyro/handoffs/<FASE>-handoff.md after a phase completes.
 // The directory is created if it doesn't exist.
-func writeHandoff(phaseName string, result *Result, nextPhase Phase) error {
+// criteria es opcional — si no es nil, incluye una tabla de acceptance criteria status.
+func writeHandoff(phaseName string, result *Result, nextPhase Phase, criteria *boomerang.CriteriaSummary) error {
 	// Determine project root: walk up from cwd looking for .zyro/
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -80,6 +83,23 @@ func writeHandoff(phaseName string, result *Result, nextPhase Phase) error {
 		artifactsBlock = "(sin artefactos nuevos detectados)"
 	}
 
+	// Bloque de acceptance criteria (opcional)
+	criteriaBlock := ""
+	if criteria != nil && criteria.Total > 0 {
+		criteriaBlock = fmt.Sprintf(`
+## Acceptance Criteria
+
+| Estado | Cantidad |
+|--------|----------|
+| ✅ Verified | %d |
+| ⏳ Pending | %d |
+| ❌ Failed | %d |
+| **Total** | **%d** |
+`,
+			criteria.Verified, criteria.Pending, criteria.Failed, criteria.Total,
+		)
+	}
+
 	content := fmt.Sprintf(`# Handoff — Fase %s
 
 **Generado:** %s
@@ -90,7 +110,7 @@ func writeHandoff(phaseName string, result *Result, nextPhase Phase) error {
 ## Resumen
 
 %s
-
+%s
 ## Artefactos recientes
 
 %s
@@ -108,6 +128,7 @@ Si hay cambios solicitados por el humano, iterar antes de avanzar.
 		time.Now().Format(time.RFC3339),
 		statusEmoji, result.Status,
 		result.Summary,
+		criteriaBlock,
 		artifactsBlock,
 		nextPhaseStr,
 	)

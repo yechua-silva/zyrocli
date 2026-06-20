@@ -19,12 +19,13 @@ type SearchResult struct {
 
 // TaskRow representa un nodo Task en HelixDB.
 type TaskRow struct {
-	ID          int    `json:"$id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Phase       string `json:"phase"`
-	Status      string `json:"status"`
-	CreatedAt   string `json:"created_at"`
+	ID                 int              `json:"$id"`
+	Name               string           `json:"name"`
+	Description        string           `json:"description"`
+	Phase              string           `json:"phase"`
+	Status             string           `json:"status"`
+	AcceptanceCriteria []map[string]any `json:"acceptance_criteria,omitempty"`
+	CreatedAt          string           `json:"created_at"`
 }
 
 // CodeNodeRow representa un nodo CodeNode.

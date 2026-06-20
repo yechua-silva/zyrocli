@@ -7,7 +7,8 @@ import (
 
 // QualityStep valida que los resultados de la fase sean correctos.
 // Para F3 (implementación) verifica que el código compile.
-// Para todas las fases verifica que no haya tareas fallidas.
+// Para todas las fases verifica que no haya tareas fallidas y evalúa
+// los acceptance criteria definidos en el DAG.
 // NOTA: No ejecutamos `go test ./...` porque es recursivo:
 // desde un test de boomerang se dispararía QualityStep → go test → QualityStep → ...
 func (o *BoomerangOrchestrator) QualityStep(ctx context.Context, phase string, dag *TaskDAG, delegateResult *DelegateResult) (bool, error) {
@@ -25,5 +26,38 @@ func (o *BoomerangOrchestrator) QualityStep(ctx context.Context, phase string, d
 		}
 	}
 
+	// Evaluar acceptance criteria del DAG
+	if !o.evaluateCriteria(ctx, dag, delegateResult) {
+		return false, nil
+	}
+
 	return true, nil
+}
+
+// evaluateCriteria verifica que todos los acceptance criteria del DAG se cumplieron.
+// Retorna true si todos están satisfechos o si no hay criteria definidos.
+func (o *BoomerangOrchestrator) evaluateCriteria(ctx context.Context, dag *TaskDAG, delegateResult *DelegateResult) bool {
+	if dag == nil || delegateResult == nil {
+		return true // nada que evaluar
+	}
+
+	allVerified := true
+	for _, task := range dag.Tasks {
+		for i := range task.AcceptanceCriteria {
+			c := &task.AcceptanceCriteria[i]
+			if c.Status == CriteriaPending {
+				tr, exists := delegateResult.TaskResults[task.Name]
+				if !exists || !tr.Success || tr.Output == "" {
+					c.Status = CriteriaFailed
+					allVerified = false
+				} else {
+					c.Status = CriteriaVerified
+				}
+			} else if c.Status == CriteriaFailed {
+				allVerified = false
+			}
+			// CriteriaVerified — no se re-evalúa
+		}
+	}
+	return allVerified
 }

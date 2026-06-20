@@ -47,11 +47,12 @@ type Config struct {
 
 // Result holds the outcome of a single phase execution.
 type Result struct {
-	Phase         Phase
-	Status        Status
-	Summary       string
-	Error         error
-	MemoryContext string // contexto de memoria causal inyectado (T-4.9)
+	Phase           Phase
+	Status          Status
+	Summary         string
+	Error           error
+	MemoryContext   string                  // contexto de memoria causal inyectado (T-4.9)
+	CriteriaSummary *boomerang.CriteriaSummary // resumen de acceptance criteria (nil si no hay)
 }
 
 // PhaseRunner is the interface each phase must implement.

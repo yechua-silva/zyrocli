@@ -53,3 +53,10 @@ target/
 typescript
 mcp-servers-extracted-entries.md
 graphify-out/
+
+# Benchmark artifacts
+scripts/benchmark/
+docs/benchmark/
+
+# Runtime audit logs
+internal/boomerang/audit/

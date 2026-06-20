@@ -74,7 +74,7 @@ func TestThinkStep(t *testing.T) {
 	o := NewBoomerangOrchestrator(&mockStore{}, mockBoundariLoader, NewTaskManager(0), nil)
 	ctx := context.Background()
 
-	dag, err := o.ThinkStep(ctx, "F0", "")
+	dag, err := o.ThinkStep(ctx, "F0", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestThinkStep(t *testing.T) {
 		t.Errorf("F0 expected 3 tasks, got %d", len(dag.Tasks))
 	}
 
-	dag, err = o.ThinkStep(ctx, "F3", "")
+	dag, err = o.ThinkStep(ctx, "F3", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func TestThinkStepInvalidPhase(t *testing.T) {
 	o := NewBoomerangOrchestrator(&mockStore{}, mockBoundariLoader, NewTaskManager(0), nil)
 	ctx := context.Background()
 
-	_, err := o.ThinkStep(ctx, "F9", "")
+	_, err := o.ThinkStep(ctx, "F9", "", nil)
 	if err == nil {
 		t.Error("expected error for invalid phase")
 	}
@@ -126,7 +126,7 @@ func TestDelegateStep(t *testing.T) {
 		},
 	}
 
-	result, err := o.DelegateStep(ctx, dag, "F0")
+	result, err := o.DelegateStep(ctx, dag, "F0", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func TestSaveStep(t *testing.T) {
 		},
 	}
 
-	result, err := o.SaveStep(ctx, "F0", delegateResult, nil)
+	result, err := o.SaveStep(ctx, "F0", delegateResult, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

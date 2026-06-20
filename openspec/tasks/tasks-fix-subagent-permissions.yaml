@@ -1,0 +1,289 @@
+# ============================================================================
+# Tasks: Fix Subagent Permissions
+# Proyecto: ZyroAgentCLI
+# Basado en: openspec/designs/design-fix-subagent-permissions.md
+# Fecha: 2026-06-20
+# ============================================================================
+#
+# Desglose del diseño en tareas atómicas (< 30 min c/u).
+# Orden sugerido: PERM-01 → PERM-02 → PERM-03 → PERM-04 → PERM-05 →
+#                 PERM-06 → PERM-07 → PERM-08 → PERM-09 → PERM-10 → PERM-11
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # PERM-01: Cambiar bash:allow → deny en sddPerms
+  # ---------------------------------------------------------------------------
+  - id: "PERM-01"
+    name: "sddPerms: bash:allow → deny"
+    description: >-
+      Modificar el map compartido `sddPerms` en `buildInstallConfig()`,
+      cambiando `"bash": "allow"` a `"bash": "deny"`. Este map es la base
+      que heredan sdd-propose, sdd-design y sdd-tasks.
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 5 min
+    dependencies: []
+    acceptance_criteria:
+      - "sddPerms en línea 236-238 tiene bash: deny en lugar de bash: allow"
+      - "go build ./cmd/zyrocli pasa sin errores"
+      - "go vet ./cmd/zyrocli no reporta problemas"
+
+  # ---------------------------------------------------------------------------
+  # PERM-02: Crear sddArchivePerms y permsWithTaskDeny
+  # ---------------------------------------------------------------------------
+  - id: "PERM-02"
+    name: "Agregar sddArchivePerms y permsWithTaskDeny"
+    description: >-
+      Insertar después de `sddPerms` (tras línea 238):
+      (a) `sddArchivePerms` — nuevo map independiente con bash:allow
+          y task:{"*":"deny"} para sdd-archive (único agente SDD que
+          necesita bash).
+      (b) `permsWithTaskDeny` — closure helper que clona un map base y
+          agrega task:{"*":"deny"}. Evita duplicar permisos para los 3
+          agentes SDD que comparten sddPerms pero necesitan task deny.
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 10 min
+    dependencies:
+      - "PERM-01"
+    acceptance_criteria:
+      - "Variable sddArchivePerms definida con bash:allow + task:{\"*\":\"deny\"}"
+      - "Función permsWithTaskDeny definida (closure) que clona map y agrega task deny"
+      - "go build ./cmd/zyrocli pasa"
+      - "go vet ./cmd/zyrocli no reporta problemas"
+
+  # ---------------------------------------------------------------------------
+  # PERM-03: Separar sdd-archive de sddPerms
+  # ---------------------------------------------------------------------------
+  - id: "PERM-03"
+    name: "Separar sdd-archive → sddArchivePerms"
+    description: >-
+      El agente sdd-archive (línea 379) actualmente referencia `sddPerms`
+      y necesita bash:allow para limpiar archivos temporales. Se cambia su
+      `Permission: sddPerms` a `Permission: sddArchivePerms`, rompiendo la
+      referencia compartida con sdd-propose/design/tasks (que tendrán
+      bash:deny). El nuevo map sddArchivePerms incluye task:{"*":"deny"}
+      explícito.
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # 1 línea
+    dependencies:
+      - "PERM-02"
+    acceptance_criteria:
+      - "sdd-archive (línea 379) usa Permission: sddArchivePerms"
+      - "sdd-archive hereda bash:allow + task:{\"*\":\"deny\"}"
+      - "go build ./cmd/zyrocli pasa"
+      - "CE10 del diseño: get_perm zyro-sdd-archive bash == 'allow'"
+
+  # ---------------------------------------------------------------------------
+  # PERM-04: Conectar sdd-propose/design/tasks → permsWithTaskDeny(sddPerms)
+  # ---------------------------------------------------------------------------
+  - id: "PERM-04"
+    name: "sdd-propose/design/tasks → permsWithTaskDeny"
+    description: >-
+      Cambiar la referencia a `sddPerms` en 3 agentes para que usen
+      `permsWithTaskDeny(sddPerms)`. Esto les da bash:deny (vía sddPerms)
+      + task:{"*":"deny"} explícito (vía helper). Los 3 agentes son:
+      - sdd-propose (línea 351)
+      - sdd-design (línea 367)
+      - sdd-tasks (línea 373)
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # 3 cambios de 1 línea c/u
+    dependencies:
+      - "PERM-01"
+      - "PERM-02"
+    acceptance_criteria:
+      - "sdd-propose: Permission: permsWithTaskDeny(sddPerms)"
+      - "sdd-design: Permission: permsWithTaskDeny(sddPerms)"
+      - "sdd-tasks: Permission: permsWithTaskDeny(sddPerms)"
+      - "Los 3 agentes tienen bash:deny + task:{\"*\":\"deny\"}"
+      - "CE4, CE5, CE6 del diseño: get_perm bash == 'deny' para los 3"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-05: Agregar webfetch:allow + bash:deny a patterns y libraries
+  # ---------------------------------------------------------------------------
+  - id: "PERM-05"
+    name: "webfetch:allow + bash:deny en patterns y libraries"
+    description: >-
+      Modificar los permisos inline de phase-0-patterns (líneas 276-279)
+      y phase-0-libraries (líneas 285-289) para:
+      - Cambiar bash:allow → bash:deny (los skills lo prohíben)
+      - Agregar webfetch:allow (necesario para investigar internet)
+      - Eliminar task:{"*":"allow"} (excesivo, heredará default deny)
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 10 min
+    dependencies: []
+    acceptance_criteria:
+      - "phase-0-patterns: bash:deny, webfetch:allow, sin task block"
+      - "phase-0-libraries: bash:deny, webfetch:allow, sin task block"
+      - "CE2, CE3 del diseño: get_perm webfetch == 'allow'"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-06: Actualizar pre-f0 (bash:deny, remover task:allow)
+  # ---------------------------------------------------------------------------
+  - id: "PERM-06"
+    name: "pre-f0: bash:deny, eliminar task:allow"
+    description: >-
+      Modificar permisos de zyro-pre-f0 (líneas 385-388):
+      - bash:allow → bash:deny (el skill lo prohíbe)
+      - Eliminar task:{"*":"allow"} (hereda default deny)
+      - Mantener webfetch:allow y question:allow (necesarios para su skill)
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 5 min
+    dependencies: []
+    acceptance_criteria:
+      - "pre-f0: bash:deny, webfetch:allow, question:allow"
+      - "pre-f0: sin bloque task explícito"
+      - "CE1 del diseño: get_perm zyro-pre-f0 bash == 'deny'"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-07: Actualizar sdd-verify (write:deny, remover task:allow)
+  # ---------------------------------------------------------------------------
+  - id: "PERM-07"
+    name: "sdd-verify: write:deny, eliminar task:allow"
+    description: >-
+      Modificar permisos de zyro-sdd-verify (líneas 333-335):
+      - write:allow → write:deny (el skill solo verifica, no escribe)
+      - Eliminar task:{"*":"allow"} (hereda default deny)
+      - Mantener bash:allow (su skill lo usa para ejecutar verificación)
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 5 min
+    dependencies: []
+    acceptance_criteria:
+      - "sdd-verify: write:deny, bash:allow, sin task block"
+      - "CE7 del diseño: get_perm zyro-sdd-verify write == 'deny'"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-08: Agregar question:allow + task:{"*":"deny"} a sdd-explore
+  # ---------------------------------------------------------------------------
+  - id: "PERM-08"
+    name: "sdd-explore: question:allow + task:{\"*\":\"deny\"}"
+    description: >-
+      Modificar permisos de zyro-sdd-explore (líneas 342-344):
+      - Agregar question:allow (necesario para entrevistar al usuario
+        según su skill sdd-explore)
+      - Agregar task:{"*":"deny"} explícito (no debe delegar subagentes
+        durante exploración)
+      - Mantener read:allow, bash:allow, write:deny, edit:deny
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 5 min
+    dependencies: []
+    acceptance_criteria:
+      - "sdd-explore: question:allow, task:{\"*\":\"deny\"}"
+      - "CE8 del diseño: get_perm zyro-sdd-explore question == 'allow'"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-09: Remover task:allow de 5 agentes (skills-find, audit, apply,
+  #          sdd-apply, sdd-spec)
+  # ---------------------------------------------------------------------------
+  - id: "PERM-09"
+    name: "Eliminar task:{\"*\":\"allow\"} de 5 agentes"
+    description: >-
+      Los siguientes agentes actualmente tienen `task: {"*":"allow"}`
+      que es excesivo. Se elimina el bloque task para que hereden el
+      default deny de OpenCode:
+      - zyro-skills-find   (líneas 295-298)
+      - zyro-skills-audit  (líneas 305-308)
+      - zyro-skills-apply  (líneas 315-318)
+      - zyro-sdd-apply     (líneas 324-327)
+      - zyro-sdd-spec      (líneas 357-360)
+      Nota: pre-f0, patterns, libraries, sdd-verify ya se manejan en
+      otras tareas donde también se modifican otros permisos.
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 10 min
+    dependencies: []
+    acceptance_criteria:
+      - "skills-find: sin bloque task"
+      - "skills-audit: sin bloque task"
+      - "skills-apply: sin bloque task"
+      - "sdd-apply: sin bloque task"
+      - "sdd-spec: sin bloque task"
+      - "CE9 del diseño: ningún subagente (excepto orchestrator) tiene task:allow"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-10: Agregar task:{"*":"deny"} a to-issues
+  # ---------------------------------------------------------------------------
+  - id: "PERM-10"
+    name: "to-issues: agregar task:{\"*\":\"deny\"} explícito"
+    description: >-
+      El agente to-issues (líneas 395-398) actualmente no tiene bloque
+      task. Se agrega `task: {"*": "deny"}` explícito para asegurar que
+      no pueda delegar subagentes. Es uno de los 6 agentes que reciben
+      bloque task deny explícito (junto con sdd-propose, sdd-design,
+      sdd-tasks, sdd-archive, sdd-explore).
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "small"  # < 5 min
+    dependencies: []
+    acceptance_criteria:
+      - "to-issues: task:{\"*\":\"deny\"}"
+      - "CE9b del diseño: get_perm to-issues task contiene deny"
+      - "go build ./cmd/zyrocli pasa"
+
+  # ---------------------------------------------------------------------------
+  # PERM-11: Compilar, instalar y verificar
+  # ---------------------------------------------------------------------------
+  - id: "PERM-11"
+    name: "Compilar, instalar y ejecutar verificación"
+    description: >-
+      Ejecutar la cadena completa de verificación post-cambios:
+      1. `go build ./cmd/zyrocli/...` — compilación sin errores
+      2. `zyrocli install` — genera ~/.config/opencode/opencode.jsonc
+      3. Ejecutar script de verificación (verify-permissions.sh o
+         comandos manuales) que valida los 11 criterios de éxito (CE1-CE11)
+      Si alguna verificación falla, corregir y repetir.
+    files:
+      - "cmd/zyrocli/install.go"
+    estimated_effort: "medium"  # < 20 min (compilar + instalar + verificar)
+    dependencies:
+      - "PERM-01"
+      - "PERM-02"
+      - "PERM-03"
+      - "PERM-04"
+      - "PERM-05"
+      - "PERM-06"
+      - "PERM-07"
+      - "PERM-08"
+      - "PERM-09"
+      - "PERM-10"
+    acceptance_criteria:
+      - "go build ./cmd/zyrocli/... compila sin errores"
+      - "CE11: zyrocli install genera opencode.jsonc sin errores"
+      - "CE1: pre-f0 bash=deny"
+      - "CE2: phase-0-patterns webfetch=allow"
+      - "CE3: phase-0-libraries bash=deny"
+      - "CE4: sdd-design bash=deny"
+      - "CE5: sdd-tasks bash=deny"
+      - "CE6: sdd-propose bash=deny"
+      - "CE7: sdd-verify write=deny"
+      - "CE8: sdd-explore question=allow"
+      - "CE9: ningún subagente (excepto orchestrator) tiene task:allow"
+      - "CE9b: 6 agentes tienen task:{\"*\":\"deny\"} explícito"
+      - "CE10: sdd-archive bash=allow"
+
+# ============================================================================
+# Resumen de cambios por agente
+# ============================================================================
+# PERM-01  → sddPerms base (bash:allow → deny)
+# PERM-02  → Nuevas variables estructurales
+# PERM-03  → sdd-archive (se separa, hereda bash:allow + task:deny)
+# PERM-04  → sdd-propose, sdd-design, sdd-tasks (via permsWithTaskDeny)
+# PERM-05  → phase-0-patterns, phase-0-libraries (+webfetch, -bash, -task)
+# PERM-06  → pre-f0 (-bash, -task)
+# PERM-07  → sdd-verify (-write, -task)
+# PERM-08  → sdd-explore (+question, +task:deny)
+# PERM-09  → skills-find, audit, apply, sdd-apply, sdd-spec (-task)
+# PERM-10  → to-issues (+task:deny)
+# PERM-11  → Compilación + instalación + verificación final

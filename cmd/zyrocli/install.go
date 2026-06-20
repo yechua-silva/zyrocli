@@ -234,7 +234,22 @@ func buildInstallConfig() *opencode.Config {
 	home, _ := os.UserHomeDir()
 	mcpDir := filepath.Join(home, ".config", "zyrocli", "mcp-tools")
 	sddPerms := map[string]any{
+		"read": "allow", "write": "deny", "edit": "deny", "bash": "deny",
+	}
+	sddArchivePerms := map[string]any{
 		"read": "allow", "write": "deny", "edit": "deny", "bash": "allow",
+		"task": map[string]any{"*": "deny"},
+	}
+	// permsWithTaskDeny clona un map base y agrega task:{"*":"deny"}.
+	// Se usa para sdd-propose, sdd-design, sdd-tasks que comparten sddPerms
+	// pero necesitan bloque task explícito.
+	permsWithTaskDeny := func(base map[string]any) map[string]any {
+		m := make(map[string]any, len(base)+1)
+		for k, v := range base {
+			m[k] = v
+		}
+		m["task"] = map[string]any{"*": "deny"}
+		return m
 	}
 	defaultModel := "opencode-go/deepseek-v4-flash"
 
@@ -275,7 +290,7 @@ func buildInstallConfig() *opencode.Config {
 				Prompt: "{skill:zyro-phase-0-patterns}", Hidden: true,
 				Permission: map[string]any{
 					"read": "allow", "write": "deny", "edit": "deny",
-					"bash": "allow", "task": map[string]any{"*": "allow"},
+					"bash": "deny", "webfetch": "allow",
 				},
 			},
 			"zyro-phase-0-libraries": {
@@ -283,9 +298,8 @@ func buildInstallConfig() *opencode.Config {
 				Description: "Fase 0: investiga librerías con Context + GitMCP, guarda en HelixDB",
 				Prompt: "{skill:zyro-phase-0-libraries}", Hidden: true,
 				Permission: map[string]any{
-					"read": "allow", "bash": "allow",
+					"read": "allow", "bash": "deny", "webfetch": "allow",
 					"write": "deny", "edit": "deny",
-					"task": map[string]any{"*": "allow"},
 				},
 			},
 			"zyro-skills-find": {
@@ -295,7 +309,6 @@ func buildInstallConfig() *opencode.Config {
 				Permission: map[string]any{
 					"read": "allow", "bash": "allow", "webfetch": "allow",
 					"write": "deny", "edit": "deny",
-					"task": map[string]any{"*": "allow"},
 				},
 			},
 			"zyro-skills-audit": {
@@ -305,7 +318,6 @@ func buildInstallConfig() *opencode.Config {
 				Permission: map[string]any{
 					"read": "allow", "webfetch": "allow",
 					"bash": "deny", "write": "deny", "edit": "deny",
-					"task": map[string]any{"*": "allow"},
 				},
 			},
 			"zyro-skills-apply": {
@@ -314,7 +326,7 @@ func buildInstallConfig() *opencode.Config {
 				Prompt: "{skill:zyro-skills-apply}", Hidden: true,
 				Permission: map[string]any{
 					"read": "allow", "bash": "allow", "write": "allow",
-					"edit": "deny", "task": map[string]any{"*": "allow"},
+					"edit": "deny",
 				},
 			},
 			"zyro-sdd-apply": {
@@ -323,7 +335,7 @@ func buildInstallConfig() *opencode.Config {
 				Prompt: "{skill:zyro-sdd-apply}", Hidden: true,
 				Permission: map[string]any{
 					"read": "allow", "write": "allow", "edit": "allow",
-					"bash": "allow", "task": map[string]any{"*": "allow"},
+					"bash": "allow",
 				},
 			},
 			"zyro-sdd-verify": {
@@ -331,8 +343,8 @@ func buildInstallConfig() *opencode.Config {
 				Description: "Verifica implementación contra specs, design y tasks",
 				Prompt: "{skill:zyro-sdd-verify}", Hidden: true,
 				Permission: map[string]any{
-					"read": "allow", "write": "allow", "edit": "deny",
-					"bash": "allow", "task": map[string]any{"*": "allow"},
+					"read": "allow", "write": "deny", "edit": "deny",
+					"bash": "allow",
 				},
 			},
 			"zyro-sdd-explore": {
@@ -340,15 +352,16 @@ func buildInstallConfig() *opencode.Config {
 				Description: "Explora codebase y requerimientos antes de un cambio",
 				Prompt: "{skill:zyro-sdd-explore}", Hidden: true,
 				Permission: map[string]any{
-					"read": "allow", "bash": "allow",
+					"read": "allow", "bash": "allow", "question": "allow",
 					"write": "deny", "edit": "deny",
+					"task": map[string]any{"*": "deny"},
 				},
 			},
 			"zyro-sdd-propose": {
 				Mode: "subagent", Model: defaultModel,
 				Description: "Crea propuestas de cambio con intento, alcance y enfoque",
 				Prompt: "{skill:zyro-sdd-propose}", Hidden: true,
-				Permission: sddPerms,
+				Permission: permsWithTaskDeny(sddPerms),
 			},
 			"zyro-sdd-spec": {
 				Mode: "subagent", Model: defaultModel,
@@ -357,35 +370,33 @@ func buildInstallConfig() *opencode.Config {
 				Permission: map[string]any{
 					"read": "allow", "bash": "deny",
 					"write": "deny", "edit": "deny",
-					"task": map[string]any{"*": "allow"},
 				},
 			},
 			"zyro-sdd-design": {
 				Mode: "subagent", Model: defaultModel,
 				Description: "F2: Diseño técnico basado en Spec — crea nodo Design en HelixDB",
 				Prompt: "{skill:zyro-sdd-design}", Hidden: true,
-				Permission: sddPerms,
+				Permission: permsWithTaskDeny(sddPerms),
 			},
 			"zyro-sdd-tasks": {
 				Mode: "subagent", Model: defaultModel,
 				Description: "F2: Divide el diseño en tareas atómicas — crea nodos Task en HelixDB",
 				Prompt: "{skill:zyro-sdd-tasks}", Hidden: true,
-				Permission: sddPerms,
+				Permission: permsWithTaskDeny(sddPerms),
 			},
 			"zyro-sdd-archive": {
 				Mode: "subagent", Model: defaultModel,
 				Description: "Archiva cambios completados y sincroniza delta specs",
 				Prompt: "{skill:zyro-sdd-archive}", Hidden: true,
-				Permission: sddPerms,
+				Permission: sddArchivePerms,
 			},
 			"zyro-pre-f0": {
 				Mode: "subagent", Model: defaultModel,
 				Description: "PRE-F0: Alineación de dominio — grill-me, domain-model, triage, improve-arch",
 				Prompt: "{skill:zyro-pre-f0}", Hidden: true,
 				Permission: map[string]any{
-					"read": "allow", "bash": "allow", "webfetch": "allow", "question": "allow",
+					"read": "allow", "bash": "deny", "webfetch": "allow", "question": "allow",
 					"write": "deny", "edit": "deny",
-					"task": map[string]any{"*": "allow"},
 				},
 			},
 			"to-issues": {
@@ -395,6 +406,7 @@ func buildInstallConfig() *opencode.Config {
 				Permission: map[string]any{
 					"read": "allow", "bash": "allow", "webfetch": "allow",
 					"write": "deny", "edit": "deny",
+					"task": map[string]any{"*": "deny"},
 				},
 			},
 		},

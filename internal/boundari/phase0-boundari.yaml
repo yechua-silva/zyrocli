@@ -26,3 +26,5 @@ tools:
     action: deny
   - name: "create_task"
     action: deny
+  - name: "dispatch_task"
+    action: allow

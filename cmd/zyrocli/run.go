@@ -18,13 +18,13 @@ var runPhase string
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Execute SDD pipeline (F0→F1→F2→F3→F4)",
-	Long: `Execute the 5-phase SDD pipeline (F0→F1→F2→F3→F4) sequentially
+	Short: "Execute SDD pipeline (PRE-F0→F0→F1→F2→F3→F4)",
+	Long: `Execute the 6-phase SDD pipeline (PRE-F0→F0→F1→F2→F3→F4) sequentially
 with human-validation approval gates after each phase. All phases require
 explicit approval before proceeding — there is no automatic mode.
 
 Flags:
-  --phase F0   Run a single phase only (F0, F1, F2, F3, or F4)`,
+  --phase PRE-F0   Run a single phase only (PRE-F0, F0, F1, F2, F3, or F4)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check if project is already initialized
 		projectDir := "." // current directory, or read from handoff.yaml project.name
@@ -113,7 +113,7 @@ Flags:
 			}
 			results = append(results, result)
 		} else {
-			cmd.Println("▶ Iniciando el proceso de desarrollo (F0 → F1 → F2 → F3 → F4)")
+			cmd.Println("▶ Iniciando el proceso de desarrollo (PRE-F0 → F0 → F1 → F2 → F3 → F4)")
 
 			var err error
 			results, err = s.Run(ctx)
@@ -140,5 +140,5 @@ Flags:
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringVarP(&runPhase, "phase", "p", "", "run a single phase only (F0, F1, F2, F3, F4)")
+	runCmd.Flags().StringVarP(&runPhase, "phase", "p", "", "run a single phase only (PRE-F0, F0, F1, F2, F3, F4)")
 }

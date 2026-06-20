@@ -25,15 +25,16 @@ func (p FailurePolicy) String() string {
 
 // PhaseConfigV2 configura una fase con soporte de skip matrix y modo async.
 type PhaseConfigV2 struct {
-	Phase         string
-	TaskDesc      string
-	ProjectID     string
-	Steps         []Step          // nil = usar SkipMatrix
-	Timeout       time.Duration
-	Parallelism   int             // subagentes concurrentes máx. (default 3)
-	AsyncMode     bool            // true = event loop, false = síncrono legacy
-	SkipMatrix    PhaseStepMatrix // nil = usar DefaultPhaseMatrix()
-	FailurePolicy FailurePolicy
+	Phase              string
+	TaskDesc           string
+	ProjectID          string
+	Steps              []Step          // nil = usar SkipMatrix
+	Timeout            time.Duration
+	Parallelism        int             // subagentes concurrentes máx. (default 3)
+	AsyncMode          bool            // true = event loop, false = síncrono legacy
+	SkipMatrix         PhaseStepMatrix // nil = usar DefaultPhaseMatrix()
+	FailurePolicy      FailurePolicy
+	AcceptanceCriteria []AcceptanceCriteria // criteria heredados de fase anterior
 }
 
 // DefaultPhaseConfigV2 crea una PhaseConfigV2 con valores por defecto para una fase.

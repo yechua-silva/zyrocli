@@ -15,7 +15,7 @@ async def search_facts_tool(query: str, limit: int = 10) -> str:
     """
     client = HelixClient()
     try:
-        nodes = await client.text_search("Fact", query, limit=limit)
+        nodes = await client.text_search("Fact", query, limit=limit, property="content")
         return json.dumps(
             {"query": query, "count": len(nodes), "results": nodes},
             indent=2,

@@ -1,0 +1,359 @@
+# Tasks: Fix MCP Tools Bugs
+# Generado desde: openspec/designs/design-fix-mcp-tools-bugs.md
+# Fase: F2 (Tasks)
+# Fecha: 2026-06-20
+
+# Convenciones:
+# - ID: MCP-XX (bugs MCP tools)
+# - Cada tarea < 30 min de implementación
+# - Primero se fixea la copia canónica (internal/opencode/mcptools/),
+#   luego se sincroniza la copia del proyecto raíz (mcp-tools/)
+# - Las 5 tareas de reemplazo (MCP-09 a MCP-13) son cp directo desde canónica
+
+tasks:
+  # ═══════════════════════════════════════════════════════════════
+  # FASE A: Fixes en copia canónica (internal/opencode/mcptools/)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: "MCP-01"
+    name: "Agregar parámetro `property` a `text_search()` en canonical helix_client.py"
+    description: >
+      Modificar la firma de `HelixClient.text_search()` en
+      `internal/opencode/mcptools/helix_client.py` para aceptar
+      `property: str = "name"`. Cambiar el body para usar el parámetro
+      en vez del hardcode `"property": "name"`.
+      Bug #1 del diseño.
+    files:
+      - "internal/opencode/mcptools/helix_client.py"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "Firma: `async def text_search(self, label, query, limit=10, property='name')`"
+      - "Body usa `'property': property` en vez de `'property': 'name'`"
+      - "text_search('Fact', 'test', property='content') envía property=content en la query"
+      - "text_search('Skill', 'python') sin property usa default 'name' (backward compat)"
+      - "Test inline: `inspect.signature(HelixClient.text_search).parameters` contiene 'property' con default 'name'"
+
+  - id: "MCP-02"
+    name: "Agregar `_get_properties`, `_clean_props` y `ProjectReturn` en canonical helix_client.py"
+    description: >
+      Agregar métodos privados `_get_properties()` y `_clean_props()` en
+      `internal/opencode/mcptools/helix_client.py`. Agregar step
+      `ProjectReturn` con 8 fields (id, name, content, language, path,
+      summary, description, source) después de `TextSearchNodes`.
+      Cambiar retorno de text_search de `[{"id": i}]` a
+      `self._get_properties(result, "n")`.
+      Bugs #5 y #6 del diseño.
+    files:
+      - "internal/opencode/mcptools/helix_client.py"
+    estimated_effort: "medium"
+    dependencies: ["MCP-01"]
+    acceptance_criteria:
+      - "Método `_clean_props(p: dict) -> dict` normaliza: `$id` → `id`, elimina claves `$*` internas"
+      - "Método `_get_properties(result, name) -> list[dict]` extrae properties completas de respuesta v3"
+      - "Si result no tiene properties, fallback a `[{'id': i}]` (backward compat)"
+      - "text_search retorna dicts con id, name, content, etc. (no solo `{'id': i}`)"
+      - "Falsy ID fix: `$id=0` retorna correctamente `[0]` (no se omite por falsy)"
+      - "Test inline: `c._get_ids({'n': {'properties': [{'$id': 0}]}})` retorna `[0]`"
+
+  - id: "MCP-03"
+    name: "Agregar `include_properties` a `get_node()` en canonical helix_client.py"
+    description: >
+      Extender `HelixClient.get_node()` en
+      `internal/opencode/mcptools/helix_client.py` con parámetro
+      `include_properties: bool = False`. Cuando es True, agregar step
+      `ProjectReturn` en la query POST y retornar properties completas
+      incluyendo `acceptance_criteria`.
+      Ver diseño sección 4.5.
+    files:
+      - "internal/opencode/mcptools/helix_client.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-02"]
+    acceptance_criteria:
+      - "Firma: `async def get_node(self, label, id, include_properties=False)`"
+      - "include_properties=False (default): retorna `{'id': id}` (backward compat)"
+      - "include_properties=True: retorna dict con id, name, description, acceptance_criteria, etc."
+      - "Callers existentes (agent.py, task_context.py) sin cambio de comportamiento"
+
+  - id: "MCP-04"
+    name: "Agregar edge label fallback helpers en canonical helix_client.py"
+    description: >
+      Agregar constante `EDGE_LABEL_FALLBACKS` a nivel módulo y métodos
+      `get_outgoing_with_fallback()` / `get_incoming_with_fallback()`
+      en `HelixClient`. Mapea labels canónicos a legacy:
+      `has_skill → REQUIRES_SKILL`, `has_code → REFERENCES`.
+      Bug #8 del diseño.
+    files:
+      - "internal/opencode/mcptools/helix_client.py"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "`EDGE_LABEL_FALLBACKS` define `has_skill: ['REQUIRES_SKILL']` y `has_code: ['REFERENCES']`"
+      - "`get_outgoing_with_fallback(node_id, 'has_skill')` intenta 'has_skill' primero, fallback a 'REQUIRES_SKILL'"
+      - "`get_incoming_with_fallback(node_id, 'has_skill')` análogo para incoming"
+      - "Si label canónico retorna datos, NO consulta legacy"
+      - "Si todos vacíos, retorna `[]`"
+      - "Test inline: `EDGE_LABEL_FALLBACKS['has_skill'] == ['REQUIRES_SKILL']`"
+
+  - id: "MCP-05"
+    name: "Fix `search_facts.py` canonical para usar `property='content'`"
+    description: >
+      En `internal/opencode/mcptools/search_facts.py`, cambiar la
+      llamada a `text_search("Fact", query, limit=limit)` por
+      `text_search("Fact", query, limit=limit, property="content")`.
+      Esto permite que la búsqueda de Facts busque en el campo
+      `content` (donde realmente se almacena el texto) en vez de `name`.
+      Bug #3 del diseño.
+    files:
+      - "internal/opencode/mcptools/search_facts.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-01"]
+    acceptance_criteria:
+      - "`search_facts_tool` llama `client.text_search('Fact', query, limit=limit, property='content')`"
+      - "`search_facts('auth')` busca en campo `content` de nodos Fact"
+      - "Sin cambios en firma de `search_facts_tool` (sigue aceptando query, limit)"
+      - "Test inline: import search_facts_tool, ejecutar con query de prueba"
+
+  - id: "MCP-06"
+    name: "Fix `task_context.py` canonical: acceptance_criteria + edge fallback"
+    description: >
+      En `internal/opencode/mcptools/task_context.py`:
+      1. Cambiar `client.get_node("Task", id)` por
+         `client.get_node("Task", id, include_properties=True)`
+      2. Extraer `acceptance_criteria` del task_node
+      3. Reemplazar `client.get_outgoing(id, "has_skill")` por
+         `client.get_outgoing_with_fallback(id, "has_skill")`
+         (y análogos para has_code, has_doc, has_pattern, depends_on)
+      4. Agregar campo `"acceptance_criteria"` en el JSON de retorno
+      Bugs: #8 y AC del diseño.
+    files:
+      - "internal/opencode/mcptools/task_context.py"
+    estimated_effort: "medium"
+    dependencies: ["MCP-03", "MCP-04"]
+    acceptance_criteria:
+      - "Llama `get_node('Task', id, include_properties=True)`"
+      - "Extrae `acceptance_criteria` del task_node (o `[]` si no existe)"
+      - "Usa `get_outgoing_with_fallback(id, 'has_skill')` en vez de `get_outgoing(id, 'has_skill')`"
+      - "Usa `get_outgoing_with_fallback(id, 'has_code')` en vez de `get_outgoing(id, 'has_code')`"
+      - "Respuesta JSON incluye campo `acceptance_criteria`"
+      - "Respuesta JSON incluye 7 secciones: task_id, acceptance_criteria, skills, code, docs, patterns, dependents, dependencies"
+
+  - id: "MCP-07"
+    name: "Fix `helix_write.py` canonical: labels y REQUIRED_FIELDS"
+    description: >
+      En `internal/opencode/mcptools/helix_write.py`:
+      1. Cambiar `"CodeModule"` por `"CodeNode"` en REQUIRED_FIELDS
+      2. Agregar entradas faltantes: `"Fact"`, `"Project"`,
+         `"CodeNode"` (si no existe), `"Document"`
+      Bugs #2 y #4 del diseño.
+    files:
+      - "internal/opencode/mcptools/helix_write.py"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "`REQUIRED_FIELDS` contiene `'CodeNode': ['path', 'language', 'summary']`"
+      - "`REQUIRED_FIELDS` NO contiene `'CodeModule'`"
+      - "`REQUIRED_FIELDS` contiene `'Fact': ['content', 'source']`"
+      - "`REQUIRED_FIELDS` contiene `'Project': ['name', 'path']`"
+      - "`REQUIRED_FIELDS` contiene `'Document': ['topic_key', 'doc_type', 'content']`"
+      - "Test inline: import REQUIRED_FIELDS, assert all labels presentes"
+
+  # ═══════════════════════════════════════════════════════════════
+  # FASE B: Sincronizar mcp-tools/ (proyecto raíz)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: "MCP-08"
+    name: "Sincronizar mcp-tools/helix_client.py con canonical post-fixes"
+    description: >
+      Copiar `internal/opencode/mcptools/helix_client.py` (con todos
+      los fixes aplicados: MCP-01 a MCP-04) a
+      `mcp-tools/helix_client.py`. Ambos archivos eran idénticos
+      (304L) antes del fix, esta tarea asegura que sigan siéndolo.
+    files:
+      - "mcp-tools/helix_client.py"
+      - "internal/opencode/mcptools/helix_client.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-01", "MCP-02", "MCP-03", "MCP-04"]
+    acceptance_criteria:
+      - "`diff internal/opencode/mcptools/helix_client.py mcp-tools/helix_client.py` retorna vacío"
+      - "mcp-tools/helix_client.py tiene todos los métodos: text_search con property, _get_properties, get_node con include_properties, get_outgoing_with_fallback"
+
+  - id: "MCP-09"
+    name: "Reemplazar mcp-tools/search_facts.py con versión canónica"
+    description: >
+      Reemplazar `mcp-tools/search_facts.py` (11L, función simple
+      sin `_tool` suffix, sin error handling) con la versión canónica
+      `internal/opencode/mcptools/search_facts.py` (30L, MCP tool
+      completa con error handling y `property="content"`).
+    files:
+      - "mcp-tools/search_facts.py"
+      - "internal/opencode/mcptools/search_facts.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-05"]
+    acceptance_criteria:
+      - "mcp-tools/search_facts.py es idéntico a internal/opencode/mcptools/search_facts.py"
+      - "`diff` entre ambos retorna vacío"
+      - "mcp-tools/search_facts.py exporta `search_facts_tool` (con `_tool`)"
+
+  - id: "MCP-10"
+    name: "Reemplazar mcp-tools/search_code.py con versión canónica"
+    description: >
+      Reemplazar `mcp-tools/search_code.py` (12L, función simple con
+      `project_id`) con la versión canónica
+      `internal/opencode/mcptools/search_code.py` (31L, MCP tool
+      completa con error handling, sin `project_id`).
+      NOTA: Se pierde el parámetro `project_id` de la versión antigua;
+      ver diseño sección 7.1 para justificación.
+    files:
+      - "mcp-tools/search_code.py"
+      - "internal/opencode/mcptools/search_code.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-08"]
+    acceptance_criteria:
+      - "mcp-tools/search_code.py es idéntico a internal/opencode/mcptools/search_code.py"
+      - "`diff` entre ambos retorna vacío"
+      - "mcp-tools/search_code.py exporta `search_code_tool` (con `_tool`)"
+      - "Firma: `search_code_tool(query: str, limit: int = 10) -> str`"
+
+  - id: "MCP-11"
+    name: "Reemplazar mcp-tools/search_skills.py con versión canónica"
+    description: >
+      Reemplazar `mcp-tools/search_skills.py` (12L, función simple)
+      con la versión canónica
+      `internal/opencode/mcptools/search_skills.py` (31L, MCP tool
+      completa con error handling).
+    files:
+      - "mcp-tools/search_skills.py"
+      - "internal/opencode/mcptools/search_skills.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-08"]
+    acceptance_criteria:
+      - "mcp-tools/search_skills.py es idéntico a internal/opencode/mcptools/search_skills.py"
+      - "`diff` entre ambos retorna vacío"
+      - "mcp-tools/search_skills.py exporta `search_skills_tool` (con `_tool`)"
+
+  - id: "MCP-12"
+    name: "Reemplazar mcp-tools/helix_write.py con versión canónica"
+    description: >
+      Reemplazar `mcp-tools/helix_write.py` (22L, stub deprecado)
+      con la versión canónica
+      `internal/opencode/mcptools/helix_write.py` (87L, implementación
+      completa con REQUIRED_FIELDS corregido y labels canónicos).
+    files:
+      - "mcp-tools/helix_write.py"
+      - "internal/opencode/mcptools/helix_write.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-07"]
+    acceptance_criteria:
+      - "mcp-tools/helix_write.py es idéntico a internal/opencode/mcptools/helix_write.py"
+      - "`diff` entre ambos retorna vacío"
+      - "mcp-tools/helix_write.py exporta `save_to_helix_tool`, `link_to_project_tool`, `find_project_tool`"
+
+  - id: "MCP-13"
+    name: "Reemplazar mcp-tools/task_context.py con versión canónica post-fixes"
+    description: >
+      Reemplazar `mcp-tools/task_context.py` (28L, legacy edges
+      REQUIRES_SKILL) con la versión canónica
+      `internal/opencode/mcptools/task_context.py` (72L post-fixes,
+      con 6 secciones + acceptance_criteria + edge fallback).
+    files:
+      - "mcp-tools/task_context.py"
+      - "internal/opencode/mcptools/task_context.py"
+    estimated_effort: "small"
+    dependencies: ["MCP-06", "MCP-08"]
+    acceptance_criteria:
+      - "mcp-tools/task_context.py es idéntico a internal/opencode/mcptools/task_context.py"
+      - "`diff` entre ambos retorna vacío"
+      - "mcp-tools/task_context.py exporta `task_context_tool`"
+
+  # ═══════════════════════════════════════════════════════════════
+  # FASE C: Limpieza y sincronización LIVE
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: "MCP-14"
+    name: "Eliminar mcp-tools/runner.py deprecado"
+    description: >
+      Eliminar `mcp-tools/runner.py` del proyecto raíz. Este archivo
+      tiene imports rotos y no es usado por nadie:
+      - opencode.json referencia `~/.config/zyrocli/mcp-tools/runner.py` (LIVE)
+      - El entry point real es `agent.py`
+      - La canónica en `internal/opencode/mcptools/runner.py` se conserva
+      Bug #7 del diseño.
+      Verificar que no hay referencias a `mcp-tools/runner.py` en
+      scripts, Makefile, opencode.json.
+    files:
+      - "mcp-tools/runner.py"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "`mcp-tools/runner.py` no existe en el sistema de archivos"
+      - "Ninguna referencia a `mcp-tools/runner.py` en Makefile, scripts, o docs del proyecto"
+      - "`internal/opencode/mcptools/runner.py` NO se elimina (se conserva)"
+
+  - id: "MCP-15"
+    name: "Sincronizar LIVE ~/.config/zyrocli/mcp-tools/ + agregar make target"
+    description: >
+      Sincronizar la copia LIVE con la canónica post-fixes:
+      ```
+      cp internal/opencode/mcptools/*.py ~/.config/zyrocli/mcp-tools/
+      ```
+      Además, agregar target `make sync-mcptools` en el Makefile del
+      proyecto que automatice la sincronización entre canonical y
+      proyecto raíz:
+      ```makefile
+      sync-mcptools:
+      \tfor f in helix_client.py search_facts.py search_code.py search_skills.py helix_write.py task_context.py runner.py; do
+      \t\tcp internal/opencode/mcptools/$$$$f mcp-tools/$$$$f
+      \tdone
+      ```
+    files:
+      - "~/.config/zyrocli/mcp-tools/"
+      - "Makefile"
+    estimated_effort: "small"
+    dependencies:
+      - "MCP-08"
+      - "MCP-09"
+      - "MCP-10"
+      - "MCP-11"
+      - "MCP-12"
+      - "MCP-13"
+      - "MCP-14"
+    acceptance_criteria:
+      - "`diff internal/opencode/mcptools/*.py ~/.config/zyrocli/mcp-tools/` retorna vacío (todos los pares)"
+      - "`make sync-mcptools` existe y ejecuta cp de todos los archivos de canonical a mcp-tools/"
+      - "Puede ejecutarse `make sync-mcptools` sin errores"
+
+  # ═══════════════════════════════════════════════════════════════
+  # FASE D: Verificación
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: "MCP-16"
+    name: "Ejecutar verificación de sincronización y smoke tests"
+    description: >
+      Ejecutar todos los checks de verificación definidos en el diseño
+      (sección 6):
+      1. Verificar sincronización: diff de todos los .py entre las 3 copias
+      2. Unit tests inline (7 pruebas de Python)
+      3. Smoke tests de integración (5 pruebas contra HelixDB real)
+      4. Verificar que runner.py fue eliminado
+      5. Verificar backward compatibility de text_search
+    files:
+      - "internal/opencode/mcptools/"
+      - "mcp-tools/"
+    estimated_effort: "medium"
+    dependencies:
+      - "MCP-15"
+    acceptance_criteria:
+      - "Todos los diffs entre canonical y mcp-tools/ retornan vacío"
+      - "`test ! -f mcp-tools/runner.py && echo 'DELETED OK'` pasa"
+      - "Test inline #1: `property` en firma de text_search pasa"
+      - "Test inline #2: `CodeNode` en REQUIRED_FIELDS pasa"
+      - "Test inline #3: REQUIRED_FIELDS completo pasa"
+      - "Test inline #4: falsy ID fix pasa"
+      - "Test inline #5: _get_properties extrae y normaliza pasa"
+      - "Test inline #6: EDGE_LABEL_FALLBACKS correcto pasa"
+      - "Smoke test: search_facts retorna results con content field"
+      - "Smoke test: search_code retorna properties completas"
+      - "Smoke test: task_context retorna acceptance_criteria"
+      - "Smoke test: edge label fallback encuentra REQUIRES_SKILL"
+      - "Backward compat: text_search sin property retorna mismos resultados que antes"

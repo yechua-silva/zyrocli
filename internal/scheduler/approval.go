@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/secko/zyrocli/internal/boomerang"
 )
 
 // stdinReader is a package-level variable so tests can replace it with a mock.
@@ -20,6 +22,7 @@ type GuidedApproval struct {
 	Recommend  string // recomendación del orquestador
 	Risk       string // advertencia de riesgo
 	FullOutput string // output completo del agente (se muestra con "d")
+	Criteria   *boomerang.CriteriaSummary // resumen de acceptance criteria (opcional)
 }
 
 // NewGuidedApproval creates a GuidedApproval with required fields.
@@ -48,17 +51,36 @@ func (g *GuidedApproval) WithDetail(output string) *GuidedApproval {
 	return g
 }
 
+// WithCriteria sets the acceptance criteria summary.
+func (g *GuidedApproval) WithCriteria(cs *boomerang.CriteriaSummary) *GuidedApproval {
+	g.Criteria = cs
+	return g
+}
+
 // PromptApproval displays the guided approval dialog and reads a response.
 // Returns true if approved (s/sí), false if rejected (n/no).
 func (g *GuidedApproval) PromptApproval() (bool, error) {
 	fmt.Printf("\n─── Fase: %s — Completada ───\n\n", g.Phase)
 	fmt.Printf("Resumen: %s\n", g.Summary)
 
+	// Mostrar acceptance criteria si están disponibles
+	if g.Criteria != nil && g.Criteria.Total > 0 {
+		fmt.Printf("\n### Acceptance Criteria\n")
+		fmt.Printf("Total: %d | ✅ Verified: %d | ⏳ Pending: %d | ❌ Failed: %d\n",
+			g.Criteria.Total, g.Criteria.Verified, g.Criteria.Pending, g.Criteria.Failed)
+	}
+
 	if g.Recommend != "" {
 		fmt.Printf("\n### Recomendación\n%s\n", g.Recommend)
 	}
 	if g.Risk != "" {
 		fmt.Printf("\n### Riesgos\n%s\n", g.Risk)
+	}
+
+	// Bloquear si hay criteria fallidos
+	if g.Criteria != nil && g.Criteria.Failed > 0 {
+		fmt.Printf("\n❌ No se puede aprobar: %d acceptance criteria fallaron.\n", g.Criteria.Failed)
+		return false, nil
 	}
 
 	fmt.Printf("\n¿Querés ajustar algo o continuamos? (s/n/d): ")
@@ -94,7 +116,8 @@ func (g *GuidedApproval) showDetails() {
 
 // ApprovalGate procesa aprobación usando OpenCode si está disponible.
 // Si opencode no está disponible, delega a GuidedApproval.
-func ApprovalGate(phase Phase, summary string) (bool, error) {
+// criteriaSummary es opcional — si se provee, muestra tabla de criteria y bloquea si Failed > 0.
+func ApprovalGate(phase Phase, summary string, criteriaSummary *boomerang.CriteriaSummary) (bool, error) {
 	if opencodeExists() {
 		cmd := exec.Command("opencode", "subagent", "zyro-approval-gate",
 			"--param", fmt.Sprintf("phase=%s", phase),
@@ -105,6 +128,11 @@ func ApprovalGate(phase Phase, summary string) (bool, error) {
 			outputStr := strings.TrimSpace(string(output))
 			if strings.Contains(strings.ToLower(outputStr), "approved") ||
 				strings.Contains(strings.ToLower(outputStr), `"approved": true`) {
+				// Incluso si opencode aprueba, bloquear si hay criteria fallidos
+				if criteriaSummary != nil && criteriaSummary.Failed > 0 {
+					fmt.Printf("\n❌ OpenCode aprobó, pero %d acceptance criteria fallaron. Bloqueando.\n", criteriaSummary.Failed)
+					return false, nil
+				}
 				return true, nil
 			}
 			return false, nil
@@ -113,12 +141,15 @@ func ApprovalGate(phase Phase, summary string) (bool, error) {
 
 	// Fallback: GuidedApproval dialog
 	g := NewGuidedApproval(phase, summary)
+	if criteriaSummary != nil {
+		g.WithCriteria(criteriaSummary)
+	}
 	return g.PromptApproval()
 }
 
 // PromptApproval mantiene compatibilidad (deprecated)
 func PromptApproval(phase Phase, summary string) (bool, error) {
-	return ApprovalGate(phase, summary)
+	return ApprovalGate(phase, summary, nil)
 }
 
 func opencodeExists() bool {

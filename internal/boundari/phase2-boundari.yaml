@@ -23,3 +23,5 @@ tools:
     action: deny
   - name: "save_to_helix"
     action: deny
+  - name: "dispatch_task"
+    action: allow

@@ -27,3 +27,7 @@ tools:
       extensions: [".md", ".yaml", ".json"]
   - name: "execute_command"
     action: deny
+  - name: "dispatch_task"
+    action: allow
+  - name: "save_to_helix"
+    action: allow

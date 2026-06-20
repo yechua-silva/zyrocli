@@ -363,8 +363,8 @@ func handleDispatchTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCRes
 
 	id := taskManager.DispatchTask(context.Background(), input.Name, input.Agent, input.Phase, input.Params)
 
-	// ── Guardar nodo Task en HelixDB para que el watcher lo encuentre ──
-	go saveTaskToHelix(string(id), input.Name, input.Agent, input.Phase)
+	// ── Guardar nodo Task en HelixDB (sin criteria aún — se asignan desde el orquestador) ──
+	go saveTaskToHelix(string(id), input.Name, input.Agent, input.Phase, nil)
 
 	result, _ := json.Marshal(map[string]string{
 		"task_id": string(id),
@@ -556,7 +556,9 @@ func handleCompleteTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCRes
 }
 
 // saveTaskToHelix guarda un nodo Task en HelixDB mediante el SDK con project isolation.
-func saveTaskToHelix(taskID, name, agent, phase string) {
+// Si criteria no está vacío, serializa cada AcceptanceCriteria a map[string]any y lo
+// incluye en las properties del nodo como acceptance_criteria.
+func saveTaskToHelix(taskID, name, agent, phase string, criteria []boomerang.AcceptanceCriteria) {
 	if helixClient == nil {
 		log.Printf("[mcp] HelixDB no disponible, saltando persistencia de Task %s", taskID)
 		return
@@ -568,12 +570,66 @@ func saveTaskToHelix(taskID, name, agent, phase string) {
 		"phase":   phase,
 		"status":  "running",
 	}
+
+	if len(criteria) > 0 {
+		criteriaData := make([]map[string]any, len(criteria))
+		for i, c := range criteria {
+			criteriaData[i] = map[string]any{
+				"id":          c.ID,
+				"description": c.Description,
+				"phase":       c.Phase,
+				"status":      string(c.Status),
+				"source":      c.Source,
+				"task_id":     c.TaskID,
+			}
+		}
+		props["acceptance_criteria"] = criteriaData
+	}
+
 	nodeID, err := helixClient.CreateNode(context.Background(), "Task", props)
 	if err != nil {
 		log.Printf("[mcp] Error creando nodo Task %s en HelixDB: %v", taskID, err)
 		return
 	}
 	log.Printf("[mcp] Nodo Task creado: id=%d, task_id=%s", nodeID, taskID)
+}
+
+// deserializeCriteria convierte un slice raw de interface{} (proveniente de HelixDB)
+// a un slice tipado de AcceptanceCriteria.
+func deserializeCriteria(raw []interface{}) []boomerang.AcceptanceCriteria {
+	var result []boomerang.AcceptanceCriteria
+	for _, item := range raw {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		c := boomerang.AcceptanceCriteria{
+			ID:          getString(m, "id"),
+			Description: getString(m, "description"),
+			Phase:       getString(m, "phase"),
+			Status:      boomerang.CriteriaStatus(getString(m, "status")),
+			Source:      getString(m, "source"),
+			TaskID:      getString(m, "task_id"),
+		}
+		result = append(result, c)
+	}
+	return result
+}
+
+// getString extrae un string de un map, retornando "" si la key no existe o no es string.
+func getString(m map[string]interface{}, key string) string {
+	if m == nil {
+		return ""
+	}
+	v, ok := m[key]
+	if !ok {
+		return ""
+	}
+	s, ok := v.(string)
+	if !ok {
+		return ""
+	}
+	return s
 }
 
 func errorResponse(rawID json.RawMessage, code int, message string, data string) *JSONRPCResponse {
