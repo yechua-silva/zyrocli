@@ -107,7 +107,7 @@ class HelixClient:
     def _get_properties(self, result: dict, name: str = "n") -> list[dict]:
         """Extract full property dicts from a v3 query result.
 
-        Used by ``text_search()`` to return complete properties.
+        Used by ``text_search()`` to return complete properties (via ValueMap).
         When the result has no properties, falls back to ``[{"id": i}]``
         for backward compatibility.
         """
@@ -214,10 +214,10 @@ class HelixClient:
     async def get_node(self, label: str, id: int, include_properties: bool = False) -> dict | None:
         """Fetch a single node by label and id.
 
-        When ``include_properties=True``, adds a ``ProjectReturn`` step so the
+        When ``include_properties=True``, adds a ``ValueMap`` step so the
         response includes all properties of the node (acceptance_criteria, etc.).
 
-        Response v3 format: {name: {"ids": [<id>]}} or with ProjectReturn:
+        Response v3 format: {name: {"ids": [<id>]}} or with ValueMap:
         {name: {"properties": [{"$id": <id>, "name": ..., ...}]}}
         """
         steps: list[dict] = [
@@ -230,15 +230,9 @@ class HelixClient:
         if include_properties:
             steps.append(
                 {
-                    "ProjectReturn": [
-                        {"source": "$id", "alias": "id"},
-                        {"source": "name", "alias": "name"},
-                        {"source": "content", "alias": "content"},
-                        {"source": "language", "alias": "language"},
-                        {"source": "path", "alias": "path"},
-                        {"source": "summary", "alias": "summary"},
-                        {"source": "description", "alias": "description"},
-                        {"source": "source", "alias": "source"},
+                    "ValueMap": [
+                        "$id", "name", "content", "language",
+                        "path", "summary", "description", "source",
                     ]
                 }
             )
@@ -266,7 +260,7 @@ class HelixClient:
     ) -> list[dict]:
         """Convenience: text-search nodes of a given label.
 
-        Response includes full properties via ``ProjectReturn``.
+        Response includes full properties via ``ValueMap``.
         Default ``property="name"`` provides backward compatibility;
         pass ``property="content"`` for ``Fact`` / ``Document`` nodes.
 
@@ -285,18 +279,7 @@ class HelixClient:
                                 "k": {"Literal": limit},
                             }
                         },
-                        {
-                            "ProjectReturn": [
-                                {"source": "$id", "alias": "id"},
-                                {"source": "name", "alias": "name"},
-                                {"source": "content", "alias": "content"},
-                                {"source": "language", "alias": "language"},
-                                {"source": "path", "alias": "path"},
-                                {"source": "summary", "alias": "summary"},
-                                {"source": "description", "alias": "description"},
-                                {"source": "source", "alias": "source"},
-                            ]
-                        },
+                        {"ValueMap": None},
                     ],
                 }
             ],
