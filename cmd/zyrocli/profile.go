@@ -88,6 +88,11 @@ var profileSetCmd = &cobra.Command{
 			return fmt.Errorf("profile: agent %q not found", agentName)
 		}
 
+		if err := validateModel(modelName); err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "⚠️  Advertencia: %v\n", err)
+			fmt.Fprintln(cmd.ErrOrStderr(), "  Igualmente se guardará el modelo. Verificá que exista en OpenCode.")
+		}
+
 		agent.Model = modelName
 		cfg.Agent[agentName] = agent
 
@@ -171,6 +176,51 @@ var profileTUICmd = &cobra.Command{
 		fmt.Println("✓ Model assignments saved.")
 		return nil
 	},
+}
+
+// validateModel checks that the model string has the format "provider/model"
+// and that both provider and model exist in the known or configured providers.
+func validateModel(modelStr string) error {
+	parts := strings.SplitN(modelStr, "/", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("formato inválido: debe ser provider/model (ej: anthropic/claude-sonnet-4)")
+	}
+
+	providerID := parts[0]
+	modelID := parts[1]
+
+	// Check KnownProviders
+	providers := opencode.KnownProviders()
+	for _, p := range providers {
+		if p.ID == providerID {
+			for _, m := range p.Models {
+				if m.ID == modelID {
+					return nil
+				}
+			}
+			return fmt.Errorf("modelo %q no encontrado en proveedor %q. Modelos disponibles: %s",
+				modelID, providerID, formatModels(p.Models))
+		}
+	}
+
+	return fmt.Errorf("proveedor %q no encontrado. Proveedores disponibles: %s",
+		providerID, formatProviders(providers))
+}
+
+func formatModels(models []opencode.Model) string {
+	names := make([]string, len(models))
+	for i, m := range models {
+		names[i] = m.ID
+	}
+	return strings.Join(names, ", ")
+}
+
+func formatProviders(providers []opencode.Provider) string {
+	names := make([]string, len(providers))
+	for i, p := range providers {
+		names[i] = p.ID
+	}
+	return strings.Join(names, ", ")
 }
 
 func init() {

@@ -194,6 +194,88 @@ Run this once after installing zyrocli. No flags needed — the binary is self-c
 			cmd.Println("  ✓ find-skills installed")
 		}
 
+		// ── 4.5 Plugin: /zyro-model ──────────────────────────────
+		cmd.Println()
+		cmd.Println("  Installing zyro-model plugin...")
+		pluginHome, _ := os.UserHomeDir()
+		pluginPath := filepath.Join(pluginHome, ".config", "opencode", "plugins", "zyro-model.ts")
+		pluginContent := `/**
+ * zyro-model — OpenCode slash command for per-agent model assignment.
+ *
+ * See: docs/spec-zyro-model-routing.md
+ * Source: .config/opencode/plugins/zyro-model.ts
+ */
+import type { Plugin } from "@opencode-ai/plugin";
+const ZYRO_AGENTS = [
+  { name: "zyro-orchestrator",     description: "Coordinador - solo habla y delega",                 phase: "" },
+  { name: "zyro-pre-f0",           description: "PRE-F0: Alineacion de dominio",                     phase: "PRE-F0" },
+  { name: "zyro-phase-0-patterns", description: "F0: Busqueda de patrones similares",                phase: "F0" },
+  { name: "zyro-phase-0-libraries",description: "F0: Investigacion de librerias",                    phase: "F0" },
+  { name: "zyro-skills-find",      description: "F0: Descubrimiento de skills",                      phase: "F0" },
+  { name: "zyro-skills-audit",     description: "F0: Validacion de skills descubiertas",             phase: "F0" },
+  { name: "zyro-skills-apply",     description: "F0: Instalacion de skills aprobadas",               phase: "F0" },
+  { name: "zyro-sdd-explore",      description: "F0: Exploracion de codebase y requerimientos",      phase: "F0" },
+  { name: "zyro-sdd-spec",         description: "F1: Especificacion tecnica",                        phase: "F1" },
+  { name: "zyro-sdd-propose",      description: "F2: Propuestas de cambio",                          phase: "F2" },
+  { name: "zyro-sdd-design",       description: "F2: Diseno tecnico basado en Spec",                 phase: "F2" },
+  { name: "zyro-sdd-tasks",        description: "F2: Division en tareas atomicas",                   phase: "F2" },
+  { name: "zyro-sdd-apply",        description: "F3: Implementacion siguiendo specs, design y tasks", phase: "F3" },
+  { name: "zyro-sdd-verify",       description: "F3: Verificacion contra specs y design",            phase: "F3" },
+  { name: "zyro-sdd-archive",      description: "F4: Archivo de cambios completados",                phase: "F4" },
+  { name: "to-issues",             description: "Generacion de GitHub Issues desde PRDs",            phase: "" },
+];
+export const ZyroModelPlugin: Plugin = async ({ client }) => {
+  return {
+    command: {
+      "zyro-model": async (args: string) => {
+        const parts = (args || "").trim().split(/\s+/);
+        const sub = parts[0]?.toLowerCase();
+        if (sub === "list" || !sub) {
+          const { providers } = await client.config.providers();
+          const config = await client.config.get();
+          const agentConfig = config?.agent || {};
+          let text = "## ZyroCLI - Model Assignments\n\n| Agent | Fase | Modelo Actual |\n|-------|------|--------------|\n";
+          for (const agent of ZYRO_AGENTS) {
+            const current = agentConfig[agent.name]?.model || "*(hereda del orchestrator)*";
+            text += "| " + agent.name + " | " + (agent.phase || "-") + " | " + current + " |\n";
+          }
+          text += "\n### How to set models\n\n  zyrocli profile set <agent> <provider/model>\n  zyrocli profile tui\n";
+          await client.session.prompt({ body: { noReply: true, parts: [{ type: "text", text }] } });
+          await client.tui.showToast({ message: "OK /zyro-model: lista generada", variant: "success" });
+        } else if (sub === "set" && parts.length >= 3) {
+          const agentName = parts[1];
+          const modelStr = parts.slice(2).join(" ");
+          if (!ZYRO_AGENTS.some((a) => a.name === agentName)) {
+            await client.tui.showToast({ message: "ERROR: Agente " + agentName + " no encontrado", variant: "error" });
+            return;
+          }
+          await client.tui.appendPrompt({ body: { text: "!zyrocli profile set " + agentName + " " + modelStr } });
+          await client.tui.showToast({ message: "Pre-cargado: Enter para ejecutar", variant: "info" });
+        } else if (sub === "set-all" && parts.length >= 2) {
+          const modelStr = parts.slice(1).join(" ");
+          let cmd = "";
+          for (const agent of ZYRO_AGENTS) cmd += "zyrocli profile set " + agent.name + " " + modelStr + " && ";
+          cmd = cmd.replace(/ && $/, "");
+          await client.tui.appendPrompt({ body: { text: "!" + cmd } });
+          await client.tui.showToast({ message: "Pre-cargado Set All: " + modelStr + " - Enter para ejecutar", variant: "info" });
+        } else {
+          const helpText = "## /zyro-model - Ayuda\n\nUsage:\n  /zyro-model              - Mostrar asignaciones\n  /zyro-model set <a> <m>  - Asignar modelo a un agente\n  /zyro-model set-all <m>  - Mismo modelo para todos\n\nAgentes:\n" + ZYRO_AGENTS.map(a => "  " + a.name + " - " + a.description).join("\n");
+          await client.session.prompt({ body: { noReply: true, parts: [{ type: "text", text: helpText }] } });
+        }
+      },
+    },
+  };
+};
+export default ZyroModelPlugin;
+`
+		if err := os.MkdirAll(filepath.Dir(pluginPath), 0755); err != nil {
+			cmd.Printf("  ⚠ Error creating plugins dir: %v\n", err)
+		} else if err := os.WriteFile(pluginPath, []byte(pluginContent), 0644); err != nil {
+			cmd.Printf("  ⚠ Error writing plugin: %v\n", err)
+		} else {
+			cmd.Println("  ✓ zyro-model plugin installed")
+		}
+
 		// ── 5. Theme: Zorro Hacker logo → OpenCode tui.json ─────
 		cmd.Println()
 		cmd.Println("  Personalizing OpenCode...")

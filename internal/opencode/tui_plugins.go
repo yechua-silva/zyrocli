@@ -64,7 +64,6 @@ func UpdateTuiJSON() error {
 	// Limpiar plugins stale (ubicaciones antiguas o plugins deprecados)
 	stale := []string{
 		"opencode-subagent-statusline",
-		filepath.Join(home, ".config", "opencode", "plugins", "zyro-model.js"),
 	}
 	var cleaned []string
 	for _, p := range cfg.Plugin {

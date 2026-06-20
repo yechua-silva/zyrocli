@@ -120,6 +120,11 @@ await client.tui.executeCommand({ body: { command: "zyro-model" } })
 
 ## Conclusión para /zyro-model
 
+> **⚠️ ACTUALIZACIÓN 2026-06-20**: Esta investigación es anterior a la implementación real.
+> Ver `docs/spec-zyro-model-routing.md` para la especificación vigente.
+> El comando `/zyro-model` ahora es un plugin TypeScript en `.config/opencode/plugins/zyro-model.ts`.
+> El agente `model-assigner` NO se implementó — se reemplazó por el plugin + CLI.
+
 El camino correcto para implementar /zyro-model es:
 
 1. **El comando `/zyro-model`** ya está registrado y apunta al agente `model-assigner`
