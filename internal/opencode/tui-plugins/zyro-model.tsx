@@ -198,6 +198,64 @@ function showModelSelector(api, providers, agentName, providerId) {
 }
 
 // ---------------------------------------------------------------------------
+// Config path detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Determines which opencode.json to write to.
+ * Returns project-level path (CWD/.config/opencode/opencode.json) if it exists,
+ * otherwise falls back to global (~/.config/opencode/opencode.json).
+ * Mirrors GetEffectiveConfigPath() in the Go code.
+ */
+async function detectConfigPath() {
+  const cwd = typeof process !== "undefined" && process.cwd ? process.cwd() : "."
+  const projectConfig = `${cwd}/.config/opencode/opencode.json`
+
+  try {
+    // Bun.file().stat() throws if file doesn't exist
+    await Bun.file(projectConfig).stat()
+    return projectConfig
+  } catch (_) {
+    const home = typeof process !== "undefined" && process.env?.HOME ? process.env.HOME : "~"
+    return `${home}/.config/opencode/opencode.json`
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Direct JSON persistence (replaces Bun.$ zyrocli profile set)
+// ---------------------------------------------------------------------------
+
+/**
+ * Persists model assignments directly to opencode.json.
+ * Preserves all existing sections (agent, mcp, skills, command, etc.).
+ * Never throws — errors are logged to console and swallowed.
+ */
+async function persistAgentModel(agentName, modelStr) {
+  try {
+    const configPath = await detectConfigPath()
+    const raw = await Bun.file(configPath).text()
+    const config = JSON.parse(raw)
+
+    if (!config.agent) config.agent = {}
+
+    if (agentName === "__SET_ALL__") {
+      for (const a of AGENTS) {
+        if (!config.agent[a.name]) config.agent[a.name] = {}
+        config.agent[a.name].model = modelStr
+      }
+    } else {
+      if (!config.agent[agentName]) config.agent[agentName] = {}
+      config.agent[agentName].model = modelStr
+    }
+
+    await Bun.write(configPath, JSON.stringify(config, null, 2) + "\n")
+  } catch (err) {
+    console.error("[zyro-model] persistAgentModel failed:", err)
+    // Non-fatal: in-memory update via api.client.global.config.update() already happened
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Assignment
 // ---------------------------------------------------------------------------
 
@@ -226,13 +284,8 @@ async function assignModel(api, providers, agentName, providerId, modelId) {
       api.state.config.agent[agentName].model = modelStr
     }
 
-    if (agentName === "__SET_ALL__") {
-      for (const a of AGENTS) {
-        await Bun.$`zyrocli profile set ${a.name} ${modelStr}`.text()
-      }
-    } else {
-      await Bun.$`zyrocli profile set ${agentName} ${modelStr}`.text()
-    }
+    // 3. Persistir directo al JSON (reemplaza Bun.$ zyrocli profile set)
+    await persistAgentModel(agentName, modelStr)
 
     api.ui.toast({
       message: `✓ ${agentName === "__SET_ALL__" ? "Todos los agentes" : agentName} → ${modelStr}`,
