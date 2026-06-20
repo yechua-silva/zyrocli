@@ -12,6 +12,9 @@ import (
 //go:embed tui-plugins/zorro-logo.tsx
 var zorroLogoPlugin string
 
+//go:embed tui-plugins/zyro-model.tsx
+var zyroModelPlugin string
+
 // ZorroPluginPath retorna la ruta donde se instalará el plugin del logo.
 func ZorroPluginPath() string {
 	home, _ := os.UserHomeDir()
@@ -28,6 +31,27 @@ func WriteZorroLogo() (string, error) {
 
 	if err := os.WriteFile(pluginPath, []byte(zorroLogoPlugin), 0644); err != nil {
 		return "", fmt.Errorf("opencode: write zorro logo plugin: %w", err)
+	}
+
+	return pluginPath, nil
+}
+
+// ZyroModelPluginPath retorna la ruta donde se instalará el plugin zyro-model.
+func ZyroModelPluginPath() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".config", "opencode", "tui-plugins", "zyro-model.tsx")
+}
+
+// WriteZyroModelPlugin escribe el plugin zyro-model en el directorio de TUI plugins de OpenCode.
+func WriteZyroModelPlugin() (string, error) {
+	pluginPath := ZyroModelPluginPath()
+
+	if err := os.MkdirAll(filepath.Dir(pluginPath), 0755); err != nil {
+		return "", fmt.Errorf("opencode: create tui-plugins dir: %w", err)
+	}
+
+	if err := os.WriteFile(pluginPath, []byte(zyroModelPlugin), 0644); err != nil {
+		return "", fmt.Errorf("opencode: write zyro-model plugin: %w", err)
 	}
 
 	return pluginPath, nil
@@ -76,6 +100,7 @@ func UpdateTuiJSON() error {
 	// Agregar plugins de Zyro si no están ya registrados
 	wanted := []string{
 		ZorroPluginPath(),
+		ZyroModelPluginPath(),
 	}
 	for _, p := range wanted {
 		if !slices.Contains(cfg.Plugin, p) {
