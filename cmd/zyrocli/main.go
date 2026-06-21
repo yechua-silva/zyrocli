@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/secko/zyrocli/internal/setup"
 	"github.com/secko/zyrocli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -167,7 +168,21 @@ func runModelsFlow() {
 		return
 	}
 
-	// Resumen
+	// Persistir selección en ~/.zyro/config.yaml
+	cfg, err := setup.LoadConfig()
+	if err != nil {
+		cfg = setup.DefaultConfig()
+	}
+	cfg.Services.EmbeddingModel = models["embedding_model"]
+	cfg.Services.EmbeddingDims = setup.ModelDims(models["embedding_model"])
+	cfg.Services.ChatModel = models["chat_model"]
+	if err := setup.SaveConfig(cfg); err != nil {
+		fmt.Println(tui.ErrorStr("Error guardando configuración de modelos: " + err.Error()))
+	} else {
+		fmt.Println(tui.Success("Configuración de modelos guardada permanentemente"))
+	}
+
+	// Resumen (después de persistir)
 	fmt.Println()
 	fmt.Println(tui.Success("Modelos seleccionados:"))
 	fmt.Println(tui.Info("Embeddings: " + models["embedding_model"]))

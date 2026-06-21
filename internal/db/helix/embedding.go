@@ -262,7 +262,7 @@ func (s *EmbeddingService) embedOllama(ctx context.Context, texts []string) ([][
 	}
 	model := s.config.Model
 	if model == "" {
-		model = "nomic-embed-text"
+		model = setup.GetEmbeddingModel()
 	}
 
 	var embeddings [][]float32

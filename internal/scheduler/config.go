@@ -65,11 +65,11 @@ func NewDefaultConfig(projectDir string, tm *boomerang.TaskManager) *Config {
 		return cfg
 	}
 
-	// Crear servicio de embeddings (Ollama local — nomic-embed-text con 768d)
+	// Crear servicio de embeddings (Ollama local)
 	embeddingSvc := helix.NewEmbeddingService(helix.EmbeddingConfig{
 		Provider:  helix.ProviderOllama,
-		Model:     "nomic-embed-text",
-		Dims:      768,
+		Model:     setup.GetEmbeddingModel(),
+		Dims:      setup.GetEmbeddingDims(),
 		BatchSize: 10,
 		Timeout:   30 * time.Second,
 	})
