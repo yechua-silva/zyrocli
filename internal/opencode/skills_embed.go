@@ -43,6 +43,15 @@ func WriteAllSkills() (int, error) {
 		return 0, fmt.Errorf("opencode: create skills dir %s: %w", baseDir, err)
 	}
 
+	// Remove deprecated skill directories
+	deprecatedDirs := []string{"sdd-apply"}
+	for _, dir := range deprecatedDirs {
+		deprecatedPath := filepath.Join(baseDir, dir)
+		if _, err := os.Stat(deprecatedPath); err == nil {
+			os.RemoveAll(deprecatedPath)
+		}
+	}
+
 	var count int
 
 	err := fs.WalkDir(skillsFS, "skills", func(path string, d fs.DirEntry, err error) error {

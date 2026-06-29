@@ -408,7 +408,7 @@ func TestDoctorIntegration_HelixDBNotRunning(t *testing.T) {
 	})
 
 	// 5. Verifica que reporta "error" en HelixDB
-	if !strings.Contains(output, "No responde en localhost:6969") {
+	if !strings.Contains(output, "No responde en http://localhost:6969") {
 		t.Errorf("output debería indicar que HelixDB no responde, got:\n%s", output)
 	}
 

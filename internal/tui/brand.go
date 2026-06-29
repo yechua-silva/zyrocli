@@ -116,6 +116,7 @@ func centeredBlock(art string, style lipgloss.Style) string {
 	styledLines := make([]string, len(lines))
 	for i, line := range lines {
 		// Padding derecho para que todas las líneas tengan el mismo ancho
+		line = strings.TrimRight(line, " ")
 		padded := line + strings.Repeat(" ", artWidth-len(line))
 		styledLines[i] = style.Render(padded)
 	}

@@ -198,6 +198,9 @@ func (h *HarnessValidator) ValidateTransition(from Phase, to Phase, approved boo
 	if fromIdx == -1 {
 		return fmt.Errorf("harness: unknown phase %q in transition %s→%s", from, from, to)
 	}
+	if !approved {
+		return fmt.Errorf("harness: transition %s→%s blocked: requires approval", from, to)
+	}
 	// Allow same-phase validation (phase just completed)
 	if toIdx == -1 || toIdx == fromIdx {
 		return nil
