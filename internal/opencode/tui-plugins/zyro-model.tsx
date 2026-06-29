@@ -198,60 +198,87 @@ function showModelSelector(api, providers, agentName, providerId) {
 }
 
 // ---------------------------------------------------------------------------
-// Config path detection
+// Agent model persistence via zyrocli
 // ---------------------------------------------------------------------------
 
 /**
- * Determines which opencode.json to write to.
- * Returns project-level path (CWD/.config/opencode/opencode.json) if it exists,
- * otherwise falls back to global (~/.config/opencode/opencode.json).
- * Mirrors GetEffectiveConfigPath() in the Go code.
- */
-async function detectConfigPath() {
-  const cwd = typeof process !== "undefined" && process.cwd ? process.cwd() : "."
-  const projectConfig = `${cwd}/.config/opencode/opencode.json`
-
-  try {
-    // Bun.file().stat() throws if file doesn't exist
-    await Bun.file(projectConfig).stat()
-    return projectConfig
-  } catch (_) {
-    const home = typeof process !== "undefined" && process.env?.HOME ? process.env.HOME : "~"
-    return `${home}/.config/opencode/opencode.json`
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Direct JSON persistence (replaces Bun.$ zyrocli profile set)
-// ---------------------------------------------------------------------------
-
-/**
- * Persists model assignments directly to opencode.json.
- * Preserves all existing sections (agent, mcp, skills, command, etc.).
- * Never throws — errors are logged to console and swallowed.
+ * Persists model assignments via zyrocli profile set.
+ * Uses the full path to the zyrocli binary to bypass PATH issues
+ * inside OpenCode's sandbox. Executes a real subprocess (Bun.$)
+ * which writes to the real filesystem, not a virtual one.
+ * Returns the path written on success, null on failure.
+ * Never throws.
  */
 async function persistAgentModel(agentName, modelStr) {
   try {
-    const configPath = await detectConfigPath()
-    const raw = await Bun.file(configPath).text()
-    const config = JSON.parse(raw)
-
-    if (!config.agent) config.agent = {}
-
+    // Get home directory via shell (reliable in any Bun runtime)
+    const home = (await Bun.$`echo $HOME`.text()).trim()
+    if (!home) return null
+    
+    // Find zyrocli binary — probe known locations
+    let zyrocliPath = "zyrocli" // fallback
+    const candidates = [
+      `${home}/.local/bin/zyrocli`,
+      `${home}/go/bin/zyrocli`,
+      "/usr/local/bin/zyrocli",
+      "/usr/bin/zyrocli",
+    ]
+    for (const p of candidates) {
+      const found = await Bun.$`test -f ${p} && echo yes`.text()
+      if (found.trim() === "yes") {
+        zyrocliPath = p
+        break
+      }
+    }
+    
     if (agentName === "__SET_ALL__") {
       for (const a of AGENTS) {
-        if (!config.agent[a.name]) config.agent[a.name] = {}
-        config.agent[a.name].model = modelStr
+        const result = await Bun.$`${zyrocliPath} profile set ${a.name} ${modelStr}`.text()
+        console.log(`[zyro-model] profile set ${a.name} → ${result.trim()}`)
       }
     } else {
-      if (!config.agent[agentName]) config.agent[agentName] = {}
-      config.agent[agentName].model = modelStr
+      const result = await Bun.$`${zyrocliPath} profile set ${agentName} ${modelStr}`.text()
+      console.log(`[zyro-model] profile set ${agentName} → ${result.trim()}`)
     }
-
-    await Bun.write(configPath, JSON.stringify(config, null, 2) + "\n")
+    
+    // Also update AGENTS.md frontmatter if present (OpenCode reads model from there)
+    try {
+      const cwd = (await Bun.$`pwd`.text()).trim()
+      if (cwd) {
+        const agentsMd = `${cwd}/.config/opencode/AGENTS.md`
+        const exists = await Bun.$`test -f ${agentsMd} && echo yes`.text()
+        if (exists.trim() === "yes") {
+          const escapedModel = modelStr.replace(/\|/g, '\\|')
+          if (agentName === "__SET_ALL__") {
+            for (const a of AGENTS) {
+              await Bun.$`sed -i 's|^model:.*$|model: ${escapedModel}|' ${agentsMd}`.text()
+            }
+          } else {
+            // For specific agent: only zyro-orchestrator has an AGENTS.md
+            if (agentName === "zyro-orchestrator") {
+              await Bun.$`sed -i 's|^model:.*$|model: ${escapedModel}|' ${agentsMd}`.text()
+            }
+          }
+        }
+      }
+    } catch (_) {
+      // Non-fatal: AGENTS.md update is best-effort
+    }
+    
+    // Return the config path that zyrocli wrote to (use GetEffectiveConfigPath logic)
+    // Try project config first, then global
+    try {
+      const cwd = (await Bun.$`pwd`.text()).trim()
+      if (cwd) {
+        const projectConfig = `${cwd}/.config/opencode/opencode.json`
+        const testResult = await Bun.$`test -f ${projectConfig} && echo exists`.text()
+        if (testResult.trim() === "exists") return projectConfig
+      }
+    } catch (_) {}
+    return `${home}/.config/opencode/opencode.json`
   } catch (err) {
     console.error("[zyro-model] persistAgentModel failed:", err)
-    // Non-fatal: in-memory update via api.client.global.config.update() already happened
+    return null
   }
 }
 
@@ -284,13 +311,21 @@ async function assignModel(api, providers, agentName, providerId, modelId) {
       api.state.config.agent[agentName].model = modelStr
     }
 
-    // 3. Persistir directo al JSON (reemplaza Bun.$ zyrocli profile set)
-    await persistAgentModel(agentName, modelStr)
+    // 3. Persistir via zyrocli profile set (real subprocess, real filesystem)
+    const savedPath = await persistAgentModel(agentName, modelStr)
 
-    api.ui.toast({
-      message: `✓ ${agentName === "__SET_ALL__" ? "Todos los agentes" : agentName} → ${modelStr}`,
-      variant: "success",
-    })
+    const label = agentName === "__SET_ALL__" ? "Todos los agentes" : agentName
+    if (savedPath) {
+      api.ui.toast({
+        message: `✓ ${label} → ${modelStr} (📁 ${savedPath})`,
+        variant: "success",
+      })
+    } else {
+      api.ui.toast({
+        message: `✓ ${label} → ${modelStr} ⚠️ no se pudo persistir a archivo`,
+        variant: "warning",
+      })
+    }
   } catch (err) {
     api.ui.toast({ message: `✗ Error: ${err?.message || "desconocido"}`, variant: "error" })
   }

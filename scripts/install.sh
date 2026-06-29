@@ -10,7 +10,7 @@ set -euo pipefail
 # Si no se especifica versión, descarga la última (latest).
 # ═══════════════════════════════════════════════════════════════
 
-REPO="secko/zyrocli"
+REPO="yechua-silva/zyrocli"
 VERSION="${1:-latest}"
 INSTALL_DIR="${HOME}/.local/bin"
 BINARY_NAME="zyrocli"

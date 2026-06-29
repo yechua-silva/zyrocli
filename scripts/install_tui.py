@@ -1277,22 +1277,39 @@ def paso8_resumen(config: dict[str, Any]) -> None:
     console.print(table)
     console.print()
 
-    # ── Escribir config ────────────────────────────────────────
+    # ── Escribir config (formato compatible con Go) ────────────
     config_dir = Path.home() / ".zyro"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / "config.yaml"
 
-    # Limpiar campos temporales
-    config_out = {
-        k: v for k, v in config.items() if not k.startswith("_")
+    # Obtener valores de modelos (con defaults)
+    embed_model = config.get("embeddings", {}).get("model", "mxbai-embed-large")
+    embed_dims = config.get("embeddings", {}).get("dims", 1024)
+    chat_model = config.get("chat", {}).get("model", "phi4-mini:3.8b")
+
+    # Construir estructura compatible con el struct Go Config
+    go_config = {
+        "version": "2.0.0",
+        "services": {
+            "ollama_url": "",
+            "helixdb_url": "",
+            "embedding_model": embed_model,
+            "embedding_dims": embed_dims,
+            "chat_model": chat_model,
+        },
     }
+
+    # Agregar metadata adicional que Go ignora pero Python usa
+    go_config["install_date"] = config.get("install_date")
+    if config.get("gpu"):
+        go_config["gpu"] = config["gpu"]
 
     import yaml
 
     try:
         with open(config_path, "w") as f:
             yaml.dump(
-                config_out,
+                go_config,
                 f,
                 default_flow_style=False,
                 sort_keys=False,
