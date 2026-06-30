@@ -2,13 +2,13 @@
 
 package hardware
 
-// gpuDetectorWindows detects GPU on Windows via nvidia-smi and WMI.
-type gpuDetectorWindows struct{}
-
 import (
 	"os/exec"
 	"strings"
 )
+
+// gpuDetectorWindows detects GPU on Windows via nvidia-smi and WMI.
+type gpuDetectorWindows struct{}
 
 // DetectGPU implements GPUDetector for Windows.
 //
