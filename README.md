@@ -330,6 +330,9 @@ Sígueme en mis redes para estar al tanto de nuevas herramientas, artículos y p
 - 📝 **Dev.to**: [dev.to/yechuasilva](https://dev.to/yechuasilva)
 - 💼 **LinkedIn**: [linkedin.com/in/yechua-silva](https://www.linkedin.com/in/yechua-silva)
 
+## Feedback
+- **DEV.to**: [Publicacion y discusión](https://dev.to/yechuasilva/zyrocli-an-orchestrator-that-gives-ai-agents-a-memory-and-a-conscience-2i1n)
+
 ## Licencia
 
 MIT
