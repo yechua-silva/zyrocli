@@ -7,7 +7,7 @@
 
 > **Pipeline SDD completo (F0→F4) · Memoria Causal · Seguridad por Fase · Auto-instalable**
 
-> **🆕 v3.0.0**
+> **🆕 v3.1.0**
 > 
 > - **Nueva TUI interactiva** con Bubble Tea — menú principal, instalación guiada, configuración de modelos
 > - **Detección de GPU cross-platform** — Linux (nvidia-smi/lspci/ROCm), macOS (sysctl/system_profiler), Windows (nvidia-smi/WMI)
@@ -158,7 +158,7 @@ Ejecutamos **3 sesiones incrementales** (JWT auth → roles → refresh token) �
 
 #### 🔧 Boomerang: lo hecho y lo pendiente
 
-**✅ Implementado en v3.0.0 (Phase Skip Matrix)**
+**✅ Implementado en v3.1.0 (Phase Skip Matrix)**
 Cada macro-fase ejecuta solo los pasos que necesita (ver matriz arriba).
 Esto reduce el overhead del Boomerang en fases de investigación y diseño hasta ~40%.
 
@@ -174,7 +174,7 @@ La especificación técnica está en `sdd/fase1-skip-matrix/`.
 #### ✅ Conclusión honesta
 
 _Los benchmarks de abajo corresponden a v2, previo al Phase Skip Matrix._
-_La matriz implementada en v3.0.0 ya reduce el overhead, pero el Smart Boomerang dinámico_
+_La matriz implementada en v3.1.0 ya reduce el overhead, pero el Smart Boomerang dinámico_
 _está pendiente para reducirlo aún más._
 
 1. **ZyroCLI produce mejor calidad** — único que genera tests (27-82% cobertura) y código modular.

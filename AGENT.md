@@ -89,7 +89,7 @@ Resumen: `PRE-F0 → F0 → F1 → F2 → F3 → F4` con approval gates humanos.
 
 ---
 
-## 🚀 Release Process (v3.0.0+)
+## 🚀 Release Process (v3.1.0+)
 
 > Proceso estricto para crear un release. NO desviarse. NO forzar tags.
 
@@ -110,17 +110,17 @@ git pull origin main
 git log --oneline -3
 
 # 5. Verificar que el tag NO existe ya en remoto
-git ls-remote --tags origin | grep v3.0.0
+git ls-remote --tags origin | grep v3.1.0
 
 # 6. Si el tag ya existe, eliminarlo limpiamente (NUNCA force-push)
-#    git tag -d v3.0.0
-#    git push origin --delete refs/tags/v3.0.0
+#    git tag -d v3.1.0
+#    git push origin --delete refs/tags/v3.1.0
 
 # 7. Crear tag anotado (NO lightweight)
-git tag -a v3.0.0 -m "Release v3.0.0"
+git tag -a v3.1.0 -m "Release v3.1.0"
 
 # 8. Push del tag
-git push origin v3.0.0
+git push origin v3.1.0
 
 # 9. Verificar CI/CD en GitHub Actions
 #    https://github.com/yechua-silva/zyrocli/actions
