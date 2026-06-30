@@ -192,7 +192,7 @@ func handleToolsList(req JSONRPCRequest) *JSONRPCResponse {
 	tools := []ToolDefinition{
 		{
 			Name:        "dispatch_task",
-			Description: "Despacha una tarea a un subagente de forma asíncrona. Retorna inmediatamente con el task_id. La tarea se ejecuta en background.",
+			Description: "Crea una tarea en estado running. La tarea NO se ejecuta automáticamente — el orquestador debe llamar task_complete cuando termine.",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
@@ -206,7 +206,7 @@ func handleToolsList(req JSONRPCRequest) *JSONRPCResponse {
 					},
 					"phase": map[string]interface{}{
 						"type":        "string",
-						"description": "Fase SDD (F0, F1, F2, F3, F4)",
+						"description": "Fase SDD (PRE-F0, F0, F1, F2, F3, F4)",
 					},
 					"params": map[string]interface{}{
 						"type":        "object",
@@ -241,7 +241,7 @@ func handleToolsList(req JSONRPCRequest) *JSONRPCResponse {
 				"properties": map[string]interface{}{
 					"phase": map[string]interface{}{
 						"type":        "string",
-						"description": "Fase SDD (F0, F1, F2, F3, F4)",
+						"description": "Fase SDD (PRE-F0, F0, F1, F2, F3, F4)",
 						"enum":        []string{"F0", "F1", "F2", "F3", "F4"},
 					},
 					"timeout": map[string]interface{}{
@@ -260,7 +260,7 @@ func handleToolsList(req JSONRPCRequest) *JSONRPCResponse {
 				"properties": map[string]interface{}{
 					"phase": map[string]interface{}{
 						"type":        "string",
-						"description": "Filtro opcional por fase (F0, F1, F2, F3, F4). Vacío = todas.",
+						"description": "Filtro opcional por fase (PRE-F0, F0, F1, F2, F3, F4). Vacío = todas.",
 					},
 				},
 			},
@@ -323,18 +323,18 @@ func handleToolsCall(req JSONRPCRequest) *JSONRPCResponse {
 	}
 
 	switch params.Name {
-	case "dispatch_task":
-		return handleDispatchTask(req.ID, params.Arguments)
-	case "check_task_status":
-		return handleCheckTaskStatus(req.ID, params.Arguments)
-	case "wait_phase":
-		return handleWaitPhase(req.ID, params.Arguments)
-	case "list_tasks":
-		return handleListTasks(req.ID, params.Arguments)
-	case "cancel_task":
-		return handleCancelTask(req.ID, params.Arguments)
-	case "complete_task":
-		return handleCompleteTask(req.ID, params.Arguments)
+	case "task_create":
+		return handleTaskCreate(req.ID, params.Arguments)
+	case "task_status":
+		return handleTaskStatus(req.ID, params.Arguments)
+	case "task_wait":
+		return handleTaskWait(req.ID, params.Arguments)
+	case "task_list":
+		return handleTaskList(req.ID, params.Arguments)
+	case "task_cancel":
+		return handleTaskCancel(req.ID, params.Arguments)
+	case "task_complete":
+		return handleTaskComplete(req.ID, params.Arguments)
 	default:
 		return &JSONRPCResponse{
 			JSONRPC: "2.0",
@@ -347,7 +347,7 @@ func handleToolsCall(req JSONRPCRequest) *JSONRPCResponse {
 	}
 }
 
-func handleDispatchTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
+func handleTaskCreate(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
 	var input struct {
 		Name   string            `json:"name"`
 		Agent  string            `json:"agent"`
@@ -361,7 +361,7 @@ func handleDispatchTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCRes
 		return errorResponse(rawID, -32602, "Missing required fields", "name, agent, and phase are required")
 	}
 
-	id := taskManager.DispatchTask(context.Background(), input.Name, input.Agent, input.Phase, input.Params)
+	id := taskManager.CreateTask(context.Background(), input.Name, input.Agent, input.Phase, input.Params)
 
 	// ── Guardar nodo Task en HelixDB (sin criteria aún — se asignan desde el orquestador) ──
 	go saveTaskToHelix(string(id), input.Name, input.Agent, input.Phase, nil)
@@ -382,7 +382,7 @@ func handleDispatchTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCRes
 	}
 }
 
-func handleCheckTaskStatus(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
+func handleTaskStatus(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
 	var input struct {
 		TaskID string `json:"task_id"`
 	}
@@ -406,7 +406,7 @@ func handleCheckTaskStatus(rawID json.RawMessage, args json.RawMessage) *JSONRPC
 		"output":     task.Output,
 		"error":      task.Error,
 		"started_at": task.StartedAt.Format(time.RFC3339),
-		"done_at":    task.DoneAt.Format(time.RFC3339),
+		"done_at":    formatTimeOrNil(task.DoneAt),
 	})
 
 	return &JSONRPCResponse{
@@ -420,7 +420,7 @@ func handleCheckTaskStatus(rawID json.RawMessage, args json.RawMessage) *JSONRPC
 	}
 }
 
-func handleWaitPhase(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
+func handleTaskWait(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
 	var input struct {
 		Phase   string `json:"phase"`
 		Timeout int    `json:"timeout,omitempty"`
@@ -482,7 +482,7 @@ func handleWaitPhase(rawID json.RawMessage, args json.RawMessage) *JSONRPCRespon
 	}
 }
 
-func handleListTasks(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
+func handleTaskList(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
 	var input struct {
 		Phase string `json:"phase,omitempty"`
 	}
@@ -504,7 +504,7 @@ func handleListTasks(rawID json.RawMessage, args json.RawMessage) *JSONRPCRespon
 	}
 }
 
-func handleCancelTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
+func handleTaskCancel(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
 	var input struct {
 		TaskID string `json:"task_id"`
 	}
@@ -529,7 +529,7 @@ func handleCancelTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCRespo
 	}
 }
 
-func handleCompleteTask(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
+func handleTaskComplete(rawID json.RawMessage, args json.RawMessage) *JSONRPCResponse {
 	var input struct {
 		TaskID string `json:"task_id"`
 		Output string `json:"output,omitempty"`
@@ -630,6 +630,15 @@ func getString(m map[string]interface{}, key string) string {
 		return ""
 	}
 	return s
+}
+
+
+// formatTimeOrNil returns the time formatted as RFC3339, or nil if zero.
+func formatTimeOrNil(t time.Time) interface{} {
+	if t.IsZero() {
+		return nil
+	}
+	return t.Format(time.RFC3339)
 }
 
 func errorResponse(rawID json.RawMessage, code int, message string, data string) *JSONRPCResponse {

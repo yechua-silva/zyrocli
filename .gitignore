@@ -60,3 +60,6 @@ docs/benchmark/
 
 # Runtime audit logs
 internal/boomerang/audit/
+
+# OpenCode config local (modelos, agentes, skills)
+.config/opencode/
