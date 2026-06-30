@@ -12,7 +12,7 @@
 > - **Nueva TUI interactiva** con Bubble Tea — menú principal, instalación guiada, configuración de modelos
 > - **Detección de GPU cross-platform** — Linux (nvidia-smi/lspci/ROCm), macOS (sysctl/system_profiler), Windows (nvidia-smi/WMI)
 > - **Ruteo de modelos por agente** — cada skill SDD puede usar un modelo LLM distinto, configurable vía `/zyro-model` en OpenCode
-> - **Boomberang Phase Skip** — fases sin steps activos se saltan automáticamente (F0-F4 parcialmente implementado)
+> - **Boomerang Phase Skip** — cada macro-fase ejecuta solo los pasos necesarios: F0-F2 sin Git/Quality, F3 completa, F4 sin Think. Hasta ~40% menos pasos que v2.
 > - **Persistencia de configuración** en `~/.zyro/config.yaml`
 
 ## 📋 Tabla de Contenidos
@@ -106,44 +106,24 @@ F4: Archive        →  Documentación final + Handoff
 
 ### 🟠 Boomerang — Micro-ciclo de ejecución (dentro de cada fase)
 
-El motor interno que ejecuta **cada fase** de forma autónoma. 6 pasos que se repiten en F0, F1, F2, F3 y F4:
+Cada macro-fase ejecuta una combinación distinta de pasos.
+La **Phase Skip Matrix** elimina los innecesarios:
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   BOOMERANG                          │
-│                                                      │
-│  1. MEMORY       ──  Recuperar hechos relevantes    │
-│                     de HelixDB (memoria causal)      │
-│                                                      │
-│  2. THINK        ──  Planificar acción específica    │
-│                     según el contexto recuperado     │
-│                                                      │
-│  3. DELEGATE     ──  Ejecutar agente(s) Python      │
-│                     con contexto + herramientas       │
-│                                                      │
-│  4. GIT CHECK    ──  Verificar estado del repo       │
-│                     (sin cambios conflictivos)       │
-│                                                      │
-│  5. QUALITY GATES──  Validación determinista         │
-│                     (tests, lint, tipos)             │
-│                                                      │
-│  6. SAVE MEMORY  ──  Extraer hechos nuevos y         │
-│                     guardar en HelixDB               │
-│                                                      │
-└─────────────────────────────────────────────────────┘
+           MEMORY  THINK  DELEGATE  GIT CHECK  QUALITY  SAVE
+PRE-F0  │   ✅      ✅      ✅        —          —       ✅
+F0      │   ✅      ✅      ✅        —          —       ✅
+F1      │   ✅      ✅      ✅        —          —       ✅
+F2      │   ✅      ✅      ✅        —          —       ✅
+F3      │   ✅      ✅      ✅        ✅         ✅      ✅
+F4      │   ✅      —       ✅        ✅         —       ✅
 ```
 
-**Cuándo se usa:** en CADA fase del SDD. F0 ejecuta su Boomerang, F1 ejecuta su Boomerang, etc.  
+**Por qué:** F0-F2 son fases de investigación y diseño — no requieren validar git ni calidad de código.
+F3 es implementación y necesita control de cambios + tests. F4 es cierre y solo necesita git + archive.
+Esto reduce el overhead del Boomerang hasta ~40% versus ejecutar los 6 pasos siempre.
+
 **Quién lo gobierna:** el orquestador Go — **nunca el agente Python**.
-
-### ¿Por qué dos ciclos?
-
-| SDD (macro) | Boomerang (micro) |
-|-------------|-------------------|
-| Responde al **qué** construir | Responde al **cómo** ejecutarlo |
-| Lo ves como plan de proyecto | Es invisible — pasa dentro de cada fase |
-| Avanza con aprobación humana | Es automático, no requiere aprobación |
-| 4-5 fases por feature | 6 pasos × N fases por feature |
 
 ### 📊 Benchmark v2 — Comparativa justa (24 runs, 3 sesiones)
 
@@ -176,22 +156,26 @@ Ejecutamos **3 sesiones incrementales** (JWT auth → roles → refresh token) �
 > ⚠️ **Comparación justa:** ZyroCLI completó 6/9 runs (3 timeouts en sesiones 2-3 por el overhead del Boomerang).
 > Las celdas con "—" indican N < 2, datos insuficientes para promedio.
 
-#### 🔧 Cuello de botella del Boomerang (ZyroCLI)
+#### 🔧 Boomerang: lo hecho y lo pendiente
 
-El Boomerang ejecuta **6 pasos secuenciales por fase** (Memory → Think → Delegate → Git Check → Quality → Save).
-Esto genera:
+**✅ Implementado en v3.0.0 (Phase Skip Matrix)**
+Cada macro-fase ejecuta solo los pasos que necesita (ver matriz arriba).
+Esto reduce el overhead del Boomerang en fases de investigación y diseño hasta ~40%.
 
-- **2.5× más lento** que Plain (121s vs 47s en sesión 1)
-- **3/9 timeouts** en sesiones complejas (roles + refresh)
-- **+56% razonamiento** vs Plain (planificación extra)
+**⏳ Pendiente (Smart Boomerang dinámico)**
+Inspeccionar el estado en vivo del repo para decidir si un paso corre o no:
+- Si no hay cambios en git → saltar GitStep (incluso en F3)
+- Si no hay tareas delegadas → saltar DelegateStep
+- Si no hay hechos nuevos → saltar SaveStep
 
-**Por qué existe:** El Boomerang fue diseñado para proyectos grandes donde el overhead de planificación
-se paga con creces al evitar errores costosos. Para tareas chicas (1 API Go), el overhead es desproporcionado.
-
-**Mejora planeada:** Smart Boomerang — saltar pasos innecesarios. Si no hay cambios en git → saltar GitStep.
-Si no hay tareas delegadas → saltar DelegateStep. Objetivo: reducir overhead de 2.5× a ~1.3×.
+Objetivo: reducir el overhead de ~2.5× a ~1.3× respecto a OpenCode plano.
+La especificación técnica está en `sdd/fase1-skip-matrix/`.
 
 #### ✅ Conclusión honesta
+
+_Los benchmarks de abajo corresponden a v2, previo al Phase Skip Matrix._
+_La matriz implementada en v3.0.0 ya reduce el overhead, pero el Smart Boomerang dinámico_
+_está pendiente para reducirlo aún más._
 
 1. **ZyroCLI produce mejor calidad** — único que genera tests (27-82% cobertura) y código modular.
 2. **ZyroCLI gasta menos tokens input** que gentle-ai (−35%) y comparable a Plain (−2%).
