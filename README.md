@@ -7,6 +7,14 @@
 
 > **Pipeline SDD completo (F0→F4) · Memoria Causal · Seguridad por Fase · Auto-instalable**
 
+> **🆕 v3.0.0**
+> 
+> - **Nueva TUI interactiva** con Bubble Tea — menú principal, instalación guiada, configuración de modelos
+> - **Detección de GPU cross-platform** — Linux (nvidia-smi/lspci/ROCm), macOS (sysctl/system_profiler), Windows (nvidia-smi/WMI)
+> - **Ruteo de modelos por agente** — cada skill SDD puede usar un modelo LLM distinto, configurable vía `/zyro-model` en OpenCode
+> - **Boomberang Phase Skip** — fases sin steps activos se saltan automáticamente (F0-F4 parcialmente implementado)
+> - **Persistencia de configuración** en `~/.zyro/config.yaml`
+
 ## 📋 Tabla de Contenidos
 
 - [✨ ¿Qué hace ZyroCLI?](#qué-hace-zyrocli)
@@ -26,6 +34,7 @@ ZyroCLI es un orquestador que ejecuta un **pipeline de desarrollo de software** 
 | Comando | Qué hace |
 |---------|----------|
 | `zyrocli install` | Instala skills, MCP tools y configura OpenCode globalmente |
+| `zyrocli setup` | Configura modelo LLM por agente, GPU, y preferencias del pipeline |
 | `zyrocli init` | Crea un proyecto desde un handoff.yaml |
 | `zyrocli run --phase PRE-F0` | **Alineación**: grill-me, domain-model, triage y mejora arquitectónica |
 | `zyrocli run --phase F0` | **Investigación**: busca patrones, librerías y skills en paralelo |
@@ -33,9 +42,9 @@ ZyroCLI es un orquestador que ejecuta un **pipeline de desarrollo de software** 
 | `zyrocli run --phase F2` | **Diseño**: desglose en componentes y tareas atómicas |
 | `zyrocli run --phase F3` | **Implementación**: apply + verify (loop hasta pasar) |
 | `zyrocli run --phase F4` | **Cierre**: archive, lint, build final |
-| `zyrocli install` | Instala skills, MCP tools, y configura OpenCode globalmente |
 | `zyrocli doctor` | Diagnostica HelixDB, Ollama, GPU y dependencias |
 | `zyrocli` (sin args) | Menú interactivo TUI con acceso a todas las funciones |
+| `/zyro-model` | Comando en OpenCode para cambiar modelo LLM del agente activo |
 
 ## 🧠 ¿Por qué existe?
 
@@ -69,9 +78,9 @@ Cada fase del pipeline tiene una **política Boundari** que define qué herramie
 
 ### 4. Búsqueda Híbrida + Embeddings Locales
 
-La memoria causal se consulta con **búsqueda híbrida** (vector ANN + BM25 + RRF fusion). Los embeddings se generan localmente con Ollama + `mxbai-embed-large` (CPU-friendly). Si no hay embeddings, cae a BM25 puro (degradación graceful).
+La memoria causal se consulta con **búsqueda híbrida** (vector ANN + BM25 + RRF fusion). Los embeddings se generan localmente con Ollama + `nomic-embed-text` (768d, GPU vía Vulkan). Si no hay embeddings, cae a BM25 puro (degradación graceful).
 
-**Por qué:** La búsqueda semántica permite encontrar hechos conceptualmente similares aunque usen palabras diferentes. El modelo mxbai-embed-large es el mejor quality/speed para CPU según MTEB benchmark.
+**Por qué:** La búsqueda semántica permite encontrar hechos conceptualmente similares aunque usen palabras diferentes. El modelo nomic-embed-text ofrece buen balance calidad/velocidad para búsqueda semántica local.
 
 [Investigación →](docs/explorations/investigacion-06-embedding-system.md)
 
@@ -193,8 +202,16 @@ Si no hay tareas delegadas → saltar DelegateStep. Objetivo: reducir overhead d
 
 #### 📁 Datos crudos y reportes
 
-- [📈 Reporte v2 con 7 gráficos SVG →](docs/benchmark/v2/index.html)
-- [📈 Reporte v1 (30 iteraciones, 1 sesión) →](docs/benchmark/index.html)
+#### 📊 Charts
+
+![Tokens totales](docs/benchmark/chart-01-tokens-totales.png)
+*Tokens totales por jaula y sesión*
+
+![Input vs Output](docs/benchmark/chart-02-input-output.png)
+*Distribución de tokens input vs output*
+
+![Turns](docs/benchmark/chart-03-turns.png)
+*Turns por sesión*
 - [📊 Datos crudos — Plain](docs/benchmark/v2/data-plain.json)
 - [📊 Datos crudos — gentle-ai](docs/benchmark/v2/data-gentle.json)
 - [📊 Datos crudos — ZyroCLI](docs/benchmark/v2/data-zyro.json)
@@ -207,15 +224,6 @@ Si no hay tareas delegadas → saltar DelegateStep. Objetivo: reducir overhead d
 - **Medición exacta:** `opencode export` para tokens, `go test -cover` para cobertura, `gocyclo` para complejidad
 - **Timeout:** 900s por run (15 min)
 - **Fecha:** 2026-06-17
-
-### 📚 Más información
-
-| Documento | Contenido |
-|-----------|----------|
-| [Arquitectura v2](docs/architecture-v2.md) | Diseño completo del sistema |
-| [HelixDB Schema](docs/helixdb-schema-hql.md) | Schema de nodos y edges en HelixDB |
-| [HelixDB Integración](docs/helixdb-integration.md) | Cómo se conectan los componentes |
-| [Especificación Técnica](docs/spec-zyrov2.md) | Spec completa C-I-O |
 
 ## 🏗️ Arquitectura
 
@@ -272,6 +280,9 @@ zyrocli init handoff.yaml
 
 | Documento | Contenido |
 |-----------|----------|
+| [Arquitectura v2](docs/architecture-v2.md) | Diseño completo del sistema |
+| [HelixDB Schema](docs/helixdb-schema-hql.md) | Schema de nodos y edges en HelixDB |
+| [HelixDB Integración](docs/helixdb-integration.md) | Cómo se conectan los componentes |
 | [Especificación Técnica](docs/spec-zyrov2.md) | Spec completa C-I-O del sistema |
 | [Diseño Técnico](docs/design-zyrov2.md) | Arquitectura detallada, firmas, schemas |
 | [Roadmap](docs/roadmap-integrado.md) | Plan de implementación y sprints |
@@ -280,7 +291,7 @@ zyrocli init handoff.yaml
 | [FAQ - Boundari](docs/explorations/investigacion-03-boundari-politicas-seguridad.md) | Por qué seguridad por fase |
 | [FAQ - Memoria Causal](docs/explorations/investigacion-04-engram-memoria-causal.md) | Por qué engram custom sobre HelixDB |
 | [FAQ - OpenCode](docs/explorations/investigacion-05-opencode-ecosistema-plugins.md) | Por qué OpenCode como runtime |
-| [FAQ - Embeddings](docs/explorations/investigacion-06-embedding-system.md) | Por qué mxbai-embed-large + Scaleway |
+| [FAQ - Embeddings](docs/explorations/investigacion-06-embedding-system.md) | Por qué nomic-embed-text + Scaleway |
 
 ## 🛡️ Seguridad
 
@@ -300,8 +311,8 @@ F4 (Cierre) → solo lectura, archive con approval
 - **Memoria Causal**: 6 tipos de Facts, 7 aristas causales, curva de Ebbinghaus
 - **Embeddings**: Ollama + nomic-embed-text (768d, GPU vía Vulkan) + fallback BM25
 - **Seguridad**: Boundari con políticas YAML por fase
-- **Tests**: 383 tests, 100% passing
-- **Distribución**: npm, GitHub Releases, Homebrew, go install
+- **Tests**: 455 tests, 100% passing
+- **Distribución**: npm, GitHub Releases, go install
 
 ## Créditos
 
@@ -324,7 +335,7 @@ F4 (Cierre) → solo lectura, archive con approval
 
 - **Go** — Lenguaje principal del orquestador.
 - **Python (PydanticAI)** — Lenguaje de los agentes MCP con validación tipada.
-- **Ollama + mxbai-embed-large** — Embeddings locales para búsqueda semántica.
+- **Ollama + nomic-embed-text** — Embeddings locales para búsqueda semántica.
 
 Gracias a todos por construir las herramientas que hacen esto posible. 🙌
 

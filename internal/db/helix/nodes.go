@@ -8,7 +8,7 @@ import (
 
 	helixsdk "github.com/helixdb/helix-db/sdks/go"
 
-	"github.com/secko/zyrocli/internal/git"
+	"github.com/yechua-silva/zyrocli/internal/git"
 )
 
 // projectIDStr converts a uint64 project node ID to its property string form.

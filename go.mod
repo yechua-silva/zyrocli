@@ -1,4 +1,4 @@
-module github.com/secko/zyrocli
+module github.com/yechua-silva/zyrocli
 
 go 1.26.3
 

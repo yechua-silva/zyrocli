@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	helix "github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/codeparse"
+	helix "github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/codeparse"
 	"github.com/spf13/cobra"
 )
 

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/secko/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
 )
 
 // stdinReader is a package-level variable so tests can replace it with a mock.

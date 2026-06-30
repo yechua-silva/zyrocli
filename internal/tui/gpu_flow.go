@@ -3,7 +3,7 @@ package tui
 import (
 	"fmt"
 
-	"github.com/secko/zyrocli/internal/hardware"
+	"github.com/yechua-silva/zyrocli/internal/hardware"
 )
 
 // GPUSummary returns a formatted string with GPU detection results.

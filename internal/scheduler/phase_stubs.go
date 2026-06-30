@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/handoff"
+	"github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/handoff"
 )
 
 // PREF0Runner implements PhaseRunner for PRE-F0: Domain alignment.

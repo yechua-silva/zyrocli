@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	helix "github.com/secko/zyrocli/internal/db/helix"
+	helix "github.com/yechua-silva/zyrocli/internal/db/helix"
 )
 
 // ---------------------------------------------------------------------------

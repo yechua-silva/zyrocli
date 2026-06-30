@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/handoff"
-	"github.com/secko/zyrocli/internal/opencode"
-	"github.com/secko/zyrocli/internal/scaffold"
+	"github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/handoff"
+	"github.com/yechua-silva/zyrocli/internal/opencode"
+	"github.com/yechua-silva/zyrocli/internal/scaffold"
 	"github.com/spf13/cobra"
 )
 

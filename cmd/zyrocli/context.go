@@ -6,8 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	helix "github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/taskcontext"
+	helix "github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/taskcontext"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secko/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
 )
 
 // Scheduler manages the execution of SDD phases as a sequential DAG

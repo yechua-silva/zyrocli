@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/secko/zyrocli/internal/apply"
-	"github.com/secko/zyrocli/internal/boomerang"
-	"github.com/secko/zyrocli/internal/handoff"
-	"github.com/secko/zyrocli/internal/scaffold"
-	"github.com/secko/zyrocli/internal/scheduler"
+	"github.com/yechua-silva/zyrocli/internal/apply"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/handoff"
+	"github.com/yechua-silva/zyrocli/internal/scaffold"
+	"github.com/yechua-silva/zyrocli/internal/scheduler"
 	"github.com/spf13/cobra"
 )
 

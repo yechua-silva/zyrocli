@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boundari"
-	"github.com/secko/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/boundari"
+	"github.com/yechua-silva/zyrocli/internal/memory"
 )
 
 // SaveStep guarda decisiones y hechos en memoria causal.

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/secko/zyrocli/internal/memory"
-	"github.com/secko/zyrocli/internal/tokens"
+	"github.com/yechua-silva/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/tokens"
 )
 
 // MemoryStep consulta memoria causal relevante para la fase actual.

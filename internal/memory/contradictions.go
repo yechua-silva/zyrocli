@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	dbhelix "github.com/secko/zyrocli/internal/db/helix"
+	dbhelix "github.com/yechua-silva/zyrocli/internal/db/helix"
 )
 
 // DetectContradictions detecta hechos contradictorios por similitud semántica

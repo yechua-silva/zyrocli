@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/secko/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/memory"
 )
 
 // MemoryHooks conecta la memoria causal con el scheduler.

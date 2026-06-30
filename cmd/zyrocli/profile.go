@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/secko/zyrocli/internal/opencode"
+	"github.com/yechua-silva/zyrocli/internal/opencode"
 	"github.com/spf13/cobra"
 )
 

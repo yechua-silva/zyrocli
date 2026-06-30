@@ -10,7 +10,7 @@ import (
 	"time"
 
 	helixsdk "github.com/helixdb/helix-db/sdks/go"
-	"github.com/secko/zyrocli/internal/setup"
+	"github.com/yechua-silva/zyrocli/internal/setup"
 )
 
 // Client wraps helixsdk.Client with project-level isolation.

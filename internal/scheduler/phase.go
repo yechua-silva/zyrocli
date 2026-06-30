@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
 )
 
 // Phase identifies an SDD phase.

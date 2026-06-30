@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/secko/zyrocli/internal/apply"
+	"github.com/yechua-silva/zyrocli/internal/apply"
 )
 
 // TaskID es un identificador único de tarea.
