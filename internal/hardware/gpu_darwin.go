@@ -2,13 +2,13 @@
 
 package hardware
 
-// gpuDetectorDarwin detects GPU on macOS via sysctl and system_profiler.
-type gpuDetectorDarwin struct{}
-
 import (
 	"os/exec"
 	"strings"
 )
+
+// gpuDetectorDarwin detects GPU on macOS via sysctl and system_profiler.
+type gpuDetectorDarwin struct{}
 
 // DetectGPU implements GPUDetector for macOS.
 //
