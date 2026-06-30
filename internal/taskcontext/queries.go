@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	helix "github.com/secko/zyrocli/internal/db/helix"
+	helix "github.com/yechua-silva/zyrocli/internal/db/helix"
 )
 
 // GetTaskContext recupera contexto completo para una task desde HelixDB

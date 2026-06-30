@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boundari"
+	"github.com/yechua-silva/zyrocli/internal/boundari"
 )
 
 // DelegateStep reparte tareas del DAG a subagentes usando TaskManager.DispatchTask().

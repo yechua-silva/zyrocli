@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/secko/zyrocli/internal/setup"
+	"github.com/yechua-silva/zyrocli/internal/setup"
 )
 
 // TestResult holds the result of a model test.

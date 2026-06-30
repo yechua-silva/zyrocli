@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/scanner"
+	"github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/scanner"
 	"github.com/spf13/cobra"
 )
 

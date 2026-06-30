@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/secko/zyrocli/internal/setup"
+	"github.com/yechua-silva/zyrocli/internal/setup"
 )
 
 // EmbeddingProvider define el origen de embeddings

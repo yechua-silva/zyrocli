@@ -16,7 +16,7 @@ project:
   language: go
 governance:
   mode: structured
-  module: github.com/secko/zyrocli
+  module: github.com/yechua-silva/zyrocli
   go_version: "1.26"
 testing:
   strategy: table-driven
@@ -63,8 +63,8 @@ func TestLoadConfig_Valid(t *testing.T) {
 	if cfg.Mode != "structured" {
 		t.Errorf("expected Mode 'structured', got %q", cfg.Mode)
 	}
-	if cfg.Module != "github.com/secko/zyrocli" {
-		t.Errorf("expected Module 'github.com/secko/zyrocli', got %q", cfg.Module)
+	if cfg.Module != "github.com/yechua-silva/zyrocli" {
+		t.Errorf("expected Module 'github.com/yechua-silva/zyrocli', got %q", cfg.Module)
 	}
 	if cfg.GoVersion != "1.26" {
 		t.Errorf("expected GoVersion '1.26', got %q", cfg.GoVersion)

@@ -6,12 +6,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boomerang"
-	"github.com/secko/zyrocli/internal/boundari"
-	"github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/handoff"
-	"github.com/secko/zyrocli/internal/memory"
-	"github.com/secko/zyrocli/internal/setup"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/boundari"
+	"github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/handoff"
+	"github.com/yechua-silva/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/setup"
 )
 
 // LoadConfig reads handoff.yaml and extracts scheduler configuration.

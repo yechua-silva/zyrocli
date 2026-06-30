@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/secko/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
 )
 
 func TestWriteHandoffWithCriteria(t *testing.T) {

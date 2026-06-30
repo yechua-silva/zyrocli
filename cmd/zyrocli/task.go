@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	helix "github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/git"
+	helix "github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/git"
 )
 
 var taskCmd = &cobra.Command{

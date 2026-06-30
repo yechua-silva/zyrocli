@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/secko/zyrocli/internal/skilladvisor"
+	"github.com/yechua-silva/zyrocli/internal/skilladvisor"
 	"github.com/spf13/cobra"
 )
 

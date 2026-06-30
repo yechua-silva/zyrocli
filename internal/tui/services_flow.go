@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/secko/zyrocli/internal/setup"
+	"github.com/yechua-silva/zyrocli/internal/setup"
 )
 
 // ServiceStatus represents the status of a service.

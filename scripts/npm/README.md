@@ -18,8 +18,9 @@ zyrocli setup
 ## Uso
 
 ```bash
-zyro setup           # Instalar todo (Go, uv, HelixDB, etc.)
-zyro doctor --fix    # Diagnosticar y reparar
-zyro init handoff.yaml  # Iniciar proyecto
-zyro run --phase F0  # Ejecutar fase
+zyrocli setup              # Instalar todo (Go, uv, HelixDB, Ollama, etc.)
+zyrocli install            # Configurar skills, MCP tools y OpenCode
+zyrocli doctor             # Diagnosticar el entorno
+zyrocli init handoff.yaml  # Inicializar proyecto desde un contrato
+zyrocli run --phase F0     # Ejecutar fase de investigación
 ```

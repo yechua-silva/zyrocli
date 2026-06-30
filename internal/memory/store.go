@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	dbhelix "github.com/secko/zyrocli/internal/db/helix"
+	dbhelix "github.com/yechua-silva/zyrocli/internal/db/helix"
 )
 
 // HelixEngramStore implementa EngramStore sobre HelixDB

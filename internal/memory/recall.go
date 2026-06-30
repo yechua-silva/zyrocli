@@ -8,7 +8,7 @@ import (
 	"time"
 
 	helixsdk "github.com/helixdb/helix-db/sdks/go"
-	dbhelix "github.com/secko/zyrocli/internal/db/helix"
+	dbhelix "github.com/yechua-silva/zyrocli/internal/db/helix"
 )
 
 // ---------------------------------------------------------------------------

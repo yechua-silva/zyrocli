@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	dbhelix "github.com/secko/zyrocli/internal/db/helix"
-	"github.com/secko/zyrocli/internal/memory"
-	"github.com/secko/zyrocli/internal/setup"
+	dbhelix "github.com/yechua-silva/zyrocli/internal/db/helix"
+	"github.com/yechua-silva/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/setup"
 	"github.com/spf13/cobra"
 )
 

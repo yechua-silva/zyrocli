@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boundari"
-	"github.com/secko/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/boundari"
+	"github.com/yechua-silva/zyrocli/internal/memory"
 )
 
 // mockStore implementa EngramStore para tests

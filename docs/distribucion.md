@@ -2,7 +2,7 @@
 
 > **Fecha:** 2026-06-15
 > **Propósito:** Investigar y definir estrategias para publicar ZyroAgentCLI como binario instalable desde npm, GitHub Releases, Homebrew, go install y otros canales.
-> **Contexto:** ZyroAgentCLI es un binario Go (`module github.com/secko/zyrocli`). Se compila con `go build -o zyrocli ./cmd/zyrocli`. Actualmente solo se distribuye via `git clone + ./scripts/install.sh`.
+> **Contexto:** ZyroAgentCLI es un binario Go (`module github.com/yechua-silva/zyrocli`). Se compila con `go build -o zyrocli ./cmd/zyrocli`. Actualmente solo se distribuye via `git clone + ./scripts/install.sh`.
 
 ---
 
@@ -29,7 +29,7 @@ ZyroAgentCLI necesita **múltiples canales de distribución** porque distintos u
 |-------|-------------------|
 | `npx zyrocli` | Usuarios Node.js, sin Go, quieren probar rápido |
 | `brew install zyrocli` | Usuarios macOS (Homebrew es el estándar de facto) |
-| `go install github.com/secko/zyrocli@latest` | Usuarios Go, ya tienen toolchain |
+| `go install github.com/yechua-silva/zyrocli@latest` | Usuarios Go, ya tienen toolchain |
 | `curl -sSL https://zyro.dev/install.sh \| bash` | Usuarios Linux, script tradicional |
 | GitHub Releases (descarga directa) | Cualquier usuario, CI/CD pipelines |
 
@@ -136,7 +136,7 @@ release:
     ### Instalación
     ```bash
     # Con Go (si tenés Go instalado)
-    go install github.com/secko/zyrocli@{{ .Tag }}
+    go install github.com/yechua-silva/zyrocli@{{ .Tag }}
 
     # Con npm
     npx zyrocli@{{ .Version }}
@@ -234,7 +234,7 @@ zyrocli/
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/secko/zyrocli.git"
+    "url": "git+https://github.com/yechua-silva/zyrocli.git"
   },
   "engines": {
     "node": ">=18"
@@ -287,7 +287,7 @@ const pkg = require('../package.json');
 const version = pkg.version;
 const platformKey = getPlatformKey();
 const binaryName = PLATFORM_MAP[platformKey];
-const url = `https://github.com/secko/zyrocli/releases/download/v${version}/${binaryName}`;
+const url = `https://github.com/yechua-silva/zyrocli/releases/download/v${version}/${binaryName}`;
 const dest = path.join(__dirname, '..', 'bin', 'zyrocli');
 
 if (!fs.existsSync(path.dirname(dest))) {
@@ -439,7 +439,7 @@ esbuild define `esbuild.binaryHashes` en su `package.json` para verificar la int
 El mecanismo nativo de Go para instalar binarios:
 
 ```bash
-go install github.com/secko/zyrocli@latest
+go install github.com/yechua-silva/zyrocli@latest
 ```
 
 Esto clona el repositorio, compila con la toolchain local de Go y coloca el binario en `$GOPATH/bin/zyrocli` (o `$HOME/go/bin/zyrocli`).
@@ -451,7 +451,7 @@ Esto clona el repositorio, compila con la toolchain local de Go y coloca el bina
 
 ### Cómo funciona
 
-1. `go install github.com/secko/zyrocli@latest` resuelve el último commit de `main` (o usa `@v0.1.0` para una versión específica).
+1. `go install github.com/yechua-silva/zyrocli@latest` resuelve el último commit de `main` (o usa `@v0.1.0` para una versión específica).
 2. Detecta `./cmd/zyrocli` como main package (Go lo infiere del module path).
 3. Compila con `CGO_ENABLED=0` por defecto (binario estático).
 4. Instala en `$GOPATH/bin/zyrocli`.
@@ -459,9 +459,9 @@ Esto clona el repositorio, compila con la toolchain local de Go y coloca el bina
 ### Versionado semántico
 
 ```bash
-go install github.com/secko/zyrocli@v0.1.0   # versión específica
-go install github.com/secko/zyrocli@latest    # último commit de main
-go install github.com/secko/zyrocli@main      # commit actual de main
+go install github.com/yechua-silva/zyrocli@v0.1.0   # versión específica
+go install github.com/yechua-silva/zyrocli@latest    # último commit de main
+go install github.com/yechua-silva/zyrocli@main      # commit actual de main
 ```
 
 Para que `@latest` funcione, se necesita un tag semver en el repositorio:
@@ -506,26 +506,26 @@ homebrew-tap/                    ← repositorio GitHub: secko/homebrew-tap
 # Formula/zyrocli.rb
 class Zyrocli < Formula
   desc "Gentle AI orchestration for structured SDD workflows"
-  homepage "https://github.com/secko/zyrocli"
+  homepage "https://github.com/yechua-silva/zyrocli"
   version "0.1.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/secko/zyrocli/releases/download/v#{version}/zyrocli-darwin-arm64"
+      url "https://github.com/yechua-silva/zyrocli/releases/download/v#{version}/zyrocli-darwin-arm64"
       sha256 "abc123..."  # ← checksum SHA256 del binario
     else
-      url "https://github.com/secko/zyrocli/releases/download/v#{version}/zyrocli-darwin-amd64"
+      url "https://github.com/yechua-silva/zyrocli/releases/download/v#{version}/zyrocli-darwin-amd64"
       sha256 "def456..."
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/secko/zyrocli/releases/download/v#{version}/zyrocli-linux-arm64"
+      url "https://github.com/yechua-silva/zyrocli/releases/download/v#{version}/zyrocli-linux-arm64"
       sha256 "ghi789..."
     else
-      url "https://github.com/secko/zyrocli/releases/download/v#{version}/zyrocli-linux-amd64"
+      url "https://github.com/yechua-silva/zyrocli/releases/download/v#{version}/zyrocli-linux-amd64"
       sha256 "jkl012..."
     end
   end
@@ -867,7 +867,7 @@ El `NPM_TOKEN` se genera desde npmjs.com → Settings → Access Tokens → Gene
 paquete npm:      @secko/zyrocli     (si "zyrocli" ya está ocupado)
                   zyrocli             (si está libre)
 Homebrew formula: zyrocli
-Go module:        github.com/secko/zyrocli
+Go module:        github.com/yechua-silva/zyrocli
 Binary:           zyrocli
 ```
 

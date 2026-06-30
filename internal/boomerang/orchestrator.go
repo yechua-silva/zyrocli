@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boundari"
-	"github.com/secko/zyrocli/internal/memory"
-	"github.com/secko/zyrocli/internal/tokens"
+	"github.com/yechua-silva/zyrocli/internal/boundari"
+	"github.com/yechua-silva/zyrocli/internal/memory"
+	"github.com/yechua-silva/zyrocli/internal/tokens"
 )
 
 // PhaseConfig configura la ejecución de una fase

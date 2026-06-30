@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/secko/zyrocli/internal/boomerang"
+	"github.com/yechua-silva/zyrocli/internal/boomerang"
 )
 
 // recentArtifacts walks openspec/ and .zyro/handoffs/ looking for files modified

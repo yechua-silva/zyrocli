@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/secko/zyrocli/internal/setup"
-	"github.com/secko/zyrocli/internal/tui"
+	"github.com/yechua-silva/zyrocli/internal/setup"
+	"github.com/yechua-silva/zyrocli/internal/tui"
 	"github.com/spf13/cobra"
 )
 

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/secko/zyrocli/internal/doc"
+	"github.com/yechua-silva/zyrocli/internal/doc"
 	"github.com/spf13/cobra"
 )
 

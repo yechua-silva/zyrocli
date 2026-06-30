@@ -22,7 +22,7 @@
 
 ## Stack
 
-- **Go 1.26+**, module: `github.com/secko/zyrocli`
+- **Go 1.26+**, module: `github.com/yechua-silva/zyrocli`
 - **HelixDB** (graph-vector DB, localhost:6969, HTTP API + Go SDK)
 - **Python MCP tools** (PydanticAI, httpx) via `uv run`
 - **Context** (Neuledge): `npm i -g @neuledge/context`

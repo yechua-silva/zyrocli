@@ -5,7 +5,7 @@ source:
 project:
   name: ZyroAgentCLI
   language: go
-  repository: github.com/secko/zyrocli
+  repository: github.com/yechua-silva/zyrocli
 validated_idea:
   problem: "ZyroCLI necesita un parser completo de handoff.yaml que valide el contrato v2.0"
   solution: "Implementar parser, validador y comando init con soporte para archivo y stdin"
@@ -21,7 +21,7 @@ mvp:
     - "Cobra init subcommand"
 governance:
   mode: structured
-  module: github.com/secko/zyrocli
+  module: github.com/yechua-silva/zyrocli
   go_version: "1.26"
   strict_tdd: false
   approvals:
