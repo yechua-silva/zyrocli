@@ -267,14 +267,14 @@ GitHub detecta automáticamente que un repo tiene un paquete npm cuando:
 {
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/secko/zyrocli.git"
+    "url": "git+https://github.com/yechua-silva/zyrocli.git"
   }
 }
 ```
 O el formato string simple:
 ```json
 {
-  "repository": "https://github.com/secko/zyrocli"
+  "repository": "https://github.com/yechua-silva/zyrocli"
 }
 ```
 **Ambos funcionan.** El formato objeto es más explícito y es el estándar de npm.
@@ -282,7 +282,7 @@ O el formato string simple:
 ### 4. Homepage field
 ```json
 {
-  "homepage": "https://github.com/secko/zyrocli#readme"
+  "homepage": "https://github.com/yechua-silva/zyrocli#readme"
 }
 ```
 Esto hace que npm muestre el enlace "Readme" que apunta al README de GitHub.
@@ -326,8 +326,8 @@ Basado en el análisis, estos son los badges que ZyroCLI debería tener (en orde
 [![License](https://img.shields.io/github/license/secko/zyrocli)](LICENSE)
 
 <!-- Línea 2: Calidad y CI -->
-[![Go Report Card](https://goreportcard.com/badge/github.com/secko/zyrocli)](https://goreportcard.com/report/github.com/secko/zyrocli)
-[![CI](https://github.com/secko/zyrocli/actions/workflows/ci.yml/badge.svg)](https://github.com/secko/zyrocli/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yechua-silva/zyrocli)](https://goreportcard.com/report/github.com/yechua-silva/zyrocli)
+[![CI](https://github.com/yechua-silva/zyrocli/actions/workflows/ci.yml/badge.svg)](https://github.com/yechua-silva/zyrocli/actions)
 [![Tests](https://img.shields.io/badge/tests-383_✔️-brightgreen)]()
 
 <!-- Opcional: npm install inline -->
@@ -347,8 +347,8 @@ Basado en el análisis, estos son los badges que ZyroCLI debería tener (en orde
 | GitHub release | `https://img.shields.io/github/v/release/secko/zyrocli` |
 | GitHub tag | `https://img.shields.io/github/v/tag/secko/zyrocli` |
 | GitHub license | `https://img.shields.io/github/license/secko/zyrocli` |
-| GitHub Actions | `https://github.com/secko/zyrocli/actions/workflows/ci.yml/badge.svg` |
-| Go Report Card | `https://goreportcard.com/badge/github.com/secko/zyrocli` |
+| GitHub Actions | `https://github.com/yechua-silva/zyrocli/actions/workflows/ci.yml/badge.svg` |
+| Go Report Card | `https://goreportcard.com/badge/github.com/yechua-silva/zyrocli` |
 | nodei.co (npm stats) | `https://nodei.co/npm/zyrocli.png?downloads=true` |
 
 ---
@@ -387,11 +387,11 @@ El package.json en `scripts/npm/package.json` **ya está correctamente configura
 {
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/secko/zyrocli.git"
+    "url": "git+https://github.com/yechua-silva/zyrocli.git"
   },
-  "homepage": "https://github.com/secko/zyrocli#readme",
+  "homepage": "https://github.com/yechua-silva/zyrocli#readme",
   "bugs": {
-    "url": "https://github.com/secko/zyrocli/issues"
+    "url": "https://github.com/yechua-silva/zyrocli/issues"
   }
 }
 ```

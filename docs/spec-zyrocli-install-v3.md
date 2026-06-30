@@ -415,9 +415,9 @@ func detectGPU() (*GPUInfo, error) {
 package main
 
 import (
-    "github.com/secko/zyrocli/internal/tui"
-    "github.com/secko/zyrocli/internal/hardware"
-    "github.com/secko/zyrocli/internal/opencode"
+    "github.com/yechua-silva/zyrocli/internal/tui"
+    "github.com/yechua-silva/zyrocli/internal/hardware"
+    "github.com/yechua-silva/zyrocli/internal/opencode"
     "github.com/spf13/cobra"
 )
 
