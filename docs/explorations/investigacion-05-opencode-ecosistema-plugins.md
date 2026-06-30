@@ -954,7 +954,7 @@ El paquete `internal/opencode/` actualmente tiene 3 responsabilidades (config, s
 3. **opencode-claude-bridge**: `https://www.npmjs.com/package/@sjawhar/opencode-claude-bridge` — Bridge Claude→OpenCode
 4. **opencode-lazy-loader**: `https://www.npmjs.com/package/opencode-lazy-loader` — Lazy MCP para skills
 5. **@opencode-ai/plugin**: `https://www.npmjs.com/package/@opencode-ai/plugin` — SDK de plugins OpenCode
-6. **ZyroAgentCLI**: `https://github.com/secko/zyrocli` — Repo actual (privado/local)
+6. **ZyroAgentCLI**: `https://github.com/yechua-silva/zyrocli` — Repo actual (privado/local)
 7. **OpenCode (Tencent Source)**: `https://github.com/tencent-source/opencode` — Repo oficial (404 verificado 2026-06-15, posible renombre o migración)
 
 ---
