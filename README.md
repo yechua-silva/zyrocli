@@ -1,9 +1,9 @@
 # ZyroCLI — Orquestador Autónomo para Desarrollo Asistido por IA
 
 [![npm version](https://img.shields.io/npm/v/zyrocli)](https://www.npmjs.com/package/zyrocli)
-[![Go version](https://img.shields.io/github/go-mod/go-version/secko/zyrocli)](https://go.dev/)
-[![License](https://img.shields.io/github/license/secko/zyrocli)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/secko/zyrocli)](https://goreportcard.com/report/github.com/secko/zyrocli)
+[![Go version](https://img.shields.io/github/go-mod/go-version/yechua-silva/zyrocli)](https://go.dev/)
+[![License](https://img.shields.io/github/license/yechua-silva/zyrocli)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yechua-silva/zyrocli)](https://goreportcard.com/report/github.com/yechua-silva/zyrocli)
 
 > **Pipeline SDD completo (F0→F4) · Memoria Causal · Seguridad por Fase · Auto-instalable**
 
@@ -231,15 +231,15 @@ Humano ──→ ZyroCLI (Go) ──→ OpenCode (Agentes IA)
 
 ```bash
 # Opción 1: Go install (requiere Go 1.26+)
-go install github.com/secko/zyrocli@latest
+go install github.com/yechua-silva/zyrocli@latest
 zyrocli install
 
 # Opción 2: binary directo (recomendado)
-curl -sSL https://github.com/secko/zyrocli/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/yechua-silva/zyrocli/releases/latest/download/install.sh | bash
 zyrocli install
 
 # Opción 3: compilar desde fuente
-git clone https://github.com/secko/zyrocli
+git clone https://github.com/yechua-silva/zyrocli
 cd zyrocli
 make build
 sudo cp ./zyrocli /usr/local/bin/
@@ -327,6 +327,16 @@ F4 (Cierre) → solo lectura, archive con approval
 - **Ollama + mxbai-embed-large** — Embeddings locales para búsqueda semántica.
 
 Gracias a todos por construir las herramientas que hacen esto posible. 🙌
+
+## 📬 Contacto
+
+Sígueme en mis redes para estar al tanto de nuevas herramientas, artículos y proyectos:
+
+- 🌐 **GitHub**: [github.com/yechua-silva](https://github.com/yechua-silva)
+- 📝 **Dev.to**: [dev.to/yechuasilva](https://dev.to/yechuasilva)
+- 💼 **LinkedIn**: [linkedin.com/in/yechua-silva](https://www.linkedin.com/in/yechua-silva)
+
+¿Preguntas, sugerencias o quieres contribuir? Abre un [issue](https://github.com/yechua-silva/zyrocli/issues) o conéctate por las redes.
 
 ## Licencia
 
