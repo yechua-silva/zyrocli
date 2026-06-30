@@ -326,7 +326,6 @@ F4 (Cierre) → solo lectura, archive con approval
 - **Python (PydanticAI)** — Lenguaje de los agentes MCP con validación tipada.
 - **Ollama + mxbai-embed-large** — Embeddings locales para búsqueda semántica.
 
-Gracias a todos por construir las herramientas que hacen esto posible. 🙌
 
 ## 📬 Contacto
 
@@ -335,8 +334,6 @@ Sígueme en mis redes para estar al tanto de nuevas herramientas, artículos y p
 - 🌐 **GitHub**: [github.com/yechua-silva](https://github.com/yechua-silva)
 - 📝 **Dev.to**: [dev.to/yechuasilva](https://dev.to/yechuasilva)
 - 💼 **LinkedIn**: [linkedin.com/in/yechua-silva](https://www.linkedin.com/in/yechua-silva)
-
-¿Preguntas, sugerencias o quieres contribuir? Abre un [issue](https://github.com/yechua-silva/zyrocli/issues) o conéctate por las redes.
 
 ## Licencia
 
