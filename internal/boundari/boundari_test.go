@@ -50,10 +50,10 @@ func TestLoadDefaultPolicy(t *testing.T) {
 		if writeRule == nil || writeRule.Action != ActionAllow {
 			t.Error("PRE-F0 should allow write_file")
 		}
-		// dispatch_task debe ser allow
-		dispatchRule := p.GetRule("dispatch_task")
+		// task_create debe ser allow
+		dispatchRule := p.GetRule("task_create")
 		if dispatchRule == nil || dispatchRule.Action != ActionAllow {
-			t.Error("PRE-F0 should allow dispatch_task")
+			t.Error("PRE-F0 should allow task_create")
 		}
 		// edit_file debe ser deny
 		editRule := p.GetRule("edit_file")

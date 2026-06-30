@@ -52,7 +52,7 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "grep", Action: ActionAllow},
 			{Name: "write_file", Action: ActionAllow},
 			{Name: "save_to_helix", Action: ActionAllow},
-			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "task_create", Action: ActionAllow},
 			{Name: "edit_file", Action: ActionDeny},
 			{Name: "execute_command", Action: ActionDeny},
 		}
@@ -65,7 +65,7 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "write_file", Action: ActionDeny},
 			{Name: "edit_file", Action: ActionDeny},
 			{Name: "execute_command", Action: ActionDeny},
-			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "task_create", Action: ActionAllow},
 		}
 	case "F3":
 		p.Description = "Implementación — permisiva (fallback)"
@@ -74,7 +74,7 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "write_file", Action: ActionAllow},
 			{Name: "edit_file", Action: ActionAllow},
 			{Name: "execute_command", Action: ActionAllow, RequireApproval: true},
-			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "task_create", Action: ActionAllow},
 			{Name: "save_to_helix", Action: ActionAllow},
 		}
 	default:
@@ -83,7 +83,7 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "write_file", Action: ActionDeny},
 			{Name: "edit_file", Action: ActionDeny},
 			{Name: "execute_command", Action: ActionDeny},
-			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "task_create", Action: ActionAllow},
 			{Name: "save_to_helix", Action: ActionAllow},
 		}
 	}

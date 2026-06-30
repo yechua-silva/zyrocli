@@ -161,6 +161,30 @@ func (tm *TaskManager) DispatchTask(ctx context.Context, name, agent, phase stri
 	return id
 }
 
+// CreateTask creates a task in Running state without auto-executing.
+// The orchestrator must call CompleteTask when done.
+func (tm *TaskManager) CreateTask(ctx context.Context, name, agent, phase string, params map[string]string) TaskID {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	tm.counter++
+	id := TaskID(fmt.Sprintf("%s-%s-%d", phase, name, tm.counter))
+
+	task := &Task{
+		ID:        id,
+		Name:      name,
+		Agent:     agent,
+		Phase:     phase,
+		Params:    params,
+		Status:    TaskRunning,
+		StartedAt: time.Now(),
+	}
+	tm.tasks[id] = task
+	tm.activeCount++
+
+	return id
+}
+
 // executeTask marca la tarea como despachada y usa el Runner si está configurado.
 // Si hay un apply.Runner, ejecuta la tarea a través del pool de gorutinas con
 // timeout y fail-fast. Si no hay runner, usa el comportamiento anterior (stub).
@@ -342,9 +366,13 @@ func (tm *TaskManager) CancelTask(id TaskID) bool {
 		return false
 	}
 
+	wasRunning := t.Status == TaskRunning
 	t.Status = TaskCancelled
 	t.Error = "cancelled by user"
 	t.DoneAt = time.Now()
+	if wasRunning {
+		tm.activeCount--
+	}
 	tm.notifyWaiters(id)
 	return true
 }
