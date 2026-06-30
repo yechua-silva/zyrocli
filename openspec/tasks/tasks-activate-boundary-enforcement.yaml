@@ -1,0 +1,387 @@
+# =============================================================================
+# Tasks: Activate Boundary Enforcement
+# =============================================================================
+# Based on: openspec/designs/design-activate-boundary-enforcement.md
+# Phase:    F2 (Design → Tasks)
+#
+# Implementation Order (ref: §16 del design):
+#   Phase 1 — Foundation (BOUND-01 → BOUND-05)
+#   Phase 2 — Core Enforcement (BOUND-06 → BOUND-12)
+#   Phase 3 — Tests & Messages (BOUND-13 → BOUND-16)
+# =============================================================================
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # PHASE 1: FOUNDATION (zero regression risk)
+  # ---------------------------------------------------------------------------
+
+  - id: "BOUND-01"
+    name: "Crear phasePRE-F0-boundari.yaml"
+    description: >
+      Crear el archivo YAML de política para la fase PRE-F0 en
+      internal/boundari/phasePRE-F0-boundari.yaml con 13 tool rules
+      (read_file, search_code, search_skills, task_context, web_search,
+      web_fetch, glob, grep, write_file, save_to_helix, dispatch_task = allow;
+      edit_file, execute_command = deny) y budget MaxToolCalls=30,
+      MaxRuntimeSecs=300.
+    files:
+      - "internal/boundari/phasePRE-F0-boundari.yaml"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "ValidatePolicy(phasePRE-F0-boundari.yaml) retorna nil"
+      - "LoadPolicy('PRE-F0', dirs) carga el archivo sin error"
+      - "Policy.Budget.MaxToolCalls == 30"
+      - "Policy.Budget.MaxRuntimeSecs == 300"
+      - "GetRule('edit_file').Action == deny"
+      - "GetRule('execute_command').Action == deny"
+      - "GetRule('write_file').Action == allow"
+      - "GetRule('dispatch_task').Action == allow"
+
+  - id: "BOUND-02"
+    name: "Agregar case PRE-F0 + dispatch_task/save_to_helix en LoadDefaultPolicy"
+    description: >
+      En internal/boundari/loader.go:
+      (a) Agregar case "PRE-F0" al switch de LoadDefaultPolicy() con las mismas
+          13 tool rules y budget 30/300 que el YAML.
+      (b) Agregar {Name: "dispatch_task", Action: ActionAllow} a los cases
+          "F0", "F3" y default.
+      (c) Agregar {Name: "save_to_helix", Action: ActionAllow} a los cases
+          "F3" y default (F0 ya tiene deny por defecto).
+    files:
+      - "internal/boundari/loader.go"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "LoadDefaultPolicy('PRE-F0').Budget.MaxToolCalls == 30"
+      - "LoadDefaultPolicy('PRE-F0').GetRule('write_file').Action == allow"
+      - "LoadDefaultPolicy('F0').GetRule('dispatch_task').Action == allow"
+      - "LoadDefaultPolicy('F3').GetRule('dispatch_task').Action == allow"
+      - "LoadDefaultPolicy('F3').GetRule('save_to_helix').Action == allow"
+      - "LoadDefaultPolicy('default').GetRule('dispatch_task').Action == allow"
+      - "go build ./internal/boundari/... compila sin error"
+
+  - id: "BOUND-03"
+    name: "Agregar dispatch_task/save_to_helix a YAMLs F0-F4"
+    description: >
+      Modificar los 5 archivos YAML de fases existentes para agregar las tool
+      rules faltantes según §6.2 del design:
+        phase0-boundari.yaml: + dispatch_task: allow
+        phase1-boundari.yaml: + dispatch_task: allow, save_to_helix: allow
+        phase2-boundari.yaml: + dispatch_task: allow
+        phase3-boundari.yaml: + dispatch_task: allow
+        phase4-boundari.yaml: + dispatch_task: allow
+      No se modifican reglas existentes, solo se agregan.
+    files:
+      - "internal/boundari/phase0-boundari.yaml"
+      - "internal/boundari/phase1-boundari.yaml"
+      - "internal/boundari/phase2-boundari.yaml"
+      - "internal/boundari/phase3-boundari.yaml"
+      - "internal/boundari/phase4-boundari.yaml"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "ValidatePolicy(phase0-boundari.yaml) retorna nil"
+      - "ValidatePolicy(phase1-boundari.yaml) retorna nil"
+      - "En F0: GetRule('dispatch_task').Action == allow (sin otras reglas nuevas)"
+      - "En F1: GetRule('dispatch_task').Action == allow y GetRule('save_to_helix').Action == allow"
+      - "En F2-F4: GetRule('dispatch_task').Action == allow"
+      - "go test ./internal/boundari/... pasa TestAllPoliciesLoad"
+
+  - id: "BOUND-04"
+    name: "Crear criteria.go con tipos AcceptanceCriteria y CriteriaStatus"
+    description: >
+      Crear internal/boomerang/criteria.go con los tipos:
+        CriteriaStatus string (constantes: CriteriaPending, CriteriaVerified,
+        CriteriaFailed) y AcceptanceCriteria struct con campos ID, Description,
+        Phase, Status, Source, TaskID. Package boomerang.
+    files:
+      - "internal/boomerang/criteria.go"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "go build ./internal/boomerang/... compila sin error"
+      - "CriteriaPending == 'pending'"
+      - "CriteriaVerified == 'verified'"
+      - "CriteriaFailed == 'failed'"
+      - "AcceptanceCriteria tiene todos los campos requeridos con sus JSON tags"
+
+  - id: "BOUND-05"
+    name: "Agregar campo AcceptanceCriteria a TaskSpec"
+    description: >
+      En internal/boomerang/orchestrator.go, agregar el campo
+      AcceptanceCriteria []AcceptanceCriteria con json tag
+      "acceptance_criteria,omitempty" al struct TaskSpec.
+    files:
+      - "internal/boomerang/orchestrator.go"
+    estimated_effort: "small"
+    dependencies:
+      - "BOUND-04"
+    acceptance_criteria:
+      - "go build ./internal/boomerang/... compila sin error"
+      - "New TaskSpec con criteria vacío: JSON serializado no incluye el campo"
+      - "New TaskSpec con criteria: JSON serializado incluye el campo"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 2: CORE ENFORCEMENT (medium risk)
+  # ---------------------------------------------------------------------------
+
+  - id: "BOUND-06"
+    name: "Cambiar firma de DelegateStep + agregar CheckTool enforcement"
+    description: >
+      En internal/boomerang/delegate.go:
+      (a) Cambiar firma: agregar enforcer *boundari.Enforcer como último
+          parámetro.
+      (b) Antes de cada DispatchTask en el loop: si enforcer != nil, llamar
+          enforcer.CheckTool("dispatch_task", ctx) con metadata task_name,
+          agent, phase. Si CheckTool.Allowed == false, saltar la tarea y
+          registrar TaskResult fallido.
+      (c) Llamar boundari.LogAudit() con el resultado de CheckTool.
+      (d) Agregar import "github.com/secko/zyrocli/internal/boundari".
+    files:
+      - "internal/boomerang/delegate.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-04"
+    acceptance_criteria:
+      - "go build ./internal/boomerang/... compila sin error"
+      - "DelegateStep con enforcer=nil: mismo comportamiento que antes"
+      - "DelegateStep con enforcer que permite dispatch_task: tarea se ejecuta normal"
+      - "DelegateStep con enforcer que deniega dispatch_task: tarea se salta, audit log se escribe"
+      - "TestDelegateStep existente: pasa con nil como 4to argumento"
+
+  - id: "BOUND-07"
+    name: "Cambiar firma de SaveStep + agregar CheckTool enforcement"
+    description: >
+      En internal/boomerang/save.go:
+      (a) Cambiar firma: agregar enforcer *boundari.Enforcer como último
+          parámetro.
+      (b) Antes de cada SaveFact en el loop: si enforcer != nil, llamar
+          enforcer.CheckTool("save_to_helix", ctx) con metadata task_name,
+          phase. Si CheckTool.Allowed == false, saltar ese fact (continue).
+      (c) Llamar boundari.LogAudit() con el resultado.
+      (d) Agregar import "github.com/secko/zyrocli/internal/boundari".
+    files:
+      - "internal/boomerang/save.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-04"
+    acceptance_criteria:
+      - "go build ./internal/boomerang/... compila sin error"
+      - "SaveStep con enforcer=nil: mismo comportamiento que antes"
+      - "SaveStep con enforcer que permite save_to_helix: FactsSaved se incrementa"
+      - "SaveStep con enforcer que deniega save_to_helix: FactsSaved == 0, audit log se escribe"
+      - "TestSaveStep existente: pasa con nil como 5to argumento"
+
+  - id: "BOUND-08"
+    name: "Conectar Enforcer lifecycle en runPhaseV2() — creación + budget + audit"
+    description: >
+      En internal/boomerang/orchestrator.go, modificar runPhaseV2():
+      (a) Agregar imports: "os", "path/filepath", "time",
+          "github.com/secko/zyrocli/internal/boundari".
+      (b) Después de result := &PhaseResult{Phase: config.Phase}:
+          - policy, err := o.boundariLoader(config.Phase)
+          - if err != nil → policy = boundari.LoadDefaultPolicy(config.Phase)
+          - enforcer := boundari.NewEnforcer(policy)
+          - boundari.ClearAuditLog()
+      (c) Antes de CADA step en el loop:
+          - if enforcer.IsBudgetExceeded() → return nil, error
+      (d) Después del step loop, antes de token estimation:
+          - Construir auditDir + auditFile + auditPath
+          - boundari.SaveAuditLog(auditPath) con warning no bloqueante
+    files:
+      - "internal/boomerang/orchestrator.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-06"
+      - "BOUND-07"
+    acceptance_criteria:
+      - "go build ./... compila sin error"
+      - "Enforcer se crea en runPhaseV2 con la policy correcta"
+      - "ClearAuditLog() se llama al inicio de la fase"
+      - "Budget exceeded: runPhaseV2 retorna error, no panic"
+      - "SaveAuditLog() se llama al final y el archivo audit/boomerang-*.jsonl existe"
+      - "Si SaveAuditLog falla, es warning no bloqueante (fase igual retorna éxito)"
+
+  - id: "BOUND-09"
+    name: "Pasar Enforcer a llamadas DelegateStep/SaveStep + QualityStep retry"
+    description: >
+      En internal/boomerang/orchestrator.go, en el step loop de runPhaseV2():
+      (a) StepDelegate: pasar enforcer a o.DelegateStep() (line 167).
+      (b) StepSave: pasar enforcer a o.SaveStep() (line 207).
+      (c) StepQuality: en el retry loop (line 198), pasar enforcer al
+          o.DelegateStep() de reintento.
+      (d) StepQuality: pasar enforcer al o.DelegateStep() del quality retry.
+    files:
+      - "internal/boomerang/orchestrator.go"
+    estimated_effort: "small"
+    dependencies:
+      - "BOUND-08"
+    acceptance_criteria:
+      - "go build ./... compila sin error"
+      - "Llamada a DelegateStep en StepDelegate pasa enforcer"
+      - "Llamada a SaveStep en StepSave pasa enforcer"
+      - "Llamada a DelegateStep dentro de QualityStep retry pasa enforcer"
+      - "Llamadas con enforcer=nil en tests backward-compatibles"
+
+  - id: "BOUND-10"
+    name: "Agregar evaluateCriteria() a QualityStep"
+    description: >
+      En internal/boomerang/quality.go:
+      (a) Agregar método evaluateCriteria(ctx, dag, delegateResult) bool.
+      (b) Llamarlo al final de QualityStep().
+      (c) La función itera criteria del DAG: si Status == CriteriaPending y
+          el task tuvo éxito → marca CriteriaVerified; si el task falló →
+          marca CriteriaFailed.
+      (d) CriteriaVerified no se re-evalúa.
+      (e) Sin criteria o nil DAG → retorna true.
+    files:
+      - "internal/boomerang/quality.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-05"
+    acceptance_criteria:
+      - "go build ./internal/boomerang/... compila sin error"
+      - "QualityStep sin criteria en DAG retorna true"
+      - "QualityStep con criteria y tasks exitosos: todos criteria → verified"
+      - "QualityStep con criteria y task fallido: criteria → failed, retorna false"
+      - "QualityStep con nil DAG o nil delegateResult: retorna true"
+
+  - id: "BOUND-11"
+    name: "Agregar CriteriaSummary + actualizar ApprovalGate"
+    description: >
+      En internal/scheduler/approval.go:
+      (a) Agregar struct CriteriaSummary {Total, Pending, Verified, Failed int}.
+      (b) Cambiar firma de ApprovalGate(phase, summary string, criteria
+          *CriteriaSummary) (bool, error).
+      (c) Si criteria != nil y criteria.Total > 0:
+          - Mostrar bloque de criteria status en el diálogo.
+          - Si criteria.Failed > 0 → retornar false, nil directamente (sin
+            preguntar al usuario).
+      (d) Si criteria == nil → comportamiento legacy.
+    files:
+      - "internal/scheduler/approval.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-10"
+    acceptance_criteria:
+      - "go build ./internal/scheduler/... compila sin error"
+      - "ApprovalGate con criteria=nil: comportamiento legacy inalterado"
+      - "ApprovalGate con criteria.Failed>0: retorna false sin preguntar"
+      - "ApprovalGate con criteria.Total>0 y Failed=0: muestra bloque y pregunta normal"
+      - "CriteriaSummary struct exportado con JSON tags"
+
+  - id: "BOUND-12"
+    name: "Agregar criteria computation en scheduler antes del gate"
+    description: >
+      En internal/scheduler/scheduler.go:
+      (a) Después de ejecutar la fase y antes de ApprovalGate, computar
+          CriteriaSummary desde el DAG.
+      (b) Si criteriaSummary.Failed > 0:
+          - Mostrar mensaje de error.
+          - No entrar al approval gate.
+          - Marcarla como StatusFail y retornar error.
+      (c) Pasar criteriaSummary a ApprovalGate.
+      (d) Manejar casos sin DAG o sin criteria (backward compat).
+    files:
+      - "internal/scheduler/scheduler.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-11"
+    acceptance_criteria:
+      - "go build ./... compila sin error"
+      - "Fase sin criteria: ApprovalGate recibe nil, funciona normal"
+      - "Fase con criteria fallidos: pipeline se detiene antes del gate"
+      - "Fase con criteria ok: ApprovalGate recibe criteriaSummary, flujo continua"
+      - "DAG nil: no panic, criteriaSummary nil"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 3: TESTS & MESSAGES (low risk)
+  # ---------------------------------------------------------------------------
+
+  - id: "BOUND-13"
+    name: "Actualizar mensajes en cmd/zyrocli/run.go"
+    description: >
+      En cmd/zyrocli/run.go, actualizar los mensajes de pipeline para incluir
+      PRE-F0:
+      (a) Short description → "Execute SDD pipeline (PRE-F0→F0→F1→F2→F3→F4)"
+      (b) Long description → mencionar "6-phase SDD pipeline"
+      (c) Pipeline message → "PRE-F0 → F0 → F1 → F2 → F3 → F4"
+      (d) Flag help → listar "PRE-F0, F0, F1, F2, F3, F4"
+    files:
+      - "cmd/zyrocli/run.go"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "go build ./cmd/zyrocli/... compila sin error"
+      - "zyrocli run --help muestra PRE-F0 en la lista de fases"
+      - "zyrocli run --phase PRE-F0 ejecuta sin error de fase desconocida"
+      - "El mensaje de pipeline show incluye PRE-F0"
+
+  - id: "BOUND-14"
+    name: "Actualizar boomerang_test.go — pasar nil como enforcer"
+    description: >
+      En internal/boomerang/boomerang_test.go:
+      (a) TestDelegateStep: agregar nil como 4to argumento.
+      (b) TestSaveStep: agregar nil como 5to argumento.
+      (c) No se cambia lógica de tests existentes (nil = legacy behavior).
+    files:
+      - "internal/boomerang/boomerang_test.go"
+    estimated_effort: "small"
+    dependencies:
+      - "BOUND-06"
+      - "BOUND-07"
+    acceptance_criteria:
+      - "go test ./internal/boomerang/... pasa todos los tests existentes"
+      - "TestDelegateStep: DelegateStep se llama con enforcer=nil, mismo resultado"
+      - "TestSaveStep: SaveStep se llama con enforcer=nil, FactsSaved==2"
+      - "Sin cambios en lógica de tests, solo firma"
+
+  - id: "BOUND-15"
+    name: "Agregar tests de default policy para PRE-F0 en boundari_test.go"
+    description: >
+      En internal/boundari/boundari_test.go:
+      (a) TestLoadDefaultPolicy: agregar subtest "PRE-F0" que verifica:
+          write_file=allow, dispatch_task=allow, edit_file=deny,
+          budget 30/300.
+      (b) TestAllPoliciesLoad: agregar "PRE-F0" al slice de fases para
+          verificar que el YAML se carga correctamente.
+    files:
+      - "internal/boundari/boundari_test.go"
+    estimated_effort: "small"
+    dependencies:
+      - "BOUND-01"
+      - "BOUND-02"
+    acceptance_criteria:
+      - "go test ./internal/boundari/... -run TestLoadDefaultPolicy/PRE-F0 pasa"
+      - "go test ./internal/boundari/... -run TestAllPoliciesLoad pasa"
+      - "TestAllPoliciesLoad incluye PRE-F0 en el listado de fases"
+      - "PRE-F0 policy carga correctamente (write_file=allow, edit_file=deny)"
+
+  - id: "BOUND-16"
+    name: "Agregar tests de enforcement (DelegateStep/SaveStep con enforcer)"
+    description: >
+      Agregar tests nuevos en internal/boomerang/boomerang_test.go:
+      (a) TestDelegateStepWithEnforcerAllows: enforcer que permite dispatch_task
+          → tarea se despacha normalmente.
+      (b) TestDelegateStepWithEnforcerDenies: enforcer que deniega dispatch_task
+          → tarea se salta, audit log tiene evento denied.
+      (c) TestSaveStepWithEnforcerDenies: enforcer que deniega save_to_helix
+          → FactsSaved == 0.
+      (d) TestBudgetExceeded: enforcer con budget=0 → IsBudgetExceeded aborta.
+      (e) TestEvaluateCriteriaAllPass/OneFail/NoCriteria/NilDAG: tests para
+          evaluateCriteria().
+    files:
+      - "internal/boomerang/boomerang_test.go"
+      - "internal/boomerang/quality_test.go"  # si existe o se crea
+    estimated_effort: "medium"
+    dependencies:
+      - "BOUND-06"
+      - "BOUND-07"
+      - "BOUND-10"
+    acceptance_criteria:
+      - "go test ./internal/boomerang/... -run TestDelegateStepWithEnforcer pasa"
+      - "go test ./internal/boomerang/... -run TestSaveStepWithEnforcer pasa"
+      - "go test ./internal/boomerang/... -run TestBudgetExceeded pasa"
+      - "go test ./internal/boomerang/... -run TestEvaluateCriteria pasa"
+      - "100% de los tests nuevos pasan en primera ejecución"

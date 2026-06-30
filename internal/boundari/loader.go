@@ -38,6 +38,24 @@ func LoadDefaultPolicy(phase string) *Policy {
 		Budget:  Budget{MaxToolCalls: 50, MaxRuntimeSecs: 300},
 	}
 	switch phase {
+	case "PRE-F0":
+		p.Description = "Alineación de dominio — lectura + .md (fallback)"
+		p.Budget = Budget{MaxToolCalls: 30, MaxRuntimeSecs: 300}
+		p.Tools = []ToolRule{
+			{Name: "read_file", Action: ActionAllow},
+			{Name: "search_code", Action: ActionAllow},
+			{Name: "search_skills", Action: ActionAllow},
+			{Name: "task_context", Action: ActionAllow},
+			{Name: "web_search", Action: ActionAllow},
+			{Name: "web_fetch", Action: ActionAllow},
+			{Name: "glob", Action: ActionAllow},
+			{Name: "grep", Action: ActionAllow},
+			{Name: "write_file", Action: ActionAllow},
+			{Name: "save_to_helix", Action: ActionAllow},
+			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "edit_file", Action: ActionDeny},
+			{Name: "execute_command", Action: ActionDeny},
+		}
 	case "F0":
 		p.Description = "Investigación — solo lectura (fallback)"
 		p.Tools = []ToolRule{
@@ -47,6 +65,7 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "write_file", Action: ActionDeny},
 			{Name: "edit_file", Action: ActionDeny},
 			{Name: "execute_command", Action: ActionDeny},
+			{Name: "dispatch_task", Action: ActionAllow},
 		}
 	case "F3":
 		p.Description = "Implementación — permisiva (fallback)"
@@ -55,6 +74,8 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "write_file", Action: ActionAllow},
 			{Name: "edit_file", Action: ActionAllow},
 			{Name: "execute_command", Action: ActionAllow, RequireApproval: true},
+			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "save_to_helix", Action: ActionAllow},
 		}
 	default:
 		p.Description = "Modo lectura (fallback)"
@@ -62,6 +83,8 @@ func LoadDefaultPolicy(phase string) *Policy {
 			{Name: "write_file", Action: ActionDeny},
 			{Name: "edit_file", Action: ActionDeny},
 			{Name: "execute_command", Action: ActionDeny},
+			{Name: "dispatch_task", Action: ActionAllow},
+			{Name: "save_to_helix", Action: ActionAllow},
 		}
 	}
 	return p

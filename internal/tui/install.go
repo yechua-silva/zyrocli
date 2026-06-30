@@ -256,11 +256,10 @@ func runStep(step *InstallStep, index int) tea.Cmd {
 
 // RunInstall executes the installation TUI and returns any fatal error.
 func RunInstall(steps []InstallStep) error {
-	// Handle empty steps case without initializing Tea program
+
 	if len(steps) == 0 {
 		return nil
 	}
-
 	m := NewInstallModel(steps)
 	p := tea.NewProgram(m)
 

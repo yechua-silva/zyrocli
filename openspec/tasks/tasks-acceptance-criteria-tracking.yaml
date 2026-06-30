@@ -1,0 +1,414 @@
+# =============================================================================
+# Tasks: Acceptance Criteria Tracking
+# =============================================================================
+# Fuente: openspec/designs/design-acceptance-criteria-tracking.md
+# Fecha:   2026-06-20
+# Fase:    F2 (Tasks)
+#
+# Dependencia global: AC-01 debe completarse primero.
+# Cada tarea está diseñada para < 30 minutos de implementación.
+# =============================================================================
+
+project: "ZyroAgentCLI"
+
+tasks:
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 1: Tipos base en boomerang
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-01"
+    name: "Crear struct AcceptanceCriteria y CriteriaSummary"
+    description: >
+      Crear internal/boomerang/criteria.go con los tipos base:
+      CriteriaStatus, AcceptanceCriteria, CriteriaSummary y
+      la función NewCriteriaSummary().
+    files:
+      - "internal/boomerang/criteria.go"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "AcceptanceCriteria tiene campos ID, Description, Phase, Status, Source, TaskID con tags json y yaml"
+      - "CriteriaStatus es tipo string con constantes CriteriaPending, CriteriaVerified, CriteriaFailed"
+      - "CriteriaSummary tiene campos Total, Pending, Verified, Failed (int)"
+      - "NewCriteriaSummary(criteria []AcceptanceCriteria) computa correctamente los counts"
+      - "NewCriteriaSummary(nil o slice vacío) retorna CriteriaSummary con todos los campos en 0"
+
+  - id: "AC-02"
+    name: "Agregar campo AcceptanceCriteria a TaskSpec"
+    description: >
+      Agregar campo AcceptanceCriteria []AcceptanceCriteria a la
+      struct TaskSpec en internal/boomerang/orchestrator.go.
+      Usar json:"acceptance_criteria,omitempty" para backward compat.
+    files:
+      - "internal/boomerang/orchestrator.go"
+    estimated_effort: "tiny"
+    dependencies:
+      - "AC-01"
+    acceptance_criteria:
+      - "TaskSpec tiene nuevo campo AcceptanceCriteria []AcceptanceCriteria"
+      - "Campo usa omitempty: TaskSpec sin criteria serializa sin el campo"
+      - "TaskSpec con criteria serializa correctamente a JSON"
+      - "No rompe compilación ni tests existentes"
+
+  - id: "AC-03"
+    name: "Agregar campos AcceptanceCriteria y CriteriaSummary a PhaseResult"
+    description: >
+      Agregar AcceptanceCriteria []AcceptanceCriteria y
+      CriteriaSummary *CriteriaSummary a PhaseResult en
+      internal/boomerang/orchestrator.go. Ambos con omitempty.
+    files:
+      - "internal/boomerang/orchestrator.go"
+    estimated_effort: "tiny"
+    dependencies:
+      - "AC-01"
+    acceptance_criteria:
+      - "PhaseResult tiene AcceptanceCriteria []AcceptanceCriteria con omitempty"
+      - "PhaseResult tiene CriteriaSummary *CriteriaSummary con omitempty"
+      - "PhaseResult sin criteria es compatible con código existente"
+      - "No rompe compilación ni tests existentes"
+
+  - id: "AC-04"
+    name: "Agregar campo AcceptanceCriteria a TaskRow (HelixDB)"
+    description: >
+      Agregar AcceptanceCriteria []map[string]any a TaskRow en
+      internal/db/helix/types.go. Usar []map[string]any para
+      evitar dependencia circular helix → boomerang.
+    files:
+      - "internal/db/helix/types.go"
+    estimated_effort: "tiny"
+    dependencies: []
+    acceptance_criteria:
+      - "TaskRow tiene AcceptanceCriteria []map[string]any con omitempty"
+      - "TaskRow sin criteria serializa JSON sin el campo"
+      - "No hay import del paquete boomerang en helix"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 2: Configuración y pipeline Boomerang
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-05"
+    name: "Agregar campo AcceptanceCriteria a PhaseConfigV2"
+    description: >
+      Agregar AcceptanceCriteria []AcceptanceCriteria a
+      PhaseConfigV2 en internal/boomerang/phase_config.go.
+      Este campo transporta criteria heredados de la fase
+      anterior al ciclo Boomerang.
+    files:
+      - "internal/boomerang/phase_config.go"
+    estimated_effort: "tiny"
+    dependencies:
+      - "AC-01"
+    acceptance_criteria:
+      - "PhaseConfigV2 tiene AcceptanceCriteria []AcceptanceCriteria"
+      - "ConfigV2 sin criteria (nil slice) funciona normalmente"
+      - "DefaultPhaseConfigV2() inicializa el campo como nil"
+
+  - id: "AC-06"
+    name: "Implementar evaluateCriteria en QualityStep"
+    description: >
+      Agregar método evaluateCriteria a BoomerangOrchestrator en
+      internal/boomerang/quality.go. Evalúa cada acceptance criterion
+      contra delegateResult.TaskResults: task success + output no vacío
+      → CriteriaVerified; task falló → CriteriaFailed.
+      Llamar evaluateCriteria desde QualityStep.
+    files:
+      - "internal/boomerang/quality.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "AC-01"
+      - "AC-02"
+    acceptance_criteria:
+      - "evaluateCriteria acepta ctx, phase string, dag *TaskDAG, delegateResult *DelegateResult"
+      - "Criteria sin task asociada (TaskID vacío) se marcan como CriteriaFailed"
+      - "Criteria con task success + output no vacío → CriteriaVerified"
+      - "Criteria con task fallida → CriteriaFailed"
+      - "Criteria ya en estado Verified/Failed no se reevalúan"
+      - "Slice vacío de criteria → retorna true sin cambios"
+      - "DAG nil → retorna true"
+      - "QualityStep llama evaluateCriteria después de go build y task check"
+      - "QualityStep retorna false si evaluateCriteria retorna false"
+
+  - id: "AC-07"
+    name: "Inyectar criteria en DAG desde ThinkStep"
+    description: >
+      Modificar ThinkStep y generateDAGForPhase* en
+      internal/boomerang/think.go para aceptar criteria opcionales
+      y asignarlos a las TaskSpec correspondientes según el nombre
+      de la tarea (filterByTask).
+    files:
+      - "internal/boomerang/think.go"
+    estimated_effort: "small"
+    dependencies:
+      - "AC-02"
+      - "AC-05"
+    acceptance_criteria:
+      - "ThinkStep acepta criteria []AcceptanceCriteria como parámetro adicional"
+      - "generateDAGForPhase3 asigna criteria a tasks según filterByTask (match por TaskID ≈ task name)"
+      - "generateDAGForPhase* sin criteria asigna slices vacíos → comportamiento legacy"
+      - "Si no hay criteria, el DAG generado es idéntico al actual"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 3: Persistencia en HelixDB
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-08"
+    name: "Modificar saveTaskToHelix para serializar criteria"
+    description: >
+      Modificar saveTaskToHelix en cmd/zyrocli/mcp_server.go para
+      aceptar criteria []AcceptanceCriteria. Serializar cada
+      AcceptanceCriteria a map[string]any y agregarlo a props
+      como acceptance_criteria. Incluir función deserializeCriteria
+      para HelixDB → Go.
+    files:
+      - "cmd/zyrocli/mcp_server.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "AC-01"
+      - "AC-04"
+    acceptance_criteria:
+      - "saveTaskToHelix acepta criteria []boomerang.AcceptanceCriteria como nuevo parámetro"
+      - "Criteria se serializa a []map[string]any con keys: id, description, phase, status, source, task_id"
+      - "Criteria nil/vacío no agrega campo acceptance_criteria a props"
+      - "HelixDB no disponible → log warning, skip persistencia (backward compat)"
+      - "deserializeCriteria(raw []interface{}) → []boomerang.AcceptanceCriteria existe y funciona"
+      - "No rompe llamadas existentes a saveTaskToHelix (criteria nil es válido)"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 4: Scheduler — Result, ApprovalGate, Handoff
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-09"
+    name: "Agregar CriteriaSummary a scheduler.Result"
+    description: >
+      Agregar campo CriteriaSummary *boomerang.CriteriaSummary a
+      Result en internal/scheduler/phase.go. El scheduler necesita
+      este campo para pasarlo a ApprovalGate y writeHandoff.
+    files:
+      - "internal/scheduler/phase.go"
+    estimated_effort: "tiny"
+    dependencies:
+      - "AC-01"
+    acceptance_criteria:
+      - "Result tiene CriteriaSummary *boomerang.CriteriaSummary"
+      - "Result sin criteria (nil) es válido para backward compat"
+      - "No rompe compilación ni tests existentes"
+
+  - id: "AC-10"
+    name: "Modificar ApprovalGate para aceptar CriteriaSummary"
+    description: >
+      Modificar ApprovalGate en internal/scheduler/approval.go para
+      aceptar *CriteriaSummary. Si Failed > 0, mostrar advertencia
+      y bloquear (retornar false). Si Verified == Total, mostrar OK
+      y continuar. Actualizar GuidedApproval con campo Criteria.
+    files:
+      - "internal/scheduler/approval.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "AC-01"
+      - "AC-09"
+    acceptance_criteria:
+      - "ApprovalGate(phase Phase, summary string, criteria *CriteriaSummary) es la nueva firma"
+      - "CriteriaSummary nil → comportamiento legacy (sin criteria check)"
+      - "CriteriaSummary con Failed > 0 → mostrar tabla con Failed destacado y retornar false"
+      - "CriteriaSummary con Verified == Total → mostrar resumen verde y retornar true"
+      - "GuidedApproval tiene campo Criteria *CriteriaSummary"
+      - "PromptApproval muestra tabla de criteria si Criteria no es nil"
+      - "PromptApproval sin Criteria muestra diálogo legacy"
+      - "Existe función PromptApproval legacy que llama ApprovalGate con criteria nil ← backward compat"
+
+  - id: "AC-11"
+    name: "Modificar writeHandoff para incluir tabla de criteria"
+    description: >
+      Modificar writeHandoff en internal/scheduler/handoff.go para
+      aceptar *CriteriaSummary. Si no es nil, agregar sección
+      'Acceptance Criteria' con tabla de estado al handoff markdown.
+    files:
+      - "internal/scheduler/handoff.go"
+    estimated_effort: "small"
+    dependencies:
+      - "AC-01"
+      - "AC-09"
+    acceptance_criteria:
+      - "writeHandoff(phaseName string, result *Result, nextPhase Phase, criteria *CriteriaSummary) es la nueva firma"
+      - "CriteriaSummary nil → handoff sin tabla de criteria (backward compat)"
+      - "CriteriaSummary no nil → incluye sección '## Acceptance Criteria' con tabla estado|cantidad"
+      - "Tabla muestra ✅ Verified, ⏳ Pending, ❌ Failed, y Total"
+      - "Formato markdown de la tabla es consistente con el diseño"
+      - "No rompe handoffs de fases existentes sin criteria"
+
+  - id: "AC-12"
+    name: "Conectar pipeline de criteria en scheduler.Run"
+    description: >
+      Modificar scheduler.Run en internal/scheduler/scheduler.go
+      para extraer CriteriaSummary de boomerangResult, poblarlo en
+      scheduler.Result, y pasarlo a writeHandoff y ApprovalGate.
+    files:
+      - "internal/scheduler/scheduler.go"
+    estimated_effort: "small"
+    dependencies:
+      - "AC-06"
+      - "AC-09"
+      - "AC-10"
+      - "AC-11"
+    acceptance_criteria:
+      - "Result.CriteriaSummary se puebla desde boomerangResult.CriteriaSummary cuando usa Boomerang"
+      - "Result.CriteriaSummary es nil cuando no usa Boomerang (phase stub)"
+      - "writeHandoff recibe result.CriteriaSummary como argumento"
+      - "ApprovalGate recibe result.CriteriaSummary como argumento"
+      - "Sin Boomerang (phase stub), criteria se pasa como nil → comportamiento legacy"
+      - "No hay cambios en la lógica de approval cuando criteria es nil"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 5: Handoff Payload
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-13"
+    name: "Agregar AcceptanceCriteriaInfo, AcceptanceSummary a Payload"
+    description: >
+      Agregar tipos AcceptanceCriteriaInfo, AcceptanceSummary y
+      campos nuevos a UserStory y Payload en
+      internal/handoff/payload.go.
+      UserStory.Criteria y Payload.AcceptanceStatus con omitempty.
+    files:
+      - "internal/handoff/payload.go"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "AcceptanceCriteriaInfo tiene ID, Description (string), Status (string) con tags yaml y json"
+      - "AcceptanceSummary tiene Total, Verified, Failed, Pending (int) con tags yaml y json"
+      - "UserStory tiene nuevo campo Criteria []AcceptanceCriteriaInfo con omitempty"
+      - "UserStory mantiene campo Acceptance string legacy para backward compat"
+      - "Payload tiene nuevo campo AcceptanceStatus *AcceptanceSummary con omitempty"
+      - "Payload sin criteria serializa YAML/JSON sin los nuevos campos"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 6: Persistencia post-evaluación
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-14"
+    name: "Persistir criteria status actualizado en SaveStep"
+    description: >
+      Modificar SaveStep en internal/boomerang/save.go para
+      persistir el status actualizado de cada acceptance criterion
+      en HelixDB (vía helixClient.UpdateNode) después de que
+      QualityStep los evalúe.
+    files:
+      - "internal/boomerang/save.go"
+    estimated_effort: "small"
+    dependencies:
+      - "AC-06"
+      - "AC-08"
+    acceptance_criteria:
+      - "SaveStep recibe criteria []AcceptanceCriteria como parámetro"
+      - "Si criteria no está vacío, actualiza cada criterion en HelixDB (status actualizado)"
+      - "Si HelixDB no está disponible, log warning y continúa (no blocking)"
+      - "Si no hay criteria que persistir, comportamiento legacy sin cambios"
+      - "SaveStep retorna error si la actualización falla (pero no aborta la fase)"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 7: Subagente sdd-verify (opcional)
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-15"
+    name: "Actualizar sdd-verify SKILL.md para leer y reportar criteria"
+    description: >
+      Modificar .config/opencode/plugins/skills/sdd-verify/SKILL.md
+      para que el subagente lea acceptance criteria desde HelixDB
+      (vía task_context), evalúe evidencia contra cada criterion,
+      y reporte compliance matrix en verify-report.md.
+    files:
+      - ".config/opencode/plugins/skills/sdd-verify/SKILL.md"
+    estimated_effort: "small"
+    dependencies: []
+    acceptance_criteria:
+      - "SKILL.md incluye paso 3.5: Leer acceptance criteria de HelixDB vía task_context"
+      - "SKILL.md describe cómo evaluar cada criterion pendiente contra evidencia de implementación"
+      - "SKILL.md indica generar compliance matrix en verify-report.md con columnas ID, Description, Task, Status, Evidence"
+      - "SKILL.md aclara que sdd-verify SOLO LEE criteria, NO escribe a HelixDB (Boomerang.SaveStep persiste)"
+      - "SKILL.md mantiene todos los pasos existentes (solo se agrega paso nuevo)"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # BLOQUE 8: Tests
+  # ──────────────────────────────────────────────────────────────────────────
+
+  - id: "AC-16"
+    name: "Escribir tests unitarios de criteria"
+    description: >
+      Crear tests unitarios para los nuevos tipos y funciones:
+      - criteria_test.go: TestNewCriteriaSummary, TestCriteriaSummaryCounts,
+        TestAcceptanceCriteriaJSON, TestAcceptanceCriteriaYAML
+      - quality_test.go: TestEvaluateCriteriaAllPass, TestEvaluateCriteriaFail,
+        TestEvaluateCriteriaEmpty, TestEvaluateCriteriaNoDAG,
+        TestEvaluateCriteriaMixed, TestDeserializeCriteria
+      - orchestrator_test.go: TestTaskSpecWithCriteria, TestTaskSpecWithoutCriteria,
+        TestPhaseResultCriteria
+      - approval_test.go: TestApprovalGateBlocksFailed, TestApprovalGateAllowsVerified,
+        TestApprovalGateNoCriteria
+      - handoff_test.go: TestWriteHandoffWithCriteria, TestWriteHandoffWithoutCriteria
+      - mcp_server_test.go: TestSaveTaskToHelixWithCriteria, TestSaveTaskToHelixNoCriteria
+      - phase_config_test.go: TestPhaseConfigV2WithCriteria
+    files:
+      - "internal/boomerang/criteria_test.go"
+      - "internal/boomerang/quality_test.go"
+      - "internal/boomerang/orchestrator_test.go"
+      - "internal/scheduler/approval_test.go"
+      - "internal/scheduler/handoff_test.go"
+      - "cmd/zyrocli/mcp_server_test.go"
+      - "internal/boomerang/phase_config_test.go"
+    estimated_effort: "large"
+    dependencies:
+      - "AC-01"
+      - "AC-02"
+      - "AC-03"
+      - "AC-06"
+      - "AC-08"
+      - "AC-10"
+      - "AC-11"
+      - "AC-13"
+    acceptance_criteria:
+      - "TestNewCriteriaSummary: slice vacío → todos counts en 0"
+      - "TestCriteriaSummaryCounts: mezcla pending/verified/failed → counts correctos"
+      - "TestAcceptanceCriteriaJSON: marshal/unmarshal de AcceptanceCriteria es correcto"
+      - "TestAcceptanceCriteriaYAML: marshal/unmarshal YAML es correcto"
+      - "TestEvaluateCriteriaAllPass: DAG con criteria pending, delegate success → todo verified"
+      - "TestEvaluateCriteriaFail: delegate fallido → failed status, retorna false"
+      - "TestEvaluateCriteriaEmpty: slice vacío → retorna true"
+      - "TestEvaluateCriteriaNoDAG: DAG nil → retorna true"
+      - "TestEvaluateCriteriaMixed: algunos verified, otros pending → retorna false"
+      - "TestTaskSpecWithCriteria: TaskSpec con criteria serializa JSON correcto"
+      - "TestTaskSpecWithoutCriteria: TaskSpec sin criteria → omitempty, no aparece en JSON"
+      - "TestPhaseResultCriteria: PhaseResult transporta criteria correctamente"
+      - "TestApprovalGateBlocksFailed: CriteriaSummary con Failed > 0 → retorna false"
+      - "TestApprovalGateAllowsVerified: criteria all verified → retorna true"
+      - "TestApprovalGateNoCriteria: criteria nil → comportamiento legacy"
+      - "TestWriteHandoffWithCriteria: markdown incluye tabla de criteria"
+      - "TestWriteHandoffWithoutCriteria: markdown sin tabla (nil criteria)"
+      - "TestSaveTaskToHelixWithCriteria: serializa criteria a map correctamente"
+      - "TestSaveTaskToHelixNoCriteria: sin criteria, props no tiene acceptance_criteria"
+      - "TestPhaseConfigV2WithCriteria: PhaseConfigV2 transporta criteria"
+      - "Todos los tests pasan: go test ./internal/boomerang/... ./internal/scheduler/... ./internal/handoff/... ./cmd/zyrocli/..."
+
+  - id: "AC-17"
+    name: "Escribir tests de integración del pipeline con criteria"
+    description: >
+      Crear tests de integración en internal/boomerang/ y
+      internal/scheduler/ que validen el flujo completo de
+      criteria: desde PhaseConfigV2 → ThinkStep → DelegateStep
+      → QualityStep → SaveStep → scheduler.Result → ApprovalGate
+      → writeHandoff.
+    files:
+      - "internal/boomerang/boomerang_test.go"
+      - "internal/scheduler/scheduler_test.go"
+    estimated_effort: "medium"
+    dependencies:
+      - "AC-06"
+      - "AC-07"
+      - "AC-12"
+      - "AC-14"
+    acceptance_criteria:
+      - "TestPipelineF3CriteriaEval: Boomerang F3 con criteria → QualityStep evalúa → PhaseResult.CriteriaSummary poblado"
+      - "TestPipelineF3CriteriaFail: Boomerang F3 con criteria que fallan → PhaseResult.Success=false"
+      - "TestCriteriaPersistenceHelixDB: saveTaskToHelix con criteria → HelixDB tiene datos (mock)"
+      - "TestSchedulerResultWithCriteria: scheduler.Run con Boomerang → Result.CriteriaSummary poblado"
+      - "Todos los tests de integración usan mocks de HelixDB donde sea necesario"
+      - "go test ./internal/boomerang/... ./internal/scheduler/... pasa completo"

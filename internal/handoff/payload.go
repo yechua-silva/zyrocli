@@ -20,10 +20,26 @@ type ValidatedIdea struct {
 	Rationale string `yaml:"rationale,omitempty"`
 }
 
+// AcceptanceCriteriaInfo represents an acceptance criterion for structured handoff tracking.
+type AcceptanceCriteriaInfo struct {
+	ID          string `yaml:"id" json:"id"`
+	Description string `yaml:"description" json:"description"`
+	Status      string `yaml:"status" json:"status"`
+}
+
+// AcceptanceSummary resumen global de acceptance criteria al final del pipeline.
+type AcceptanceSummary struct {
+	Total    int `yaml:"total" json:"total"`
+	Verified int `yaml:"verified" json:"verified"`
+	Failed   int `yaml:"failed" json:"failed"`
+	Pending  int `yaml:"pending" json:"pending"`
+}
+
 // UserStory captures a single user story for the change.
 type UserStory struct {
-	Story      string `yaml:"story,omitempty"`
-	Acceptance string `yaml:"acceptance,omitempty"`
+	Story      string                   `yaml:"story,omitempty"`
+	Acceptance string                   `yaml:"acceptance,omitempty"` // se mantiene por backward compat
+	Criteria   []AcceptanceCriteriaInfo `yaml:"criteria,omitempty"`   // structured criteria (NUEVO)
 }
 
 // MVP defines the minimum viable product scope.
@@ -65,15 +81,16 @@ type Limits struct {
 
 // Payload is the top-level handoff structure read from handoff.yaml.
 type Payload struct {
-	Version       string        `yaml:"version"`
-	Source        Source        `yaml:"source"`
-	Project       Project       `yaml:"project"`
-	ValidatedIdea ValidatedIdea `yaml:"validated_idea,omitempty"`
-	UserStory     UserStory     `yaml:"user_story,omitempty"`
-	MVP           MVP           `yaml:"mvp,omitempty"`
-	Governance    Governance    `yaml:"governance"`
-	Testing       Testing       `yaml:"testing"`
-	Limits        Limits        `yaml:"limits,omitempty"`
-	Capabilities  []string      `yaml:"capabilities,omitempty"`  // project capabilities for C-I-O traceability
-	Dependencies  []string      `yaml:"dependencies,omitempty"`  // external dependencies for C-I-O traceability
+	Version          string             `yaml:"version"`
+	Source           Source             `yaml:"source"`
+	Project          Project            `yaml:"project"`
+	ValidatedIdea    ValidatedIdea      `yaml:"validated_idea,omitempty"`
+	UserStory        UserStory          `yaml:"user_story,omitempty"`
+	MVP              MVP                `yaml:"mvp,omitempty"`
+	Governance       Governance         `yaml:"governance"`
+	Testing          Testing            `yaml:"testing"`
+	Limits           Limits             `yaml:"limits,omitempty"`
+	Capabilities     []string           `yaml:"capabilities,omitempty"`  // project capabilities for C-I-O traceability
+	Dependencies     []string           `yaml:"dependencies,omitempty"`  // external dependencies for C-I-O traceability
+	AcceptanceStatus *AcceptanceSummary `yaml:"acceptance_status,omitempty"` // NUEVO: resumen global de criteria
 }

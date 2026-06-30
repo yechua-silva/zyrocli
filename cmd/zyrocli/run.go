@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/secko/zyrocli/internal/apply"
+	"github.com/secko/zyrocli/internal/boomerang"
 	"github.com/secko/zyrocli/internal/handoff"
 	"github.com/secko/zyrocli/internal/scaffold"
 	"github.com/secko/zyrocli/internal/scheduler"
@@ -16,13 +18,13 @@ var runPhase string
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Execute SDD pipeline (F0→F1→F2→F3→F4)",
-	Long: `Execute the 5-phase SDD pipeline (F0→F1→F2→F3→F4) sequentially
+	Short: "Execute SDD pipeline (PRE-F0→F0→F1→F2→F3→F4)",
+	Long: `Execute the 6-phase SDD pipeline (PRE-F0→F0→F1→F2→F3→F4) sequentially
 with human-validation approval gates after each phase. All phases require
 explicit approval before proceeding — there is no automatic mode.
 
 Flags:
-  --phase F0   Run a single phase only (F0, F1, F2, F3, or F4)`,
+  --phase PRE-F0   Run a single phase only (PRE-F0, F0, F1, F2, F3, or F4)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check if project is already initialized
 		projectDir := "." // current directory, or read from handoff.yaml project.name
@@ -54,14 +56,30 @@ Flags:
 			return fmt.Errorf("run: handoff.yaml not found in current directory\nRun 'zyrocli init <file>' first")
 		}
 
-		// Load config from handoff.yaml
-		cfg, err := scheduler.LoadConfig("handoff.yaml")
-		if err != nil {
-			return fmt.Errorf("run: %w", err)
+		// Create TaskManager with apply.Runner for real task execution
+		applyRunner := apply.NewRunner(apply.DefaultPoolConfig())
+		tm := boomerang.NewTaskManagerWithRunner(5, applyRunner)
+
+		// Load config with Boomerang initialized, merge from handoff.yaml
+		cfg := scheduler.NewDefaultConfig(projectDir, tm)
+		if _, err := os.Stat("handoff.yaml"); err == nil {
+			if hfCfg, err := scheduler.LoadConfig("handoff.yaml"); err == nil {
+				// Merge: handoff sobrescribe defaults
+				if hfCfg.Mode != "" {
+					cfg.Mode = hfCfg.Mode
+				}
+				if hfCfg.MaxLoops > 0 {
+					cfg.MaxLoops = hfCfg.MaxLoops
+				}
+				if hfCfg.PhaseTimeout > 0 {
+					cfg.PhaseTimeout = hfCfg.PhaseTimeout
+				}
+			}
 		}
 
 		// Build phase runners in order (F0→F4)
 		runners := []scheduler.PhaseRunner{
+			&scheduler.PREF0Runner{},
 			&scheduler.F0Runner{},
 			&scheduler.F1Runner{},
 			&scheduler.F2Runner{},
@@ -85,7 +103,7 @@ Flags:
 				}
 			}
 			if !valid {
-				return fmt.Errorf("run: invalid phase %q, must be one of: F0, F1, F2, F3, F4", runPhase)
+				return fmt.Errorf("run: invalid phase %q, must be one of: PRE-F0, F0, F1, F2, F3, F4", runPhase)
 			}
 
 			cmd.Printf("▶ Running phase %s...\n", phase)
@@ -95,7 +113,7 @@ Flags:
 			}
 			results = append(results, result)
 		} else {
-			cmd.Println("▶ Iniciando el proceso de desarrollo (F0 → F1 → F2 → F3 → F4)")
+			cmd.Println("▶ Iniciando el proceso de desarrollo (PRE-F0 → F0 → F1 → F2 → F3 → F4)")
 
 			var err error
 			results, err = s.Run(ctx)
@@ -122,5 +140,5 @@ Flags:
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringVarP(&runPhase, "phase", "p", "", "run a single phase only (F0, F1, F2, F3, F4)")
+	runCmd.Flags().StringVarP(&runPhase, "phase", "p", "", "run a single phase only (PRE-F0, F0, F1, F2, F3, F4)")
 }

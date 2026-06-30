@@ -1,3 +1,7 @@
+---
+name: zyro-skills-find
+description: "Fase 0: descubre skills en skills.sh y guarda en HelixDB"
+---
 # F0: Descubrimiento de Skills
 
 ## ⚠️ REGLAS
@@ -21,3 +25,12 @@
 
 ## NO HACER
 No instalar. No validar audits. Solo descubrir y guardar en HelixDB.
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-skills-find",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
+})`

@@ -1,3 +1,7 @@
+---
+name: zyro-sdd-apply
+description: "Implementa código siguiendo specs, design y tasks"
+---
 # F3: Implementación de Código
 
 ## ⚠️ REGLAS
@@ -13,3 +17,12 @@
 3. Implementá solo lo que pide la task
 4. Corré los tests del proyecto
 5. Guarda en HelixDB: `save_to_helix(label="CodeModule", properties={task_id, path, language, summary})`
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-sdd-apply",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
+})`

@@ -6,7 +6,7 @@ Uso:
     cat log.json | python fact_extractor.py --phase F1
 
 Output JSON:
-    {"facts": [{"type": "decision", "content": "...", "confidence": 0.9, ...}]}
+    {{"facts": [{{"type": "decision", "content": "...", "confidence": 0.9, ...}}]}}
 """
 
 import argparse
@@ -18,6 +18,12 @@ from typing import Any
 
 # Patrones para detectar tipos de hechos
 FACT_PATTERNS: dict[str, list[str]] = {
+    "task": [
+        r"#\s*todo",
+        r"#\s*fixme",
+        r"todo:",
+        r"fixme:",
+    ],
     "decision": [
         r"vamos a usar",
         r"decidimos",
@@ -29,19 +35,17 @@ FACT_PATTERNS: dict[str, list[str]] = {
         r"se adopta",
     ],
     "error": [
-        r"error",
-        r"bug",
-        r"fallo",
-        r"falla",
-        r"excepción",
-        r"crash",
+        r"\berror\b",
+        r"\bbug\b",
+        r"\bfallo\b",
+        r"\bfalla\b",
+        r"\bexcepción\b",
+        r"\bcrash\b",
         r"no funciona",
         r"tira error",
-        r"FIXME",
-        r"TODO",
     ],
     "preference": [
-        r"prefiero",
+        r"\bprefiero\b",
         r"mejor usar",
         r"en lugar de",
         r"no me gusta",
@@ -57,8 +61,8 @@ FACT_PATTERNS: dict[str, list[str]] = {
     ],
     "dependency": [
         r"dependemos de",
-        r"requiere",
-        r"necesita",
+        r"\brequiere\b",
+        r"\bnecesita\b",
         r"depende de",
         r"tiene como dependencia",
     ],
@@ -80,11 +84,9 @@ def extract_facts(log_text: str, phase: str) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
     seen: set[str] = set()
 
-    log_lower = log_text.lower()
-
     for fact_type, patterns in FACT_PATTERNS.items():
         for pattern in patterns:
-            matches = re.finditer(pattern, log_lower)
+            matches = re.finditer(pattern, log_text, re.IGNORECASE)
             for match in matches:
                 start = max(0, match.start() - 50)
                 end = min(len(log_text), match.end() + 100)
@@ -128,7 +130,7 @@ contenido, confianza (0-1).
 Conversación:
 {log_text[:2000]}
 
-Output JSON: {"facts": [...]}
+Output JSON: {{"facts": [...]}}
 """
         response = httpx.post(
             "http://localhost:11434/api/generate",
@@ -152,8 +154,9 @@ Output JSON: {"facts": [...]}
                 f.setdefault("salience", 0.7)
                 f.setdefault("decay_rate", 0.05)
             return facts
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[fact_extractor] Error en LLM mode: {e}", file=sys.stderr)
+        return []
 
     return []
 

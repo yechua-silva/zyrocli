@@ -35,6 +35,16 @@ type Policy struct {
 	Tools       []ToolRule `yaml:"tools"`
 }
 
+// GetRule busca una ToolRule por nombre. Retorna nil si no existe.
+func (p *Policy) GetRule(name string) *ToolRule {
+	for i := range p.Tools {
+		if p.Tools[i].Name == name {
+			return &p.Tools[i]
+		}
+	}
+	return nil
+}
+
 // EnforcementResult resultado de verificar una tool
 type EnforcementResult struct {
 	Allowed bool

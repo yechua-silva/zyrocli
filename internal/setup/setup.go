@@ -56,7 +56,7 @@ func RunSetup(dryRun, verbose, force bool) error {
 	if osName != "linux" && osName != "darwin" {
 		fmt.Fprintf(os.Stderr, "❌ Sistema operativo no soportado: %s\n", osName)
 		fmt.Fprintf(os.Stderr, "   Solo se soportan Linux y macOS.\n")
-		fmt.Fprintf(os.Stderr, "   Reporta un issue en: https://github.com/secko/zyrocli/issues\n")
+		fmt.Fprintf(os.Stderr, "   Reporta un issue en: https://github.com/yechua-silva/zyrocli/issues\n")
 		return fmt.Errorf("OS no soportado: %s", osName)
 	}
 

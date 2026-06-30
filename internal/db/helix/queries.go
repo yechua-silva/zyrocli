@@ -11,6 +11,17 @@ type SearchResultRow struct {
 	Content string  `json:"content"`
 	Score   float64 `json:"score"`
 	Source  string  `json:"source"` // "vector" | "text"
+	// NUEVOS: extraídos del ValueMap
+	Salience       float64 `json:"salience,omitempty"`
+	Confidence     float64 `json:"confidence,omitempty"`
+	Phase          string  `json:"phase,omitempty"`
+	ProjectID      string  `json:"project_id,omitempty"`
+	IsActive       bool    `json:"is_active,omitempty"`
+	IsStale        bool    `json:"is_stale,omitempty"`
+	AccessCount    int64   `json:"access_count,omitempty"`
+	DecayRate      float64 `json:"decay_rate,omitempty"`
+	CreatedAt      string  `json:"created_at,omitempty"`
+	LastAccessedAt string  `json:"last_accessed_at,omitempty"`
 }
 
 // HybridSearchOptions opciones para búsqueda híbrida.
@@ -101,7 +112,10 @@ func CreateFact(label string, props map[string]interface{}, embedding []float32)
 		pairs = append(pairs, helixsdk.Prop(k, v))
 	}
 	q := helixsdk.WriteQuery("create_fact").
-		VarAs("fact", helixsdk.G().AddN(label, pairs))
+		VarAs("fact",
+			helixsdk.G().AddN(label, pairs).
+				Project(helixsdk.ProjectPropAs("$id", "id")),
+		)
 	if embedding != nil {
 		q = q.VarAs("fact_with_embedding",
 			helixsdk.G().N(helixsdk.NodeVar("fact")).

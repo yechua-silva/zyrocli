@@ -1,5 +1,5 @@
 # Binarios
-zyrocli
+/zyrocli
 zyrocli.exe
 zyrocli-*
 
@@ -14,11 +14,18 @@ __pycache__/
 # Build
 dist/
 build/
+# Binarios Go compilados
+*.out
+*.test
 
 # Env
 .env
 .env.local
 .env.*.local
+
+# Logs
+logs/
+*.log
 
 # IDE
 .idea/
@@ -39,10 +46,17 @@ todo-app/
 # Config local
 .zyro/
 .helix/
+.codex/
 target/
-*.log
 
 # Artifacts generados / basura
 typescript
 mcp-servers-extracted-entries.md
 graphify-out/
+
+# Benchmark artifacts
+scripts/benchmark/
+docs/benchmark/
+
+# Runtime audit logs
+internal/boomerang/audit/

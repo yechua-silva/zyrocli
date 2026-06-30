@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/secko/zyrocli/internal/setup"
 )
 
 // EmbeddingProvider define el origen de embeddings
@@ -49,7 +51,9 @@ func DefaultEmbeddingConfig() EmbeddingConfig {
 type EmbeddingService struct {
 	config EmbeddingConfig
 	client *http.Client
-	cache  sync.Map // map[string][]float32
+	cache  sync.Map   // map[string][]float32
+	keys   []string   // FIFO order for eviction
+	mu     sync.Mutex // guards keys slice
 }
 
 // NewEmbeddingService crea un nuevo servicio de embeddings
@@ -58,6 +62,27 @@ func NewEmbeddingService(config EmbeddingConfig) *EmbeddingService {
 		config: config,
 		client: &http.Client{Timeout: config.Timeout},
 	}
+}
+
+// evictIfNeeded elimina entradas más antiguas si el caché excede CacheSize (FIFO)
+func (s *EmbeddingService) evictIfNeeded() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.config.CacheSize <= 0 || len(s.keys) <= s.config.CacheSize {
+		return
+	}
+
+	// Eliminar el 10% más antiguo cuando se excede el límite
+	evictCount := s.config.CacheSize / 10
+	if evictCount < 1 {
+		evictCount = 1
+	}
+
+	for i := 0; i < evictCount && i < len(s.keys); i++ {
+		s.cache.Delete(s.keys[i])
+	}
+	s.keys = s.keys[evictCount:]
 }
 
 // Embed genera un embedding para un texto
@@ -83,6 +108,10 @@ func (s *EmbeddingService) Embed(ctx context.Context, text string) ([]float32, e
 
 	// Store cache
 	s.cache.Store(text, result[0])
+	s.mu.Lock()
+	s.keys = append(s.keys, text)
+	s.mu.Unlock()
+	s.evictIfNeeded()
 
 	return result[0], nil
 }
@@ -128,8 +157,13 @@ func (s *EmbeddingService) EmbedBatch(ctx context.Context, texts []string) ([][]
 			idx := uncachedIdx[i+j]
 			results[idx] = emb
 			s.cache.Store(uncached[i+j], emb)
+			s.mu.Lock()
+			s.keys = append(s.keys, uncached[i+j])
+			s.mu.Unlock()
 		}
 	}
+
+	s.evictIfNeeded()
 
 	return results, nil
 }
@@ -224,11 +258,11 @@ func (s *EmbeddingService) embedOpenAI(ctx context.Context, texts []string) ([][
 func (s *EmbeddingService) embedOllama(ctx context.Context, texts []string) ([][]float32, error) {
 	baseURL := s.config.BaseURL
 	if baseURL == "" {
-		baseURL = "http://localhost:11434"
+		baseURL = setup.GetOllamaURL()
 	}
 	model := s.config.Model
 	if model == "" {
-		model = "nomic-embed-text"
+		model = setup.GetEmbeddingModel()
 	}
 
 	var embeddings [][]float32

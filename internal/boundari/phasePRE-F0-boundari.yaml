@@ -1,0 +1,33 @@
+version: "1.0"
+phase: "PRE-F0"
+description: "Alineación de dominio — solo lectura + escritura de documentos .md. No ejecutar comandos."
+budget:
+  max_tool_calls: 30
+  max_runtime_seconds: 300
+tools:
+  - name: "read_file"
+    action: allow
+  - name: "search_code"
+    action: allow
+  - name: "search_skills"
+    action: allow
+  - name: "task_context"
+    action: allow
+  - name: "web_search"
+    action: allow
+  - name: "web_fetch"
+    action: allow
+  - name: "glob"
+    action: allow
+  - name: "grep"
+    action: allow
+  - name: "write_file"
+    action: allow
+  - name: "save_to_helix"
+    action: allow
+  - name: "dispatch_task"
+    action: allow
+  - name: "edit_file"
+    action: deny
+  - name: "execute_command"
+    action: deny

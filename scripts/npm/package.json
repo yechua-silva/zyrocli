@@ -1,6 +1,6 @@
 {
   "name": "zyrocli",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "description": "Orquestador Go para desarrollo asistido por IA con pipeline F0-F4",
   "bin": {
     "zyrocli": "bin/zyrocli.js"

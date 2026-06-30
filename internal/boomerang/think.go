@@ -8,8 +8,15 @@ import (
 // ThinkStep planifica un DAG de tareas según la fase y el contexto de memoria
 // recuperado en el paso anterior. Cada fase tiene un DAG predefinido que
 // maximiza el paralelismo posible.
-func (o *BoomerangOrchestrator) ThinkStep(ctx context.Context, phase, memoryContext string) (*TaskDAG, error) {
+// criteria se inyecta desde PhaseConfigV2 y se asigna a las tareas según corresponda.
+func (o *BoomerangOrchestrator) ThinkStep(ctx context.Context, phase, memoryContext string, criteria []AcceptanceCriteria) (*TaskDAG, error) {
+	if criteria == nil {
+		criteria = []AcceptanceCriteria{}
+	}
+
 	switch phase {
+	case "PRE-F0":
+		return generateDAGForPreF0(), nil
 	case "F0":
 		return generateDAGForPhase0(), nil
 	case "F1":
@@ -17,12 +24,21 @@ func (o *BoomerangOrchestrator) ThinkStep(ctx context.Context, phase, memoryCont
 	case "F2":
 		return generateDAGForPhase2(), nil
 	case "F3":
-		return generateDAGForPhase3(), nil
+		return generateDAGForPhase3(criteria), nil
 	case "F4":
 		return generateDAGForPhase4(), nil
 	default:
 		return nil, fmt.Errorf("boomerang: unknown phase %s", phase)
 	}
+}
+
+// generateDAGForPreF0 retorna el DAG de PRE-F0: alineación de dominio.
+func generateDAGForPreF0() *TaskDAG {
+	dag := &TaskDAG{}
+	dag.Tasks = []TaskSpec{
+		{ID: 1, Name: "domain-alignment", Description: "Alinear dominio y contexto", Agent: "zyro-pre-f0", Tags: []string{"alignment"}},
+	}
+	return dag
 }
 
 // generateDAGForPhase0 retorna el DAG de F0: 3 tareas de investigación en paralelo.
@@ -57,13 +73,43 @@ func generateDAGForPhase2() *TaskDAG {
 }
 
 // generateDAGForPhase3 retorna el DAG de F3: implementación + verificación en paralelo.
-func generateDAGForPhase3() *TaskDAG {
+// Si se proveen acceptance criteria, se asignan a las tareas según coincidencia de TaskID.
+func generateDAGForPhase3(criteria []AcceptanceCriteria) *TaskDAG {
 	dag := &TaskDAG{ParallelGroups: [][]int{{0, 1}}}
 	dag.Tasks = []TaskSpec{
-		{ID: 1, Name: "implement", Description: "Implementar cambios según spec", Agent: "zyro-sdd-apply", Tags: []string{"implementation"}},
-		{ID: 2, Name: "verify", Description: "Verificar implementación", Agent: "zyro-sdd-verify", Tags: []string{"verification"}},
+		{
+			ID: 1, Name: "implement",
+			Description:        "Implementar cambios según spec",
+			Agent:              "zyro-sdd-apply",
+			Tags:               []string{"implementation"},
+			AcceptanceCriteria: filterCriteriaByTask(criteria, "implement"),
+		},
+		{
+			ID: 2, Name: "verify",
+			Description:        "Verificar implementación",
+			Agent:              "zyro-sdd-verify",
+			Tags:               []string{"verification"},
+			AcceptanceCriteria: filterCriteriaByTask(criteria, "verify"),
+		},
 	}
 	return dag
+}
+
+// filterCriteriaByTask filtra los criteria cuya TaskID coincida con el nombre de la tarea.
+// Los criteria sin TaskID se asignan solo a la tarea principal ("implement").
+// Los criteria con TaskID específico se asignan solo a la tarea que coincida.
+func filterCriteriaByTask(criteria []AcceptanceCriteria, taskName string) []AcceptanceCriteria {
+	var filtered []AcceptanceCriteria
+	for _, c := range criteria {
+		if c.TaskID == "" && taskName == "implement" {
+			// Criteria sin TaskID específico van a "implement" (tarea principal)
+			filtered = append(filtered, c)
+		} else if c.TaskID != "" && c.TaskID == taskName {
+			// Criteria con TaskID específico van a la tarea que coincida
+			filtered = append(filtered, c)
+		}
+	}
+	return filtered
 }
 
 // generateDAGForPhase4 retorna el DAG de F4: archivo y cierre.

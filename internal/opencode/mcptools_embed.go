@@ -38,7 +38,18 @@ func WriteMCPTools() (string, error) {
 
 		// path = "mcptools/runner.py" → extract "runner.py"
 		relPath := strings.TrimPrefix(path, "mcptools/")
+
+		// Skip .venv files (shouldn't be embedded, but just in case)
+		if strings.Contains(relPath, ".venv/") {
+			return nil
+		}
+
 		outPath := filepath.Join(mcpDir, relPath)
+
+		// Crear directorio padre (defensivo, para archivos anidados)
+		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+			return fmt.Errorf("opencode: create dir %s: %w", filepath.Dir(outPath), err)
+		}
 
 		content, err := mcptoolsFS.ReadFile(path)
 		if err != nil {

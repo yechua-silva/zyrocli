@@ -1,3 +1,7 @@
+---
+name: zyro-phase-0-libraries
+description: "Fase 0: investiga librerías con Context + GitMCP, guarda en HelixDB"
+---
 # F0: Descubrimiento de Librerías
 
 ## ⚠️ REGLAS
@@ -22,3 +26,12 @@
 
 ## OUTPUT
 Lista de IDs de librerías creadas en HelixDB. Mínimo 1.
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-phase-0-libraries",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
+})`

@@ -1,0 +1,11 @@
+# State file for fix-body-nil-urls-dinamicas
+schema: spec-driven
+phase: archive
+dependencies:
+  proposal: all_done
+  specs: all_done
+  design: all_done
+  tasks: all_done
+  apply: all_done
+  verify: all_done
+  archive: ready

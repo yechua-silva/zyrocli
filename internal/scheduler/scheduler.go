@@ -36,16 +36,29 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 		phaseCtx, cancel := context.WithTimeout(ctx, s.config.PhaseTimeout)
 
 		// MEMORIA CAUSAL: inyectar contexto antes de ejecutar la fase
+		// En modo Boomerang, PrePhase se omite porque Boomerang.RunPhase
+		// arranca con MemoryStep() que internamente hace recall — evitaría doble recall.
+		// En modo single-phase, PrePhase inyecta el contexto en cfg.MemoryContext.
 		memoryContext := ""
 		if s.config.MemoryHooks != nil {
-			mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase.Name(), s.config.Module)
-			if err == nil && mc != "" {
-				memoryContext = mc
+			if s.config.Boomerang == nil {
+				mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase.Name(), s.config.Module)
+				if err == nil && mc != "" {
+					memoryContext = mc
+					s.config.MemoryContext = mc
+				}
+			} else {
+				// En modo Boomerang, MemoryStep() interno hace recall.
+				// Extraer contexto del resultado si está disponible.
+				memoryContext = "Boomerang gestiona memoria internamente vía MemoryStep()"
 			}
 		}
 
-		var result *Result
+			var result *Result
 		var err error
+
+		// Criteria summary para approval y handoff
+		var criteriaSummary *boomerang.CriteriaSummary
 
 		// Si hay Boomerang, usarlo (ciclo completo de 6 pasos)
 		if s.config.Boomerang != nil {
@@ -60,11 +73,13 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 				cancel()
 				return results, fmt.Errorf("boomerang phase %s: %w", phase.Name(), boomerErr)
 			}
+			criteriaSummary = boomerangResult.CriteriaSummary
 			result = &Result{
-				Phase:   Phase(boomerangResult.Phase),
-				Status:  StatusSuccess,
-				Summary: fmt.Sprintf("Boomerang: %d tasks, quality=%v, facts=%d",
+				Phase:           Phase(boomerangResult.Phase),
+				Status:          StatusSuccess,
+				Summary:         fmt.Sprintf("Boomerang: %d tasks, quality=%v, facts=%d",
 					boomerangResult.TasksPlanned, boomerangResult.QualityOK, boomerangResult.FactsSaved),
+				CriteriaSummary: criteriaSummary,
 			}
 		} else {
 			result, err = phase.Run(phaseCtx, s.config)
@@ -94,13 +109,19 @@ func (s *Scheduler) Run(ctx context.Context) ([]*Result, error) {
 		result.MemoryContext = memoryContext
 		results = append(results, result)
 
+		// Handoff: write phase completion artifact
+		nextPhase := validator.NextPhase()
+		if hfErr := writeHandoff(string(phaseName), result, nextPhase, result.CriteriaSummary); hfErr != nil {
+			fmt.Printf("  ⚠ handoff: %v\n", hfErr)
+		}
+
 		// If the phase itself reported failure or abort, stop execution
 		if result.Status == StatusFail || result.Status == StatusAbort {
 			return results, fmt.Errorf("scheduler: phase %s ended with status %s", phaseName, result.Status)
 		}
 
 		// Mandatory approval gate
-		approved, err := ApprovalGate(result.Phase, result.Summary)
+		approved, err := ApprovalGate(result.Phase, result.Summary, result.CriteriaSummary)
 		if err != nil {
 			return results, fmt.Errorf("scheduler: approval error: %w", err)
 		}
@@ -135,8 +156,7 @@ func (s *Scheduler) RunPhase(ctx context.Context, phase Phase) (*Result, error) 
 			if s.config.MemoryHooks != nil {
 				mc, err := s.config.MemoryHooks.PrePhase(phaseCtx, phase, s.config.Module)
 				if err == nil && mc != "" {
-					// TODO: inyectar mc en config o contexto para que phase.Run la use
-					_ = mc
+					s.config.MemoryContext = mc
 				}
 			}
 
@@ -162,13 +182,9 @@ func NewHarnessValidator(phases []Phase) *HarnessValidator {
 }
 
 // ValidateTransition checks that moving from `from` to `to` is valid:
-//   - `approved` MUST be true (human validation is required)
-//   - The transition MUST follow the sequential DAG order
+//   - The transition MUST follow the sequential DAG order (F0→F1, not F0→F2)
+//   - Approval is enforced by the caller (scheduler.Run / MacroPhaseRunner)
 func (h *HarnessValidator) ValidateTransition(from Phase, to Phase, approved bool) error {
-	if !approved {
-		return fmt.Errorf("harness: transition %s→%s blocked: human approval required", from, to)
-	}
-
 	fromIdx := -1
 	toIdx := -1
 	for i, p := range h.allPhases {
@@ -181,6 +197,9 @@ func (h *HarnessValidator) ValidateTransition(from Phase, to Phase, approved boo
 	}
 	if fromIdx == -1 {
 		return fmt.Errorf("harness: unknown phase %q in transition %s→%s", from, from, to)
+	}
+	if !approved {
+		return fmt.Errorf("harness: transition %s→%s blocked: requires approval", from, to)
 	}
 	// Allow same-phase validation (phase just completed)
 	if toIdx == -1 || toIdx == fromIdx {

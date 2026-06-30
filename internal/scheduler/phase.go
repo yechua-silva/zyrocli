@@ -11,15 +11,16 @@ import (
 type Phase string
 
 const (
-	PhaseF0 Phase = "F0"
-	PhaseF1 Phase = "F1"
-	PhaseF2 Phase = "F2"
-	PhaseF3 Phase = "F3"
-	PhaseF4 Phase = "F4"
+	PhasePREF0 Phase = "PRE-F0"
+	PhaseF0    Phase = "F0"
+	PhaseF1    Phase = "F1"
+	PhaseF2    Phase = "F2"
+	PhaseF3    Phase = "F3"
+	PhaseF4    Phase = "F4"
 )
 
 // AllPhases is the ordered list of all phases.
-var AllPhases = []Phase{PhaseF0, PhaseF1, PhaseF2, PhaseF3, PhaseF4}
+var AllPhases = []Phase{PhasePREF0, PhaseF0, PhaseF1, PhaseF2, PhaseF3, PhaseF4}
 
 // Status represents a phase execution result status.
 type Status string
@@ -41,15 +42,17 @@ type Config struct {
 	PhaseTimeout time.Duration               // parsed from limits.phase_timeout
 	MemoryHooks  *MemoryHooks                // hooks de memoria causal (T-4.9)
 	Boomerang    *boomerang.BoomerangOrchestrator // orquestador Boomerang (T-5.12)
+	MemoryContext string                      // contexto de memoria causal inyectado por PrePhase (C2)
 }
 
 // Result holds the outcome of a single phase execution.
 type Result struct {
-	Phase         Phase
-	Status        Status
-	Summary       string
-	Error         error
-	MemoryContext string // contexto de memoria causal inyectado (T-4.9)
+	Phase           Phase
+	Status          Status
+	Summary         string
+	Error           error
+	MemoryContext   string                  // contexto de memoria causal inyectado (T-4.9)
+	CriteriaSummary *boomerang.CriteriaSummary // resumen de acceptance criteria (nil si no hay)
 }
 
 // PhaseRunner is the interface each phase must implement.

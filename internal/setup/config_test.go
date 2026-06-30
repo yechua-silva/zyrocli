@@ -183,3 +183,82 @@ func TestConfigFields(t *testing.T) {
 		t.Error("expected verbose=true")
 	}
 }
+
+func TestGetEmbeddingModel_Default(t *testing.T) {
+	// Sin env var ni config, debe retornar default
+	t.Setenv("ZYRO_EMBEDDING_MODEL", "")
+	result := GetEmbeddingModel()
+	if result != "mxbai-embed-large" {
+		t.Errorf("expected mxbai-embed-large, got %s", result)
+	}
+}
+
+func TestGetEmbeddingModel_EnvVar(t *testing.T) {
+	t.Setenv("ZYRO_EMBEDDING_MODEL", "all-minilm")
+	result := GetEmbeddingModel()
+	if result != "all-minilm" {
+		t.Errorf("expected all-minilm, got %s", result)
+	}
+}
+
+func TestGetEmbeddingDims_Default(t *testing.T) {
+	t.Setenv("ZYRO_EMBEDDING_MODEL", "") // reset
+	t.Setenv("ZYRO_EMBEDDING_DIMS", "")
+	result := GetEmbeddingDims()
+	if result != 1024 {
+		t.Errorf("expected 1024 (default mxbai), got %d", result)
+	}
+}
+
+func TestGetEmbeddingDims_EnvVar(t *testing.T) {
+	t.Setenv("ZYRO_EMBEDDING_DIMS", "384")
+	result := GetEmbeddingDims()
+	if result != 384 {
+		t.Errorf("expected 384, got %d", result)
+	}
+}
+
+func TestGetEmbeddingDims_InvalidEnvVar(t *testing.T) {
+	t.Setenv("ZYRO_EMBEDDING_DIMS", "not-a-number")
+	result := GetEmbeddingDims()
+	if result < 1 {
+		t.Errorf("expected fallback dims, got %d", result)
+	}
+}
+
+func TestModelDims_Known(t *testing.T) {
+	tests := []struct {
+		model string
+		dims  int
+	}{
+		{"mxbai-embed-large", 1024},
+		{"mxbai-embed-large:latest", 1024},
+		{"nomic-embed-text", 768},
+		{"nomic-embed-text:latest", 768},
+		{"all-minilm", 384},
+		{"all-minilm:latest", 384},
+		{"unknown-model", 1024},
+	}
+	for _, tt := range tests {
+		d := ModelDims(tt.model)
+		if d != tt.dims {
+			t.Errorf("ModelDims(%q) = %d, want %d", tt.model, d, tt.dims)
+		}
+	}
+}
+
+func TestGetChatModel_Default(t *testing.T) {
+	t.Setenv("ZYRO_CHAT_MODEL", "")
+	result := GetChatModel()
+	if result != "phi4-mini:3.8b" {
+		t.Errorf("expected phi4-mini:3.8b, got %s", result)
+	}
+}
+
+func TestGetChatModel_EnvVar(t *testing.T) {
+	t.Setenv("ZYRO_CHAT_MODEL", "llama3.2:3b")
+	result := GetChatModel()
+	if result != "llama3.2:3b" {
+		t.Errorf("expected llama3.2:3b, got %s", result)
+	}
+}

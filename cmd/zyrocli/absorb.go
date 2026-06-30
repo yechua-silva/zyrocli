@@ -8,21 +8,34 @@ import (
 	"strings"
 
 	helix "github.com/secko/zyrocli/internal/db/helix"
+	"github.com/secko/zyrocli/internal/codeparse"
 	"github.com/spf13/cobra"
 )
 
-var absorbDir string
+var (
+	absorbDir  string
+	absorbCode bool
+)
 
 // absorbCmd scans a docs/ directory and ingests markdown files into HelixDB
 // as Document nodes with topic_key, content, and file_path properties.
 var absorbCmd = &cobra.Command{
 	Use:   "absorb [path]",
-	Short: "Ingest markdown files from docs/ into HelixDB",
-	Long: `Scan a directory (default: docs/) for .md files, read each one,
-and create a Document node in HelixDB with:
+	Short: "Ingest docs or Go source code into HelixDB",
+	Long: `Scan a directory (default: docs/) and create nodes in HelixDB.
+
+Mode 1 — Markdown docs (default): scan .md files, create Document nodes with:
   - topic_key:  the relative path without extension
   - content:    the file body (first 10000 bytes)
   - file_path:  the relative path from the scanned directory
+
+Mode 2 — Go source code (--code flag): scan .go files, parse with go/ast,
+create CodeNode entries with:
+  - topic_key:  the file name without extension
+  - content:    summary of package, exported functions, types, deps
+  - file_path:  the file path
+  - language:   "go"
+  - node_type:  "CodeNode"
 
 Connects to HelixDB at localhost:6969 (override via HELIX_URL env var).`,
 	Args: cobra.MaximumNArgs(1),
@@ -48,26 +61,17 @@ Connects to HelixDB at localhost:6969 (override via HELIX_URL env var).`,
 			return fmt.Errorf("absorb: %q is not a directory", baseDir)
 		}
 
-		// Build HelixDB client.
-		helixURL := os.Getenv("HELIX_URL")
-		if helixURL == "" {
-			helixURL = "http://localhost:6969"
-		}
-		opts := []helix.Option{helix.WithBaseURL(helixURL)}
-		if pid := os.Getenv("HELIX_PROJECT_ID"); pid != "" {
-			opts = append(opts, helix.WithProjectID(pid))
+		// If --code flag is set, parse Go source files
+		if absorbCode {
+			return absorbCodeFiles(cmd, absBase)
 		}
 
-		client, err := helix.NewClient(context.Background(), opts...)
+		// Build HelixDB client
+		client, err := newHelixClient()
 		if err != nil {
-			return fmt.Errorf("absorb: HelixDB connection failed: %w", err)
+			return err
 		}
 		defer client.Close()
-
-		// Auto-start HelixDB if needed
-		if err := client.EnsureStarted(context.Background()); err != nil {
-			return fmt.Errorf("cannot connect to HelixDB: %w", err)
-		}
 
 		// Walk the directory tree looking for .md files.
 		var ingested int
@@ -134,7 +138,74 @@ Connects to HelixDB at localhost:6969 (override via HELIX_URL env var).`,
 	},
 }
 
+// newHelixClient creates a HelixDB client from environment configuration.
+// Reads HELIX_URL and HELIX_PROJECT_ID env vars with sensible defaults.
+func newHelixClient() (*helix.Client, error) {
+	helixURL := os.Getenv("HELIX_URL")
+	if helixURL == "" {
+		helixURL = "http://localhost:6969"
+	}
+	opts := []helix.Option{helix.WithBaseURL(helixURL)}
+	if pid := os.Getenv("HELIX_PROJECT_ID"); pid != "" {
+		opts = append(opts, helix.WithProjectID(pid))
+	}
+
+	client, err := helix.NewClient(context.Background(), opts...)
+	if err != nil {
+		return nil, fmt.Errorf("absorb: HelixDB connection failed: %w", err)
+	}
+
+	if err := client.EnsureStarted(context.Background()); err != nil {
+		client.Close()
+		return nil, fmt.Errorf("cannot connect to HelixDB: %w", err)
+	}
+
+	return client, nil
+}
+
+// absorbCodeFiles parses Go source files in the given directory and creates
+// CodeNode entries in HelixDB with parsed package info, functions, types, and imports.
+func absorbCodeFiles(cmd *cobra.Command, absBase string) error {
+	results, err := codeparse.ParseDir(absBase)
+	if err != nil {
+		return fmt.Errorf("absorb: parse code: %w", err)
+	}
+
+	if len(results) == 0 {
+		cmd.Printf("⚠ No Go files found in %s/\n", absBase)
+		return nil
+	}
+
+	// Build HelixDB client
+	client, err := newHelixClient()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	var ingested int
+	for _, result := range results {
+		summary := codeparse.GenerateSummary(result)
+		props := map[string]any{
+			"path":     result.File,
+			"name":     filepath.Base(result.File),
+			"summary":  summary,
+			"language": "go",
+			"hash":     "", // hash no disponible sin leer el archivo completo
+		}
+		if _, err := client.CreateNode(context.Background(), "CodeNode", props); err != nil {
+			cmd.PrintErrf("  ⚠ error ingesting %s: %v\n", result.File, err)
+			continue
+		}
+		ingested++
+	}
+
+	cmd.Printf("✓ Ingested %d Go file(s) from %s/\n", ingested, absBase)
+	return nil
+}
+
 func init() {
 	rootCmd.AddCommand(absorbCmd)
 	absorbCmd.Flags().StringVarP(&absorbDir, "dir", "d", "docs/", "directory to scan for markdown files")
+	absorbCmd.Flags().BoolVarP(&absorbCode, "code", "c", false, "parse Go source files instead of markdown docs")
 }

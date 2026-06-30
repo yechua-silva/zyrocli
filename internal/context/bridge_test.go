@@ -2,7 +2,7 @@ package context
 
 import (
 	"bytes"
-	"context"
+	stdctx "context"
 	"encoding/json"
 	"io"
 	"strings"
@@ -70,7 +70,7 @@ func TestBridge_sendRequest_Success(t *testing.T) {
 		stopGraceful: defaultStopGraceful,
 	}
 
-	result, err := b.sendRequest(context.Background(), stdin, stdout, 1, "query_docs", map[string]string{
+	result, err := b.sendRequest(stdctx.Background(), stdin, stdout, 1, "query_docs", map[string]string{
 		"library_id": "/vercel/next.js",
 		"query":      "app router",
 	})
@@ -102,7 +102,7 @@ func TestBridge_sendRequest_JSONRPCError(t *testing.T) {
 		stopGraceful: defaultStopGraceful,
 	}
 
-	_, err := b.sendRequest(context.Background(), stdin, stdout, 1, "query_docs", map[string]string{})
+	_, err := b.sendRequest(stdctx.Background(), stdin, stdout, 1, "query_docs", map[string]string{})
 	if err == nil {
 		t.Fatal("expected error for JSON-RPC error response")
 	}
@@ -121,7 +121,7 @@ func TestBridge_sendRequest_Timeout(t *testing.T) {
 		stopGraceful: defaultStopGraceful,
 	}
 
-	_, err := b.sendRequest(context.Background(), stdin, stdout, 1, "query_docs", map[string]string{})
+	_, err := b.sendRequest(stdctx.Background(), stdin, stdout, 1, "query_docs", map[string]string{})
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
@@ -169,7 +169,7 @@ func TestBridge_IsRunning_NotStarted(t *testing.T) {
 
 func TestBridge_Start_AlreadyRunning(t *testing.T) {
 	b := &Bridge{running: true}
-	err := b.Start(context.Background())
+	err := b.Start(stdctx.Background())
 	if err == nil {
 		t.Fatal("expected error for double start")
 	}
@@ -201,7 +201,7 @@ func TestBridge_QueryDocs_PipeMock(t *testing.T) {
 		stopGraceful: defaultStopGraceful,
 	}
 
-	result, err := b.QueryDocs(context.Background(), "/vercel/next.js", "app router")
+	result, err := b.QueryDocs(stdctx.Background(), "/vercel/next.js", "app router")
 	if err != nil {
 		t.Fatalf("QueryDocs() error = %v", err)
 	}
@@ -239,7 +239,7 @@ func TestBridge_ResolveLibraryID_PipeMock(t *testing.T) {
 		stopGraceful: defaultStopGraceful,
 	}
 
-	libID, err := b.ResolveLibraryID(context.Background(), "next.js")
+	libID, err := b.ResolveLibraryID(stdctx.Background(), "next.js")
 	if err != nil {
 		t.Fatalf("ResolveLibraryID() error = %v", err)
 	}
@@ -251,7 +251,7 @@ func TestBridge_ResolveLibraryID_PipeMock(t *testing.T) {
 
 func TestBridge_QueryDocs_NotRunning(t *testing.T) {
 	b := NewBridge()
-	_, err := b.QueryDocs(context.Background(), "/vercel/next.js", "app router")
+	_, err := b.QueryDocs(stdctx.Background(), "/vercel/next.js", "app router")
 	if err == nil {
 		t.Fatal("expected error when bridge not running")
 	}
@@ -262,7 +262,7 @@ func TestBridge_QueryDocs_NotRunning(t *testing.T) {
 
 func TestBridge_ResolveLibraryID_NotRunning(t *testing.T) {
 	b := NewBridge()
-	_, err := b.ResolveLibraryID(context.Background(), "next.js")
+	_, err := b.ResolveLibraryID(stdctx.Background(), "next.js")
 	if err == nil {
 		t.Fatal("expected error when bridge not running")
 	}
@@ -290,7 +290,7 @@ func TestBridge_ResolveLibraryID_EmptyID(t *testing.T) {
 		stopGraceful: defaultStopGraceful,
 	}
 
-	_, err := b.ResolveLibraryID(context.Background(), "unknown")
+	_, err := b.ResolveLibraryID(stdctx.Background(), "unknown")
 	if err == nil {
 		t.Fatal("expected error for empty library ID")
 	}

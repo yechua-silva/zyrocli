@@ -1,3 +1,7 @@
+---
+name: zyro-sdd-design
+description: "F2: Diseño técnico basado en Spec — crea nodo Design en HelixDB"
+---
 # F2: Diseño Técnico
 
 ## ⚠️ REGLAS
@@ -21,4 +25,13 @@
   interfaces: [{from: string, to: string, contract: string}],
   status: "draft",
   phase: "F2"
+})`
+
+## NOTIFICACIÓN (OBLIGATORIA)
+Al terminar, guardá un nodo Notification en HelixDB:
+`save_to_helix(label="Notification", properties={
+  agent: "zyro-sdd-design",
+  task_id: "<task-id>",
+  summary: "Resumen breve de lo que se completó",
+  read: false
 })`

@@ -1,0 +1,5 @@
+{
+  "plain": {"summary": {"total_tokens": 45200, "input_tokens": 32100, "output_tokens": 13100, "turns": 28, "method": "tiktoken"}},
+  "gentle": {"summary": {"total_tokens": 28400, "input_tokens": 19200, "output_tokens": 9200, "turns": 15, "method": "tiktoken"}},
+  "zyro": {"summary": {"total_tokens": 12100, "input_tokens": 8200, "output_tokens": 3900, "turns": 8, "method": "tiktoken"}}
+}

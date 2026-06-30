@@ -18,7 +18,11 @@ type Enforcer struct {
 
 // NewEnforcer crea un Enforcer con una política
 func NewEnforcer(policy *Policy) *Enforcer {
-	return &Enforcer{policy: policy}
+	return &Enforcer{
+		policy:  policy,
+		usage:   BudgetUsage{StartedAt: time.Now()},
+		started: true,
+	}
 }
 
 // CheckTool verifica si una tool está permitida según la política

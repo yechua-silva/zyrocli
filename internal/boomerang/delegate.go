@@ -3,71 +3,63 @@ package boomerang
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"sync"
+	"time"
+
+	"github.com/secko/zyrocli/internal/boundari"
 )
 
-// DelegateStep reparte tareas del DAG a subagentes OpenCode.
-// Las tareas dentro de un ParallelGroup se ejecutan concurrentemente;
-// los grupos se ejecutan en secuencia.
-func (o *BoomerangOrchestrator) DelegateStep(ctx context.Context, dag *TaskDAG, phase string) (*DelegateResult, error) {
+// DelegateStep reparte tareas del DAG a subagentes usando TaskManager.DispatchTask().
+// Cada tarea se despacha de forma asíncrona y se espera su resultado con timeout de 30s.
+// Si enforcer no es nil, se verifica la política antes de cada DispatchTask.
+func (o *BoomerangOrchestrator) DelegateStep(ctx context.Context, dag *TaskDAG, phase string, enforcer *boundari.Enforcer) (*DelegateResult, error) {
 	result := &DelegateResult{
 		TaskResults: make(map[string]TaskResult),
 	}
 
-	// Ejecutar grupos paralelos secuencialmente
-	for _, group := range dag.ParallelGroups {
-		var wg sync.WaitGroup
-		var mu sync.Mutex
-
-		for _, taskIdx := range group {
-			if taskIdx >= len(dag.Tasks) {
-				continue
-			}
-			task := dag.Tasks[taskIdx]
-
-			wg.Add(1)
-			go func(t TaskSpec) {
-				defer wg.Done()
-
+	for _, task := range dag.Tasks {
+		// CheckTool antes de cada DispatchTask
+		if enforcer != nil {
+			checkResult := enforcer.CheckTool("dispatch_task", map[string]any{
+				"task_name": task.Name,
+				"agent":     task.Agent,
+				"phase":     phase,
+			})
+			boundari.LogAudit(boundari.AuditEvent{
+				Phase:   phase,
+				Tool:    "dispatch_task",
+				Allowed: checkResult.Allowed,
+				Reason:  checkResult.Reason,
+			})
+			if !checkResult.Allowed {
 				tr := TaskResult{
-					TaskName: t.Name,
-					Success:  true,
+					TaskName: task.Name,
+					Success:  false,
+					Output:   fmt.Sprintf("denied by boundari: %s", checkResult.Reason),
 				}
-
-				// Ejecutar subagente OpenCode
-				cmd := exec.CommandContext(ctx, "opencode",
-					"subagent", t.Agent,
-					"--param", fmt.Sprintf("task=%s", t.Name),
-					"--param", fmt.Sprintf("phase=%s", phase),
-				)
-
-				output, err := cmd.Output()
-				if err != nil {
-					tr.Success = false
-					tr.Output = fmt.Sprintf("error: %v", err)
-				} else {
-					tr.Output = string(output)
-					tr.Nodes = 1
-				}
-
-				mu.Lock()
-				result.TaskResults[t.Name] = tr
-				if tr.Success {
-					result.NodesCreated += tr.Nodes
-				}
-				mu.Unlock()
-			}(task)
+				result.TaskResults[task.Name] = tr
+				result.NodesCreated++
+				continue // saltar esta tarea
+			}
 		}
 
-		wg.Wait()
+		taskID := o.taskManager.DispatchTask(ctx, task.Name, task.Agent, phase, nil)
+
+		waitCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		completedTask, err := o.taskManager.WaitTask(waitCtx, taskID)
+		cancel()
+
+		tr := TaskResult{
+			TaskName: task.Name,
+			Success:  err == nil && completedTask.Status == TaskDone,
+		}
+		if err != nil {
+			tr.Output = fmt.Sprintf("Error: %v", err)
+		} else {
+			tr.Output = completedTask.Output
+		}
+		result.TaskResults[task.Name] = tr
+		result.NodesCreated++
 	}
 
 	return result, nil
-}
-
-// opencodeExists verifica si OpenCode está disponible en el PATH.
-func opencodeExists() bool {
-	_, err := exec.LookPath("opencode")
-	return err == nil
 }

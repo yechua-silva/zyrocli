@@ -29,3 +29,5 @@ tools:
     require_approval: true
   - name: "delete_file"
     action: deny
+  - name: "dispatch_task"
+    action: allow

@@ -1,10 +1,17 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/secko/zyrocli/internal/boomerang"
+	"github.com/secko/zyrocli/internal/boundari"
+	"github.com/secko/zyrocli/internal/db/helix"
 	"github.com/secko/zyrocli/internal/handoff"
+	"github.com/secko/zyrocli/internal/memory"
+	"github.com/secko/zyrocli/internal/setup"
 )
 
 // LoadConfig reads handoff.yaml and extracts scheduler configuration.
@@ -36,4 +43,70 @@ func LoadConfig(path string) (*Config, error) {
 		MaxLoops:     maxLoops,
 		PhaseTimeout: timeout,
 	}, nil
+}
+
+// NewDefaultConfig crea una Config con Boomerang inicializado.
+// Recibe un TaskManager opcional (si es nil, crea uno sin runner).
+// Si no puede inicializar el store de memoria, retorna una config
+// sin Boomerang (fallback modo legacy).
+func NewDefaultConfig(projectDir string, tm *boomerang.TaskManager) *Config {
+	cfg := &Config{
+		Mode:         "interactive",
+		MaxLoops:     5,
+		PhaseTimeout: 10 * time.Minute,
+	}
+
+	// Inicializar store de memoria (HelixDB)
+	helixClient, err := helix.NewClient(context.Background(),
+		helix.WithBaseURL(setup.GetHelixDBURL()),
+	)
+	if err != nil {
+		log.Printf("[scheduler] No se pudo conectar a HelixDB: %v (modo legacy)", err)
+		return cfg
+	}
+
+	// Crear servicio de embeddings (Ollama local)
+	embeddingSvc := helix.NewEmbeddingService(helix.EmbeddingConfig{
+		Provider:  helix.ProviderOllama,
+		Model:     setup.GetEmbeddingModel(),
+		Dims:      setup.GetEmbeddingDims(),
+		BatchSize: 10,
+		Timeout:   30 * time.Second,
+	})
+	store := memory.NewHelixEngramStore(helixClient, embeddingSvc)
+
+	// Si no recibimos un TaskManager, crear uno sin runner (fallback)
+	if tm == nil {
+		tm = boomerang.NewTaskManager(5)
+	}
+
+	// Inicializar BoomerangOrchestrator con callback de medición
+	boomer := boomerang.NewBoomerangOrchestrator(
+		store,
+		func(phase string) (*boundari.Policy, error) {
+			return boundari.LoadPolicy(phase, []string{projectDir})
+		},
+		tm,
+		func(m boomerang.Measurement) {
+			// Guardar medición como Fact en HelixDB
+			fact := &memory.Fact{
+				Type:       memory.FactType("measurement"),
+				Content:    fmt.Sprintf("phase=%s without=%d with=%d", m.Phase, m.WithoutBoomerang, m.WithBoomerang),
+				Salience:   0.3,
+				Confidence: 1.0,
+				Source:     "boomerang:measurement",
+				Phase:      m.Phase,
+				IsActive:   false,
+				DecayRate:  1.0, // no decae — son datos históricos
+			}
+			if _, err := store.SaveFact(context.Background(), fact); err != nil {
+				log.Printf("[boomerang] Error guardando medición: %v", err)
+			}
+		},
+	)
+
+	cfg.Boomerang = boomer
+	cfg.MemoryHooks = NewMemoryHooks(store, "")
+
+	return cfg
 }

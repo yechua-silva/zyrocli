@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,6 +16,7 @@ type Config struct {
 	Project     ProjectConfig     `yaml:"project"`
 	Paths       PathsConfig       `yaml:"paths"`
 	Preferences PreferencesConfig `yaml:"preferences"`
+	Services    ServicesConfig    `yaml:"services"`
 }
 
 // ProjectConfig contiene la configuración del proyecto.
@@ -36,6 +39,15 @@ type PathsConfig struct {
 type PreferencesConfig struct {
 	Verbose bool `yaml:"verbose"`
 	DryRun  bool `yaml:"dry_run"`
+}
+
+// ServicesConfig contiene las URLs de servicios externos y modelos de IA.
+type ServicesConfig struct {
+	OllamaURL      string `yaml:"ollama_url"`
+	HelixDBURL     string `yaml:"helixdb_url"`
+	EmbeddingModel string `yaml:"embedding_model"`
+	EmbeddingDims  int    `yaml:"embedding_dims"`
+	ChatModel      string `yaml:"chat_model"`
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -101,6 +113,13 @@ func DefaultConfig() *Config {
 			Verbose: false,
 			DryRun:  false,
 		},
+		Services: ServicesConfig{
+			OllamaURL:      "",
+			HelixDBURL:     "",
+			EmbeddingModel: "mxbai-embed-large",
+			EmbeddingDims:  1024,
+			ChatModel:      "phi4-mini:3.8b",
+		},
 	}
 }
 
@@ -132,4 +151,94 @@ func SaveConfig(cfg *Config) error {
 	}
 
 	return os.WriteFile(ConfigPath(), data, 0644)
+}
+
+// ── Service URL helpers ────────────────────────────────────────────────────
+
+// GetOllamaURL retorna la URL de Ollama con orden de precedencia:
+//  1. Variable de entorno OLLAMA_HOST
+//  2. Config persistente (Services.OllamaURL)
+//  3. Default: http://localhost:11434
+func GetOllamaURL() string {
+	if env := os.Getenv("OLLAMA_HOST"); env != "" {
+		return env
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.OllamaURL != "" {
+		return cfg.Services.OllamaURL
+	}
+	return "http://localhost:11434"
+}
+
+// GetHelixDBURL retorna la URL de HelixDB con orden de precedencia:
+//  1. Variable de entorno HELIXDB_URL
+//  2. Config persistente (Services.HelixDBURL)
+//  3. Default: http://localhost:6969
+func GetHelixDBURL() string {
+	if env := os.Getenv("HELIXDB_URL"); env != "" {
+		return env
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.HelixDBURL != "" {
+		return cfg.Services.HelixDBURL
+	}
+	return "http://localhost:6969"
+}
+
+// ModelDims retorna las dimensiones de embedding para un modelo conocido.
+// Si el modelo incluye tag (ej: "mxbai-embed-large:latest"), lo ignora.
+func ModelDims(model string) int {
+	base, _, _ := strings.Cut(model, ":")
+	switch base {
+	case "mxbai-embed-large":
+		return 1024
+	case "nomic-embed-text":
+		return 768
+	case "all-minilm":
+		return 384
+	default:
+		return 1024
+	}
+}
+
+// GetEmbeddingModel retorna el modelo de embeddings con orden de precedencia:
+//  1. Variable de entorno ZYRO_EMBEDDING_MODEL
+//  2. Config persistente (Services.EmbeddingModel)
+//  3. Default: mxbai-embed-large
+func GetEmbeddingModel() string {
+	if env := os.Getenv("ZYRO_EMBEDDING_MODEL"); env != "" {
+		return env
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.EmbeddingModel != "" {
+		return cfg.Services.EmbeddingModel
+	}
+	return "mxbai-embed-large"
+}
+
+// GetEmbeddingDims retorna las dimensiones de embedding con orden de precedencia:
+//  1. Variable de entorno ZYRO_EMBEDDING_DIMS
+//  2. Config persistente (Services.EmbeddingDims)
+//  3. Derivado del modelo vía ModelDims()
+func GetEmbeddingDims() int {
+	if env := os.Getenv("ZYRO_EMBEDDING_DIMS"); env != "" {
+		if d, err := strconv.Atoi(env); err == nil && d > 0 {
+			return d
+		}
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.EmbeddingDims > 0 {
+		return cfg.Services.EmbeddingDims
+	}
+	return ModelDims(GetEmbeddingModel())
+}
+
+// GetChatModel retorna el modelo chat con orden de precedencia:
+//  1. Variable de entorno ZYRO_CHAT_MODEL
+//  2. Config persistente (Services.ChatModel)
+//  3. Default: phi4-mini:3.8b
+func GetChatModel() string {
+	if env := os.Getenv("ZYRO_CHAT_MODEL"); env != "" {
+		return env
+	}
+	if cfg, err := LoadConfig(); err == nil && cfg.Services.ChatModel != "" {
+		return cfg.Services.ChatModel
+	}
+	return "phi4-mini:3.8b"
 }

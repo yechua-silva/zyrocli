@@ -1,0 +1,181 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "zyro-orchestrator": {
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash",
+      "description": "ZyroCLI Orchestrator — solo habla y delega, nunca toca código",
+      "prompt": "{skill:zyro-orchestrator}",
+      "permission": {
+        "read": "allow",
+        "task": {
+          "*": "deny",
+          "zyro-sdd-apply": "allow",
+          "zyro-sdd-verify": "allow",
+          "zyro-sdd-explore": "allow",
+          "zyro-sdd-propose": "allow",
+          "zyro-sdd-spec": "allow",
+          "zyro-sdd-design": "allow",
+          "zyro-sdd-tasks": "allow",
+          "zyro-sdd-archive": "allow",
+          "zyro-phase-0-patterns": "allow",
+          "zyro-phase-0-libraries": "allow",
+          "zyro-skills-find": "allow",
+          "zyro-skills-audit": "allow",
+          "zyro-skills-apply": "allow",
+          "zyro-pre-f0": "allow"
+        },
+        "write": "deny",
+        "edit": "deny",
+        "bash": "deny",
+        "glob": "deny",
+        "grep": "deny",
+        "list": "deny",
+        "skill": "deny",
+        "webfetch": "allow",
+        "question": "allow"
+      }
+    },
+    "zyro-phase-0-patterns": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fase 0: busca patrones similares en internet y guarda en HelixDB",
+      "prompt": "{skill:zyro-phase-0-patterns}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-phase-0-libraries": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fase 0: investiga librerías con Context + GitMCP, guarda en HelixDB",
+      "prompt": "{skill:zyro-phase-0-libraries}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-skills-find": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fase 0: descubre skills en skills.sh y guarda en HelixDB",
+      "prompt": "{skill:zyro-skills-find}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "webfetch": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-skills-audit": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fase 0: valida audits de skills descubiertas, guarda en HelixDB",
+      "prompt": "{skill:zyro-skills-audit}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "deny", "webfetch": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-skills-apply": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fase 0: instala skills APROBADAS por el humano en el proyecto",
+      "prompt": "{skill:zyro-skills-apply}",
+      "permission": { "read": "allow", "write": "allow", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-apply": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Implementa código siguiendo specs, design y tasks",
+      "prompt": "{skill:zyro-sdd-apply}",
+      "permission": { "read": "allow", "write": "allow", "edit": "allow", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-verify": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Verifica implementación contra specs, design y tasks",
+      "prompt": "{skill:zyro-sdd-verify}",
+      "permission": { "read": "allow", "write": "allow", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-explore": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Explora codebase y requerimientos antes de un cambio",
+      "prompt": "{skill:zyro-sdd-explore}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow" }
+    },
+    "zyro-sdd-propose": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Crea propuestas de cambio con intento, alcance y enfoque",
+      "prompt": "{skill:zyro-sdd-propose}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-spec": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "F1: Diseña especificación técnica basada en hallazgos de Fase 0",
+      "prompt": "{skill:zyro-sdd-spec}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "deny", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-design": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "F2: Diseño técnico basado en Spec — crea nodo Design en HelixDB",
+      "prompt": "{skill:zyro-sdd-design}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-tasks": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "F2: Divide el diseño en tareas atómicas — crea nodos Task en HelixDB",
+      "prompt": "{skill:zyro-sdd-tasks}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-sdd-archive": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Archiva cambios completados y sincroniza delta specs",
+      "prompt": "{skill:zyro-sdd-archive}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "task": { "*": "allow" } }
+    },
+    "zyro-pre-f0": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "PRE-F0: Alineación de dominio — grill-me, domain-model, triage, improve-arch",
+      "prompt": "{skill:zyro-pre-f0}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "webfetch": "allow", "question": "allow", "task": { "*": "allow" } }
+    },
+    "to-issues": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Genera GitHub Issues desde PRDs y tasks",
+      "prompt": "{skill:to-issues}",
+      "permission": { "read": "allow", "write": "deny", "edit": "deny", "bash": "allow", "webfetch": "allow" }
+    }
+  },
+  "mcp": {
+    "helix-integration": {
+      "type": "local",
+      "command": ["uv", "run", "--directory", "~/.config/zyrocli/mcp-tools", "runner.py"]
+    },
+    "zyro-task-board": {
+      "type": "local",
+      "command": ["zyrocli", "mcp-server"]
+    },
+    "context": {
+      "type": "local",
+      "command": ["context", "serve"]
+    },
+    "gitmcp": {
+      "type": "local",
+      "command": ["uvx", "mcp-server-git", "--repository", "."]
+    }
+  },
+  "skills": {
+    "paths": ["~/.config/opencode/skills"]
+  }
+}

@@ -39,7 +39,7 @@ func (c *Client) CreateNode(ctx context.Context, label string, props map[string]
 		Returning("node")
 
 	var result struct {
-		Node []struct {
+		Node struct {
 			ID int64 `json:"id"`
 		} `json:"node"`
 	}
@@ -48,11 +48,11 @@ func (c *Client) CreateNode(ctx context.Context, label string, props map[string]
 		return 0, fmt.Errorf("helix: create node: %w", err)
 	}
 
-	if len(result.Node) == 0 {
+	if result.Node.ID == 0 {
 		return 0, ErrNotFound
 	}
 
-	return result.Node[0].ID, nil
+	return result.Node.ID, nil
 }
 
 // GetNode retrieves a node by ID with its key properties.

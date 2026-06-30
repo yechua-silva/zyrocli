@@ -24,13 +24,48 @@ func TestLoadPolicyNotFound(t *testing.T) {
 }
 
 func TestLoadDefaultPolicy(t *testing.T) {
-	p := LoadDefaultPolicy("F0")
-	if p.Phase != "F0" {
-		t.Errorf("expected F0, got %s", p.Phase)
-	}
-	if len(p.Tools) == 0 {
-		t.Error("expected at least one tool rule")
-	}
+	t.Run("F0", func(t *testing.T) {
+		p := LoadDefaultPolicy("F0")
+		if p.Phase != "F0" {
+			t.Errorf("expected F0, got %s", p.Phase)
+		}
+		if len(p.Tools) == 0 {
+			t.Error("expected at least one tool rule")
+		}
+	})
+
+	t.Run("PRE-F0", func(t *testing.T) {
+		p := LoadDefaultPolicy("PRE-F0")
+		if p.Phase != "PRE-F0" {
+			t.Errorf("expected PRE-F0, got %s", p.Phase)
+		}
+		if p.Budget.MaxToolCalls != 30 {
+			t.Errorf("expected MaxToolCalls=30, got %d", p.Budget.MaxToolCalls)
+		}
+		if p.Budget.MaxRuntimeSecs != 300 {
+			t.Errorf("expected MaxRuntimeSecs=300, got %d", p.Budget.MaxRuntimeSecs)
+		}
+		// write_file debe ser allow
+		writeRule := p.GetRule("write_file")
+		if writeRule == nil || writeRule.Action != ActionAllow {
+			t.Error("PRE-F0 should allow write_file")
+		}
+		// dispatch_task debe ser allow
+		dispatchRule := p.GetRule("dispatch_task")
+		if dispatchRule == nil || dispatchRule.Action != ActionAllow {
+			t.Error("PRE-F0 should allow dispatch_task")
+		}
+		// edit_file debe ser deny
+		editRule := p.GetRule("edit_file")
+		if editRule == nil || editRule.Action != ActionDeny {
+			t.Error("PRE-F0 should deny edit_file")
+		}
+		// execute_command debe ser deny
+		execRule := p.GetRule("execute_command")
+		if execRule == nil || execRule.Action != ActionDeny {
+			t.Error("PRE-F0 should deny execute_command")
+		}
+	})
 }
 
 func TestValidatePolicy(t *testing.T) {
@@ -143,7 +178,7 @@ func TestEnforcerSaveAuditLog(t *testing.T) {
 }
 
 func TestAllPoliciesLoad(t *testing.T) {
-	phases := []string{"F0", "F1", "F2", "F3", "F4"}
+	phases := []string{"PRE-F0", "F0", "F1", "F2", "F3", "F4"}
 	for _, phase := range phases {
 		p, err := LoadPolicy(phase, []string{"."})
 		if err != nil {
